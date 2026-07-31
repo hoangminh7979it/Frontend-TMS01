@@ -6,6 +6,7 @@ import { RolesPermissionsComponent } from './features/users/pages/roles-permissi
 import { EmployeeListComponent } from './features/employees/pages/employee-list/employee-list.component';
 import { VehicleListComponent } from './features/vehicles/pages/vehicle-list/vehicle-list.component';
 import { CustomerListComponent } from './features/customers/pages/customer-list/customer-list.component';
+import { ShipmentListComponent } from './features/shipments/pages/shipment-list/shipment-list.component';
 
 export const routes: Routes = [
   {
@@ -43,7 +44,7 @@ export const routes: Routes = [
       },
       {
         path: 'shipments',
-        component: DashboardHomeComponent
+        component: ShipmentListComponent
       },
       {
         path: 'expenses',
