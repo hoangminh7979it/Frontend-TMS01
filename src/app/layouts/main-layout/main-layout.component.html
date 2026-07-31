@@ -1,0 +1,108 @@
+<div class="layout-wrapper" [ngClass]="{'sidebar-collapsed': isSidebarCollapsed}">
+  
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar-container">
+    
+    <!-- Sidebar Header Brand -->
+    <div class="sidebar-header">
+      <div class="brand-logo">
+        <i class="fa-solid fa-truck-fast"></i>
+      </div>
+      <div class="brand-info" *ngIf="!isSidebarCollapsed">
+        <h2 class="brand-title">TMS-01</h2>
+        <span class="brand-tag">LOGISTICS ENGINE</span>
+      </div>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="sidebar-menu">
+      <div class="menu-section-label" *ngIf="!isSidebarCollapsed">DANH MỤC CHỨC NĂNG</div>
+      
+      <ul>
+        <li *ngFor="let item of menuItems">
+          <a [routerLink]="item.link" routerLinkActive="active-menu-item" class="menu-link" [title]="item.title">
+            <i [class]="item.icon + ' menu-icon'"></i>
+            <span class="menu-text" *ngIf="!isSidebarCollapsed">{{ item.title }}</span>
+            <span class="menu-badge" *ngIf="item.badge && !isSidebarCollapsed">{{ item.badge }}</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer" *ngIf="!isSidebarCollapsed">
+      <div class="system-status">
+        <span class="status-dot"></span>
+        <span class="status-text">Hệ thống: Hoạt động (v1.0)</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN RIGHT CONTAINER -->
+  <div class="main-container">
+    
+    <!-- HEADER BAR -->
+    <header class="top-header">
+      
+      <!-- Left Header Controls -->
+      <div class="header-left">
+        <button class="toggle-btn" (click)="toggleSidebar()" title="Ẩn/Hiện Menu">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+        
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" placeholder="Tìm kiếm đơn hàng, biển số xe, nhân sự..." />
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="header-right">
+        
+        <!-- Theme Toggle Switcher Button -->
+        <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="currentTheme === 'dark' ? 'Chuyển sang Chế độ Sáng' : 'Chuyển sang Chế độ Tối'">
+          <i class="fa-solid" [ngClass]="currentTheme === 'dark' ? 'fa-sun icon-sun' : 'fa-moon icon-moon'"></i>
+          <span class="theme-label">{{ currentTheme === 'dark' ? 'Giao diện Tối' : 'Giao diện Sáng' }}</span>
+        </button>
+
+        <!-- Notification Bell -->
+        <button class="icon-btn" title="Thông báo hệ thống">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notification-count">3</span>
+        </button>
+
+        <!-- System Clock Badge -->
+        <div class="system-badge">
+          <i class="fa-regular fa-clock"></i>
+          <span>TMS ONLINE</span>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <!-- User Profile Card -->
+        <div class="user-profile-card">
+          <div class="user-avatar">
+            <i class="fa-solid fa-user-tie"></i>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ currentUser.firstname || currentUser.username }} {{ currentUser.lastname || '' }}</span>
+            <span class="user-role">{{ currentUser.roleName || 'QUẢN TRỊ VIÊN' }}</span>
+          </div>
+          <button class="logout-btn" (click)="onLogout()" title="Đăng xuất khỏi hệ thống">
+            <i class="fa-solid fa-power-off"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- PAGE MAIN CONTENT OUTLET -->
+    <main class="content-body">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>
