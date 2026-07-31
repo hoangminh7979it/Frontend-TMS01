@@ -1,0 +1,653 @@
+<div class="shipment-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Vận Chuyển & Đơn Hàng Vận Tải</h1>
+      <p class="page-subtitle">Quản lý chuyến xe, điểm đi - điểm đến, điều phối xe/lái xe và doanh thu cước vận chuyển.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button *ngIf="activeTab === 'shipments'" class="btn btn-primary" (click)="openCreateShipmentModal()">
+        <i class="fa-solid fa-truck-ramp-box"></i> Tạo Đơn Hàng Vận Chuyển Mới
+      </button>
+      <button *ngIf="activeTab === 'statuses'" class="btn btn-primary" (click)="openCreateStatusModal()">
+        <i class="fa-solid fa-list-check"></i> Tạo Trạng Thái Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage && !showShipmentModal && !showStatusModal" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage && !showShipmentModal && !showStatusModal" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'shipments'}" (click)="setActiveTab('shipments')">
+      <i class="fa-solid fa-route"></i> Danh Sách Đơn Hàng & Lộ Trình ({{ shipments.length }})
+    </button>
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'statuses'}" (click)="setActiveTab('statuses')">
+      <i class="fa-solid fa-tags"></i> Danh Mục Trạng Thái Lộ Trình ({{ statuses.length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: SHIPMENTS LIST -->
+  <div *ngIf="activeTab === 'shipments'" class="tab-content">
+    
+    <!-- KPI Summary Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TỔNG ĐƠN HÀNG</span>
+          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-boxes-packing"></i></div>
+        </div>
+        <div class="metric-value">{{ totalShipmentsCount }} <span class="metric-unit">Đơn</span></div>
+        <span class="metric-note">Toàn bộ đơn hàng hệ thống</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">ĐANG CHẠY TRÊN ĐƯỜNG</span>
+          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-truck-fast"></i></div>
+        </div>
+        <div class="metric-value">{{ inTransitCount }} <span class="metric-unit">Chuyến</span></div>
+        <span class="metric-note">Đang bốc hàng / vận chuyển</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TỔNG DOANH THU</span>
+          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-coins"></i></div>
+        </div>
+        <div class="metric-value">{{ totalRevenue | number }} <span class="metric-unit">VNĐ</span></div>
+        <span class="metric-note">Doanh thu cước vận chuyển</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">CƯỚC ƯỚC TÍNH NĂNG LỰC</span>
+          <div class="metric-icon-box bg-green"><i class="fa-solid fa-sack-dollar"></i></div>
+        </div>
+        <div class="metric-value">{{ totalNetProfit | number }} <span class="metric-unit">VNĐ</span></div>
+        <span class="metric-note">Giá trị hợp đồng lũy kế</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="filter-controls-card">
+      
+      <!-- Search Box -->
+      <div class="search-input-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (ngModelChange)="onSearchChange()" 
+          placeholder="Tìm theo Mã đơn, Khách hàng, Nơi nhận/giao, Biển số xe, Lái xe..." 
+        />
+      </div>
+
+      <!-- Status Filter Tabs -->
+      <div class="type-filter-tabs">
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'ALL'}" (click)="onStatusFilterChange('ALL')">
+          Tất Cả ({{ totalShipmentsCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'CREATED'}" (click)="onStatusFilterChange('CREATED')">
+          Mới Tạo
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'DISPATCHED'}" (click)="onStatusFilterChange('DISPATCHED')">
+          Đã Điều Xe
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'PICKED_UP'}" (click)="onStatusFilterChange('PICKED_UP')">
+          <i class="fa-solid fa-truck-fast"></i> Đang Vận Chuyển
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'DELIVERED'}" (click)="onStatusFilterChange('DELIVERED')">
+          <i class="fa-solid fa-circle-check"></i> Đã Giao
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Shipments Data Table -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-route"></i> Danh Sách Đơn Hàng Vận Chuyển</h3>
+        <span class="results-count">Hiển thị {{ filteredShipments.length }} đơn hàng</span>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th class="col-code">MÃ ĐƠN HÀNG</th>
+              <th class="col-date">NGÀY NHẬN HÀNG</th>
+              <th class="col-date">NGÀY GIAO HÀNG</th>
+              <th class="col-customer">KHÁCH HÀNG</th>
+              <th class="col-place">NƠI NHẬN (ĐIỂM ĐI)</th>
+              <th class="col-place">NƠI GIAO (ĐIỂM ĐẾN)</th>
+              <th class="col-cargo">TÊN HÀNG HÓA</th>
+              <th class="col-weight">TRỌNG LƯỢNG</th>
+              <th class="col-vehicle">PHƯƠNG TIỆN (XE)</th>
+              <th class="col-driver">TÀI XẾ VẬN HÀNH</th>
+              <th class="col-revenue">DOANH THU</th>
+              <th class="col-cost">CHI PHÍ PHÁT SINH</th>
+              <th class="col-status">TRẠNG THÁI (1-CLICK)</th>
+              <th class="text-right col-actions">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of filteredShipments">
+              
+              <!-- Shipment Code Badge -->
+              <td class="col-code">
+                <span class="emp-code-badge">{{ s.shipmentCode }}</span>
+                <div class="text-muted text-xs margin-top-2" *ngIf="s.createDate"><i class="fa-regular fa-clock"></i> {{ s.createDate | date:'dd/MM/yyyy' }}</div>
+              </td>
+
+              <!-- Receipt Date -->
+              <td class="col-date">
+                <div class="date-badge date-receipt" *ngIf="s.dateOfReceipt">
+                  <i class="fa-regular fa-calendar-check color-green"></i> {{ s.dateOfReceipt | date:'dd/MM/yyyy' }}
+                </div>
+                <span class="text-muted text-xs" *ngIf="!s.dateOfReceipt">Chưa xác định</span>
+              </td>
+
+              <!-- Delivery Date -->
+              <td class="col-date">
+                <div class="date-badge date-delivery" *ngIf="s.deliveryDate">
+                  <i class="fa-regular fa-calendar-days color-cyan"></i> {{ s.deliveryDate | date:'dd/MM/yyyy' }}
+                </div>
+                <span class="text-muted text-xs" *ngIf="!s.deliveryDate">Chưa xác định</span>
+              </td>
+
+              <!-- Customer Info -->
+              <td class="col-customer">
+                <div class="font-bold color-title" *ngIf="s.customerName"><i class="fa-solid fa-building"></i> {{ s.customerName }}</div>
+                <div class="text-muted text-xs" *ngIf="s.customerPhone"><i class="fa-solid fa-phone"></i> {{ s.customerPhone }}</div>
+                <span class="text-muted" *ngIf="!s.customerName">-</span>
+              </td>
+
+              <!-- Nơi Nhận (Điểm đi) -->
+              <td class="col-place">
+                <div class="places-list">
+                  <div class="place-item place-from" *ngFor="let p of splitPlaceString(s.receiptPlace)">
+                    <i class="fa-solid fa-location-dot color-green"></i> <span>{{ p }}</span>
+                  </div>
+                  <span class="text-muted text-xs" *ngIf="!s.receiptPlace">Chưa xác định</span>
+                </div>
+              </td>
+
+              <!-- Nơi Giao (Điểm đến) -->
+              <td class="col-place">
+                <div class="places-list">
+                  <div class="place-item place-to" *ngFor="let p of splitPlaceString(s.deliveryPlace)">
+                    <i class="fa-solid fa-flag-checkered color-red"></i> <span>{{ p }}</span>
+                  </div>
+                  <span class="text-muted text-xs" *ngIf="!s.deliveryPlace">Chưa xác định</span>
+                </div>
+              </td>
+
+              <!-- Tên Hàng Hóa -->
+              <td class="col-cargo">
+                <div class="font-bold color-title" *ngIf="s.cargoType">{{ s.cargoType }}</div>
+                <span class="text-muted text-xs" *ngIf="!s.cargoType">-</span>
+              </td>
+
+              <!-- Trọng Lượng -->
+              <td class="col-weight">
+                <div class="weight-badge" *ngIf="s.weight"><i class="fa-solid fa-weight-hanging"></i> {{ s.weight }} Tấn</div>
+                <span class="text-muted text-xs" *ngIf="!s.weight">-</span>
+              </td>
+
+              <!-- Phương Tiện (Xe) -->
+              <td class="col-vehicle">
+                <div *ngIf="s.licensePlate">
+                  <span class="license-plate-badge yellow-plate"><i class="fa-solid fa-truck"></i> {{ s.licensePlate }}</span>
+                  <div class="text-muted text-xs margin-top-2" *ngIf="s.vehicleName">{{ s.vehicleName }}</div>
+                </div>
+                <span class="text-muted text-xs" *ngIf="!s.licensePlate">Chưa gán xe</span>
+              </td>
+
+              <!-- Tài Xế Vận Hành -->
+              <td class="col-driver">
+                <div *ngIf="s.driverName" class="color-cyan font-bold text-xs">
+                  <i class="fa-solid fa-user-gear"></i> {{ s.driverName }}
+                  <div class="text-muted text-xs font-normal" *ngIf="s.driverPhone"><i class="fa-solid fa-phone"></i> {{ s.driverPhone }}</div>
+                </div>
+                <span class="text-muted text-xs" *ngIf="!s.driverName">Chưa gán TX</span>
+              </td>
+
+              <!-- Revenue -->
+              <td class="col-revenue">
+                <div class="font-bold color-title"><i class="fa-solid fa-money-bill-wave color-green"></i> {{ s.revenue | number }} VNĐ</div>
+              </td>
+
+              <!-- Incurred Costs -->
+              <td class="col-cost">
+                <div class="font-bold color-red" *ngIf="s.incurredCosts"><i class="fa-solid fa-receipt"></i> {{ s.incurredCosts | number }} VNĐ</div>
+                <span class="text-muted text-xs" *ngIf="!s.incurredCosts">0 VNĐ</span>
+              </td>
+
+              <!-- Status Switcher Dropdown (1-Click) -->
+              <td class="col-status">
+                <select 
+                  class="status-select-btn" 
+                  [ngModel]="s.statusEnumCode" 
+                  (ngModelChange)="onQuickStatusChange(s, $event)"
+                  [ngClass]="{
+                    'status-created': s.statusEnumCode === 'CREATED',
+                    'status-dispatched': s.statusEnumCode === 'DISPATCHED',
+                    'status-pickedup': s.statusEnumCode === 'PICKED_UP',
+                    'status-delivered': s.statusEnumCode === 'DELIVERED',
+                    'status-cancelled': s.statusEnumCode === 'CANCELLED'
+                  }"
+                >
+                  <option *ngFor="let st of statuses" [value]="st.statusEnumCode">
+                    {{ st.statusEnumName }}
+                  </option>
+                </select>
+              </td>
+
+              <!-- Actions -->
+              <td class="text-right actions-cell col-actions">
+                <button class="action-btn btn-edit" (click)="openEditShipmentModal(s)" title="Sửa Đơn Hàng">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteShipment(s)" title="Xóa Đơn Hàng">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="filteredShipments.length === 0">
+              <td colspan="14" class="text-center empty-cell">
+                <i class="fa-solid fa-truck-circle-exclamation empty-icon"></i>
+                <p>Không tìm thấy đơn hàng vận chuyển nào phù hợp.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: STATUS ENUMS CATEGORY -->
+  <div *ngIf="activeTab === 'statuses'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-tags"></i> Danh Mục Trạng Thái Lộ Trình Vận Chuyển</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>MÃ TRẠNG THÁI</th>
+              <th>TÊN TRẠNG THÁI HỂN THỊ</th>
+              <th>MÔ TẢ QUY TRÌNH</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let st of statuses">
+              <td>#{{ st.statusEnumId }}</td>
+              <td><span class="emp-code-badge">{{ st.statusEnumCode }}</span></td>
+              <td class="font-bold color-title">{{ st.statusEnumName }}</td>
+              <td>{{ st.description || '-' }}</td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditStatusModal(st)" title="Sửa Trạng Thái">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteStatus(st)" title="Xóa Trạng Thái">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE / EDIT SHIPMENT (REAL-TIME COMMA FORMATTED FINANCIAL INPUTS) -->
+  <div class="modal-backdrop" *ngIf="showShipmentModal">
+    <div class="modal-card modal-ultra-wide">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-truck-ramp-box"></i> {{ isEditShipmentMode ? 'Chỉnh Sửa Hồ Sơ Đơn Hàng Vận Chuyển' : 'Khai Báo Đơn Hàng Vận Chuyển Mới' }}</h3>
+        <button class="modal-close" (click)="closeShipmentModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="shipmentForm" (ngSubmit)="onSaveShipment()">
+        <div class="modal-body">
+          
+          <!-- Modal Error Alert -->
+          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
+
+          <!-- SECTION 1: CHỨNG TỪ & KHÁCH HÀNG -->
+          <div class="form-section-title"><i class="fa-solid fa-file-invoice"></i> PHẦN 1: THÔNG TIN KHÁCH HÀNG & CHỨNG TỪ</div>
+          
+          <div class="form-row-3">
+            <div class="form-group">
+              <label>Mã Đơn Hàng *</label>
+              <input 
+                type="text" 
+                formControlName="shipmentCode" 
+                placeholder="Ví dụ: DH-2026-001..." 
+                [ngClass]="{'input-error': shipmentForm.controls['shipmentCode'].invalid && shipmentForm.controls['shipmentCode'].touched}"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label>Khách Hàng Đặt Đơn</label>
+              <select formControlName="customerId">
+                <option [ngValue]="null">-- Chọn khách hàng --</option>
+                <option *ngFor="let c of customers" [value]="c.customerId">
+                  {{ c.customerCode }} - {{ c.companyName || c.fullName }} ({{ c.phone || 'Không SĐT' }})
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Trạng Thái Khởi Tạo</label>
+              <select formControlName="statusEnumId">
+                <option *ngFor="let st of statuses" [value]="st.statusEnumId">
+                  {{ st.statusEnumName }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SECTION 2: HÀNG HÓA & TRỌNG LƯỢNG -->
+          <div class="form-section-title"><i class="fa-solid fa-boxes-stacked"></i> PHẦN 2: THÔNG TIN HÀNG HÓA VẬN CHUYỂN</div>
+
+          <div class="form-row-2-1">
+            <div class="form-group">
+              <label>Tên Hàng Hóa & Quy Cách Đóng Gói</label>
+              <input type="text" formControlName="cargoType" placeholder="Ví dụ: Linh kiện điện tử Samsung (12 Pallet, Thùng carton)..." />
+            </div>
+
+            <div class="form-group">
+              <label>Trọng Lượng (Tấn)</label>
+              <input type="number" step="0.1" formControlName="weight" placeholder="15.5" />
+            </div>
+          </div>
+
+          <!-- SECTION 3: LỘ TRÌNH ĐIỂM ĐI - ĐIỂM ĐẾN & THỜI GIAN -->
+          <div class="form-section-title"><i class="fa-solid fa-map-location-dot"></i> PHẦN 3: LỘ TRÌNH VẬN CHUYỂN & GỢI Ý CÔNG TY (AUTOCOMPLETE)</div>
+
+          <div class="form-row-2">
+            
+            <!-- Column Left: Pickup Place & Date -->
+            <div class="form-card-box">
+              <div class="box-header color-green"><i class="fa-solid fa-location-dot"></i> NƠI NHẬN HÀNG (Tự động lưu Công ty mới)</div>
+              
+              <div class="form-group">
+                <div class="label-with-action">
+                  <label>Danh Sách Điểm Nhận Hàng</label>
+                  <button type="button" class="btn-add-mini" (click)="addReceiptPlace()">
+                    <i class="fa-solid fa-plus"></i> Thêm Điểm Nhận
+                  </button>
+                </div>
+
+                <!-- Custom High-Contrast Autocomplete Wrapper -->
+                <div class="autocomplete-wrapper" *ngFor="let p of receiptPlacesList; let i = index; trackBy: trackByIndex">
+                  <div class="dynamic-input-row">
+                    <input 
+                      type="text" 
+                      [(ngModel)]="receiptPlacesList[i]" 
+                      [ngModelOptions]="{standalone: true}" 
+                      (focus)="onFocusReceiptInput(i)"
+                      (input)="onFocusReceiptInput(i)"
+                      placeholder="Gõ tên Công ty / Điểm nhận để xem gợi ý..." 
+                    />
+                    <button 
+                      type="button" 
+                      class="btn-remove-mini" 
+                      (click)="removeReceiptPlace(i)" 
+                      [disabled]="receiptPlacesList.length === 1 && i === 0"
+                      title="Xóa điểm nhận"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <!-- High-Contrast Floating Dropdown -->
+                  <div 
+                    class="custom-autocomplete-dropdown" 
+                    *ngIf="activeReceiptIndex === i && getFilteredCompanies(receiptPlacesList[i]).length > 0"
+                  >
+                    <div 
+                      class="dropdown-item" 
+                      *ngFor="let comp of getFilteredCompanies(receiptPlacesList[i])"
+                      (mousedown)="selectReceiptCompany(i, comp)"
+                    >
+                      <div class="item-title"><i class="fa-solid fa-building color-cyan"></i> {{ comp.name }}</div>
+                      <div class="item-sub" *ngIf="comp.address"><i class="fa-solid fa-location-dot"></i> {{ comp.address }}</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="form-group">
+                <label>Ngày Nhận Hàng</label>
+                <input type="date" formControlName="dateOfReceipt" />
+              </div>
+            </div>
+
+            <!-- Column Right: Delivery Place & Date -->
+            <div class="form-card-box">
+              <div class="box-header color-red"><i class="fa-solid fa-flag-checkered"></i> NƠI GIAO HÀNG (Tự động lưu Công ty mới)</div>
+
+              <div class="form-group">
+                <div class="label-with-action">
+                  <label>Danh Sách Điểm Giao Hàng</label>
+                  <button type="button" class="btn-add-mini" (click)="addDeliveryPlace()">
+                    <i class="fa-solid fa-plus"></i> Thêm Điểm Giao
+                  </button>
+                </div>
+
+                <!-- Custom High-Contrast Autocomplete Wrapper -->
+                <div class="autocomplete-wrapper" *ngFor="let p of deliveryPlacesList; let i = index; trackBy: trackByIndex">
+                  <div class="dynamic-input-row">
+                    <input 
+                      type="text" 
+                      [(ngModel)]="deliveryPlacesList[i]" 
+                      [ngModelOptions]="{standalone: true}" 
+                      (focus)="onFocusDeliveryInput(i)"
+                      (input)="onFocusDeliveryInput(i)"
+                      placeholder="Gõ tên Công ty / Điểm giao để xem gợi ý..." 
+                    />
+                    <button 
+                      type="button" 
+                      class="btn-remove-mini" 
+                      (click)="removeDeliveryPlace(i)" 
+                      [disabled]="deliveryPlacesList.length === 1 && i === 0"
+                      title="Xóa điểm giao"
+                    >
+                      &times;
+                    </button>
+                  </div>
+
+                  <!-- High-Contrast Floating Dropdown -->
+                  <div 
+                    class="custom-autocomplete-dropdown" 
+                    *ngIf="activeDeliveryIndex === i && getFilteredCompanies(deliveryPlacesList[i]).length > 0"
+                  >
+                    <div 
+                      class="dropdown-item" 
+                      *ngFor="let comp of getFilteredCompanies(deliveryPlacesList[i])"
+                      (mousedown)="selectDeliveryCompany(i, comp)"
+                    >
+                      <div class="item-title"><i class="fa-solid fa-building color-cyan"></i> {{ comp.name }}</div>
+                      <div class="item-sub" *ngIf="comp.address"><i class="fa-solid fa-location-dot"></i> {{ comp.address }}</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="form-group">
+                <label>Ngày Giao Hàng Dự Kiến</label>
+                <input type="date" formControlName="deliveryDate" />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SECTION 4: DOANH THU, CHI PHÍ & ĐIỀU XE (REAL-TIME COMMA SEPARATORS) -->
+          <div class="form-section-title"><i class="fa-solid fa-truck-gear"></i> PHẦN 4: DOANH THU, CHI PHÍ & ĐIỀU ĐỘNG XE/LÁI XE</div>
+
+          <div class="form-row-2">
+            
+            <!-- Column Left: Financial Revenue & Expenses -->
+            <div class="form-card-box">
+              <div class="box-header color-purple"><i class="fa-solid fa-coins"></i> CƯỚC VẬN CHUYỂN & CHI PHÍ (Phân cách dấu phẩy)</div>
+              
+              <div class="form-group">
+                <label>Doanh Thu Cước Vận Chuyển (VNĐ)</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formattedRevenue" 
+                  [ngModelOptions]="{standalone: true}" 
+                  (input)="onRevenueInput($event)" 
+                  placeholder="Ví dụ: 25,000,000" 
+                  class="font-bold color-cyan"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Chi Phí Phát Sinh / Cầu Đường (VNĐ)</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formattedIncurredCosts" 
+                  [ngModelOptions]="{standalone: true}" 
+                  (input)="onIncurredCostsInput($event)" 
+                  placeholder="Ví dụ: 3,500,000" 
+                  class="font-bold color-red"
+                />
+              </div>
+            </div>
+
+            <!-- Column Right: Vehicle & Driver Dispatch -->
+            <div class="form-card-box">
+              <div class="box-header color-cyan"><i class="fa-solid fa-truck"></i> ĐIỀU ĐỘNG PHƯƠNG TIỆN & LÁI XE</div>
+
+              <div class="form-group">
+                <label>Chọn Phương Tiện (Xe Tải / Đầu Kéo)</label>
+                <select formControlName="vehicleId" (change)="onVehicleChange($event)">
+                  <option [ngValue]="null">-- Chưa gán xe --</option>
+                  <option *ngFor="let v of vehicles" [value]="v.id">
+                    {{ v.licensePlate }} - {{ v.name }} (Tải trọng: {{ v.payloadCapacity }} Tấn)
+                  </option>
+                </select>
+
+                <div class="clean-checkbox-row margin-top-4">
+                  <label class="checkbox-label-clean">
+                    <input 
+                      type="checkbox" 
+                      [(ngModel)]="useCustomDriver" 
+                      [ngModelOptions]="{standalone: true}" 
+                      (change)="onToggleCustomDriver()" 
+                    />
+                    <span>Tùy chỉnh tài xế khác (Không dùng tài xế mặc định của xe)</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Phân Công Tài Xế Vận Hành</label>
+                <select formControlName="employeeId" [attr.disabled]="!useCustomDriver ? true : null">
+                  <option [ngValue]="null">-- Chưa chọn tài xế --</option>
+                  <option *ngFor="let d of drivers" [value]="d.employeeId">
+                    {{ d.firstname }} {{ d.lastname }} (GPLX: {{ d.drivingLicenseId || 'Chưa rõ' }})
+                  </option>
+                </select>
+                <span class="text-xs color-cyan margin-top-2" *ngIf="!useCustomDriver">
+                  <i class="fa-solid fa-circle-info"></i> Tự động gán tài xế cố định của xe. Tích checkbox để tùy chỉnh tài xế khác.
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SECTION 5: NOTES -->
+          <div class="form-group margin-top-12">
+            <label><i class="fa-solid fa-note-sticky"></i> Ghi Chú Đơn Hàng / Yêu Cầu Bảo Quản</label>
+            <textarea formControlName="notes" rows="2" placeholder="Yêu cầu nhiệt độ kho lạnh, che mui bạt chằng buộc hàng hóa chi tiết..."></textarea>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeShipmentModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ Đơn Hàng
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CREATE / EDIT STATUS -->
+  <div class="modal-backdrop" *ngIf="showStatusModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-tags"></i> {{ isEditStatusMode ? 'Chỉnh Sửa Trạng Thái' : 'Tạo Trạng Thái Mới' }}</h3>
+        <button class="modal-close" (click)="closeStatusModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="statusForm" (ngSubmit)="onSaveStatus()">
+        <div class="modal-body">
+          
+          <!-- Modal Error Alert -->
+          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
+
+          <div class="form-group">
+            <label>Mã Trạng Thái *</label>
+            <input 
+              type="text" 
+              formControlName="statusEnumCode" 
+              placeholder="Ví dụ: CREATED, PICKED_UP..." 
+              [ngClass]="{'input-error': statusForm.controls['statusEnumCode'].invalid && statusForm.controls['statusEnumCode'].touched}"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Tên Trạng Thái Hiển Thị *</label>
+            <input 
+              type="text" 
+              formControlName="statusEnumName" 
+              placeholder="Ví dụ: Đang Vận Chuyển..." 
+              [ngClass]="{'input-error': statusForm.controls['statusEnumName'].invalid && statusForm.controls['statusEnumName'].touched}"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Mô Tả Quy Trình</label>
+            <textarea formControlName="description" rows="2" placeholder="Mô tả các bước thực hiện..."></textarea>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeStatusModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Trạng Thái
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
