@@ -1,0 +1,411 @@
+<div class="permissions-page">
+  
+  <!-- Page Header & Tab Navigation -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Phân Quyền Hạn & Tài Khoản</h1>
+      <p class="page-subtitle">Thiết lập vai trò, phân quyền tác vụ chi tiết và quản trị người dùng hệ thống.</p>
+    </div>
+    
+    <!-- Action buttons according to active tab -->
+    <div class="page-actions">
+      <button *ngIf="activeTab === 'roles'" class="btn btn-primary" (click)="openCreateRoleModal()">
+        <i class="fa-solid fa-plus"></i> Tạo Vai Trò Mới
+      </button>
+      <button *ngIf="activeTab === 'users'" class="btn btn-primary" (click)="openCreateUserModal()">
+        <i class="fa-solid fa-user-plus"></i> Thêm Tài Khoản Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'roles'}" (click)="setActiveTab('roles')">
+      <i class="fa-solid fa-user-shield"></i> Vai Trò & Ma Trận Phân Quyền ({{ roles.length }})
+    </button>
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'users'}" (click)="setActiveTab('users')">
+      <i class="fa-solid fa-users"></i> Danh Sách Tài Khoản Người Dùng ({{ users.length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: ROLES & PERMISSIONS MATRIX -->
+  <div *ngIf="activeTab === 'roles'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-list-check"></i> Danh Sách Vai Trò Trong Hệ Thống</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>MÃ VAI TRÒ</th>
+              <th>TÊN VAI TRÒ</th>
+              <th>MÔ TẢ</th>
+              <th>QUYỀN HẠN ĐƯỢC GÁN</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let role of roles">
+              <td>#{{ role.roleId }}</td>
+              <td><span class="role-code-badge">{{ role.roleCode }}</span></td>
+              <td class="font-bold">{{ role.roleName }}</td>
+              <td class="text-muted">{{ role.description || 'Không có mô tả' }}</td>
+              <td>
+                <span class="perm-count-badge">
+                  <i class="fa-solid fa-key"></i> {{ role.permissions ? role.permissions.length : 0 }} Quyền hạn
+                </span>
+              </td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-assign" (click)="openAssignModal(role)" title="Bảng Ma Trận Phân Quyền">
+                  <i class="fa-solid fa-table-cells"></i> Ma Trận Quyền
+                </button>
+                <button class="action-btn btn-edit" (click)="openEditRoleModal(role)" title="Sửa Vai Trò">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteRole(role)" title="Xóa Vai Trò">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: USER MANAGEMENT LIST -->
+  <div *ngIf="activeTab === 'users'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-users"></i> Danh Sách Tài Khoản Người Dùng</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>TÊN ĐĂNG NHẬP</th>
+              <th>HỌ VÀ TÊN</th>
+              <th>EMAIL</th>
+              <th>VAI TRÒ</th>
+              <th>CA LÀM VIỆC</th>
+              <th>TRẠNG THÁI</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>#{{ u.userId }}</td>
+              <td class="font-bold color-cyan">{{ u.username }}</td>
+              <td>{{ u.firstname }} {{ u.lastname }}</td>
+              <td>{{ u.email || '-' }}</td>
+              <td>
+                <span class="role-badge">{{ u.roleName || u.roleCode || 'Chưa gán' }}</span>
+              </td>
+              <td>
+                <span class="work-time-badge">
+                  {{ u.workStartTime ? (u.workStartTime + ' - ' + u.workEndTime) : '24/7' }}
+                </span>
+              </td>
+              <td>
+                <span class="status-pill" [ngClass]="u.isActive ? 'status-active' : 'status-locked'">
+                  {{ u.isActive ? 'Kích hoạt' : 'Đã khóa' }}
+                </span>
+              </td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-reset" (click)="onResetUserPassword(u)" title="Reset Mật Khẩu về Admin@6879">
+                  <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+                <button class="action-btn btn-edit" (click)="openEditUserModal(u)" title="Sửa Người Dùng">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteUser(u)" title="Xóa Người Dùng">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE/EDIT ROLE -->
+  <div class="modal-backdrop" *ngIf="showRoleModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-shield"></i> {{ isEditRoleMode ? 'Chỉnh Sửa Vai Trò' : 'Tạo Vai Trò Mới' }}</h3>
+        <button class="modal-close" (click)="closeRoleModal()">&times;</button>
+      </div>
+      <form [formGroup]="roleForm" (ngSubmit)="onSaveRole()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Mã Vai Trò (ROLE CODE)</label>
+            <input type="text" formControlName="roleCode" placeholder="Ví dụ: DRIVER, ACCOUNTANT..." />
+          </div>
+          <div class="form-group">
+            <label>Tên Vai Trò</label>
+            <input type="text" formControlName="roleName" placeholder="Ví dụ: Nhân Viên Lái Xe..." />
+          </div>
+          <div class="form-group">
+            <label>Mô Tả</label>
+            <textarea formControlName="description" rows="3" placeholder="Mô tả chức năng vai trò..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeRoleModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">Lưu Vai Trò</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ENTERPRISE ACTION MATRIX GRID TABLE -->
+  <div class="modal-backdrop" *ngIf="showAssignModal">
+    <div class="modal-card modal-xl">
+      <div class="modal-header">
+        <h3>
+          <i class="fa-solid fa-table-cells"></i> 
+          BẢNG MA TRẬN PHÂN QUYỀN HẠN - VAI TRÒ: 
+          <span class="highlight-text">{{ selectedRole?.roleName }} ({{ selectedRole?.roleCode }})</span>
+        </h3>
+        <button class="modal-close" (click)="closeAssignModal()">&times;</button>
+      </div>
+      
+      <div class="modal-body">
+        
+        <!-- Top Matrix Controls Bar -->
+        <div class="matrix-controls-bar">
+          <div class="matrix-info">
+            <span class="badge-total-perm">
+              <i class="fa-solid fa-check-double"></i> Đã chọn: {{ selectedPermissionIds.size }} / {{ permissions.length }} Quyền
+            </span>
+          </div>
+          
+          <div class="matrix-buttons">
+            <button class="btn btn-outline-cyan btn-sm" (click)="toggleGlobalSelectAll()">
+              <i class="fa-solid" [ngClass]="isGlobalAllSelected() ? 'fa-square-minus' : 'fa-square-check'"></i>
+              {{ isGlobalAllSelected() ? 'Bỏ Chọn Tất Cả System' : 'Chọn 1-Click Toàn Hệ Thống' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- ENTERPRISE MATRIX GRID TABLE -->
+        <div class="matrix-table-wrapper">
+          <table class="matrix-grid-table">
+            <thead>
+              <tr>
+                <th class="col-module">PHÂN HỆ / CHỨC NĂNG HỆ THỐNG</th>
+                
+                <th class="col-action text-center">
+                  <div class="col-header-box">
+                    <span>XEM (READ)</span>
+                    <button class="btn-col-toggle" (click)="toggleColumn('read')" [title]="isColumnAllSelected('read') ? 'Bỏ chọn tất cả quyền Xem' : 'Chọn tất cả quyền Xem'">
+                      <i class="fa-solid" [ngClass]="isColumnAllSelected('read') ? 'fa-square-minus' : 'fa-square-check'"></i>
+                    </button>
+                  </div>
+                </th>
+                
+                <th class="col-action text-center">
+                  <div class="col-header-box">
+                    <span>THÊM (CREATE)</span>
+                    <button class="btn-col-toggle" (click)="toggleColumn('create')" [title]="isColumnAllSelected('create') ? 'Bỏ chọn tất cả quyền Thêm' : 'Chọn tất cả quyền Thêm'">
+                      <i class="fa-solid" [ngClass]="isColumnAllSelected('create') ? 'fa-square-minus' : 'fa-square-check'"></i>
+                    </button>
+                  </div>
+                </th>
+                
+                <th class="col-action text-center">
+                  <div class="col-header-box">
+                    <span>SỬA (UPDATE)</span>
+                    <button class="btn-col-toggle" (click)="toggleColumn('update')" [title]="isColumnAllSelected('update') ? 'Bỏ chọn tất cả quyền Sửa' : 'Chọn tất cả quyền Sửa'">
+                      <i class="fa-solid" [ngClass]="isColumnAllSelected('update') ? 'fa-square-minus' : 'fa-square-check'"></i>
+                    </button>
+                  </div>
+                </th>
+                
+                <th class="col-action text-center">
+                  <div class="col-header-box">
+                    <span>XÓA (DELETE)</span>
+                    <button class="btn-col-toggle" (click)="toggleColumn('delete')" [title]="isColumnAllSelected('delete') ? 'Bỏ chọn tất cả quyền Xóa' : 'Chọn tất cả quyền Xóa'">
+                      <i class="fa-solid" [ngClass]="isColumnAllSelected('delete') ? 'fa-square-minus' : 'fa-square-check'"></i>
+                    </button>
+                  </div>
+                </th>
+                
+                <th class="col-row-all text-center">FULL ACCESS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of matrixRows">
+                
+                <!-- Module Name -->
+                <td class="module-cell">
+                  <div class="module-title-box">
+                    <i class="fa-solid fa-folder-open module-icon"></i>
+                    <span class="module-name">{{ row.moduleName }}</span>
+                  </div>
+                </td>
+
+                <!-- READ Cell -->
+                <td class="action-cell text-center" [ngClass]="{'cell-checked': isPermissionSelected(row.readPerm?.permissionId)}">
+                  <label class="cell-checkbox-label" *ngIf="row.readPerm">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isPermissionSelected(row.readPerm.permissionId)" 
+                      (change)="togglePermission(row.readPerm.permissionId)" 
+                    />
+                    <span class="perm-tag">READ</span>
+                  </label>
+                  <span class="no-perm" *ngIf="!row.readPerm">-</span>
+                </td>
+
+                <!-- CREATE Cell -->
+                <td class="action-cell text-center" [ngClass]="{'cell-checked': isPermissionSelected(row.createPerm?.permissionId)}">
+                  <label class="cell-checkbox-label" *ngIf="row.createPerm">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isPermissionSelected(row.createPerm.permissionId)" 
+                      (change)="togglePermission(row.createPerm.permissionId)" 
+                    />
+                    <span class="perm-tag">CREATE</span>
+                  </label>
+                  <span class="no-perm" *ngIf="!row.createPerm">-</span>
+                </td>
+
+                <!-- UPDATE Cell -->
+                <td class="action-cell text-center" [ngClass]="{'cell-checked': isPermissionSelected(row.updatePerm?.permissionId)}">
+                  <label class="cell-checkbox-label" *ngIf="row.updatePerm">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isPermissionSelected(row.updatePerm.permissionId)" 
+                      (change)="togglePermission(row.updatePerm.permissionId)" 
+                    />
+                    <span class="perm-tag">UPDATE</span>
+                  </label>
+                  <span class="no-perm" *ngIf="!row.updatePerm">-</span>
+                </td>
+
+                <!-- DELETE Cell -->
+                <td class="action-cell text-center" [ngClass]="{'cell-checked': isPermissionSelected(row.deletePerm?.permissionId)}">
+                  <label class="cell-checkbox-label" *ngIf="row.deletePerm">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isPermissionSelected(row.deletePerm.permissionId)" 
+                      (change)="togglePermission(row.deletePerm.permissionId)" 
+                    />
+                    <span class="perm-tag tag-delete">DELETE</span>
+                  </label>
+                  <span class="no-perm" *ngIf="!row.deletePerm">-</span>
+                </td>
+
+                <!-- Row Full Access Toggle -->
+                <td class="action-cell text-center">
+                  <button 
+                    class="btn-row-toggle" 
+                    [ngClass]="{'row-all-active': isRowAllSelected(row)}"
+                    (click)="toggleRow(row)"
+                  >
+                    <i class="fa-solid" [ngClass]="isRowAllSelected(row) ? 'fa-shield-check' : 'fa-shield-halved'"></i>
+                    {{ isRowAllSelected(row) ? 'Đầy Đủ' : 'Chọn Hàng' }}
+                  </button>
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAssignModal()">Hủy</button>
+        <button type="button" class="btn btn-primary" (click)="onSavePermissions()" [disabled]="loading">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Ma Trận Phân Quyền
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CREATE/EDIT USER -->
+  <div class="modal-backdrop" *ngIf="showUserModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user"></i> {{ isEditUserMode ? 'Cập Nhật Tài Khoản' : 'Thêm Tài Khoản Mới' }}</h3>
+        <button class="modal-close" (click)="closeUserModal()">&times;</button>
+      </div>
+      <form [formGroup]="userForm" (ngSubmit)="onSaveUser()">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tên Đăng Nhập</label>
+              <input type="text" formControlName="username" placeholder="Username..." />
+            </div>
+            <div class="form-group">
+              <label>Vai Trò</label>
+              <select formControlName="roleId">
+                <option [ngValue]="null">-- Chọn vai trò --</option>
+                <option *ngFor="let r of roles" [value]="r.roleId">{{ r.roleName }} ({{ r.roleCode }})</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Họ</label>
+              <input type="text" formControlName="firstname" placeholder="Nguyễn..." />
+            </div>
+            <div class="form-group">
+              <label>Tên</label>
+              <input type="text" formControlName="lastname" placeholder="Văn A..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="example@tms.com" />
+            </div>
+            <div class="form-group">
+              <label>Số Điện Thoại</label>
+              <input type="text" formControlName="phone" placeholder="0987..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Bắt Đầu Ca (Giờ:Phút)</label>
+              <input type="time" formControlName="workStartTime" />
+            </div>
+            <div class="form-group">
+              <label>Kết Thúc Ca (Giờ:Phút)</label>
+              <input type="time" formControlName="workEndTime" />
+            </div>
+          </div>
+
+          <div class="form-group" *ngIf="isEditUserMode">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive" />
+              <span>Trạng thái kích hoạt tài khoản</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeUserModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">Lưu Người Dùng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
