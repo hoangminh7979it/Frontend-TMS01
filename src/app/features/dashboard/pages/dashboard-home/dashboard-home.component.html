@@ -1,0 +1,127 @@
+<div class="dashboard-page">
+  
+  <!-- Page Title & Actions -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Bảng Điều Khiển Tổng Quan</h1>
+      <p class="page-subtitle">Giám sát hoạt động vận tải, chuyến xe và chỉ số tài chính thời gian thực.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary">
+        <i class="fa-solid fa-download"></i> Xuất Báo Cáo
+      </button>
+      <button class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Tạo Đơn Hàng Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Metrics Cards Grid -->
+  <div class="metrics-grid">
+    <div class="metric-card" *ngFor="let item of metrics">
+      <div class="metric-header">
+        <span class="metric-title">{{ item.title }}</span>
+        <div class="metric-icon-box" [style.color]="item.color" [style.background-color]="item.color + '15'">
+          <i [class]="item.icon"></i>
+        </div>
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ item.value }}</span>
+        <span class="metric-unit">{{ item.unit }}</span>
+      </div>
+      <div class="metric-footer">
+        <span class="trend-badge" [ngClass]="item.isPositive ? 'trend-up' : 'trend-down'">
+          <i class="fa-solid" [ngClass]="item.isPositive ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
+          {{ item.trend }}
+        </span>
+        <span class="metric-note">So với tuần trước</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Data Section: Tables & Quick Status -->
+  <div class="dashboard-grid">
+    
+    <!-- Table: Recent Shipments -->
+    <div class="panel-card main-table-panel">
+      <div class="panel-header">
+        <h3 class="panel-title">
+          <i class="fa-solid fa-clock-rotate-left"></i> Chuyến Hàng Gần Đây
+        </h3>
+        <a href="javascript:void(0)" class="view-all-link">Xem Tất Cả <i class="fa-solid fa-chevron-right"></i></a>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>MÃ ĐƠN</th>
+              <th>TÀI XẾ PHỤ TRÁCH</th>
+              <th>BIỂN SỐ XE</th>
+              <th>LỘ TRÌNH</th>
+              <th>TRẠNG THÁI</th>
+              <th>NGÀY LẬP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ship of recentShipments">
+              <td class="code-cell">{{ ship.code }}</td>
+              <td class="font-semibold">{{ ship.driver }}</td>
+              <td><span class="plate-badge">{{ ship.licensePlate }}</span></td>
+              <td>{{ ship.from }} &rarr; {{ ship.to }}</td>
+              <td>
+                <span class="status-pill" [ngClass]="{
+                  'status-delivering': ship.status === 'Đang Giao',
+                  'status-pending': ship.status === 'Chờ Xử Lý',
+                  'status-completed': ship.status === 'Hoàn Thành'
+                }">
+                  {{ ship.status }}
+                </span>
+              </td>
+              <td>{{ ship.date }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Side Panel: System Activity -->
+    <div class="panel-card side-activity-panel">
+      <div class="panel-header">
+        <h3 class="panel-title">
+          <i class="fa-solid fa-bolt"></i> Nhật Ký Vận Hành
+        </h3>
+      </div>
+      <div class="panel-body">
+        <div class="activity-timeline">
+          
+          <div class="timeline-item">
+            <div class="timeline-icon bg-blue"><i class="fa-solid fa-truck-arrow-right"></i></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Xe 29C-888.99 đã xuất kho</span>
+              <span class="timeline-time">10 phút trước • Lái xe: Nguyễn Văn Hùng</span>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-icon bg-green"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Đơn DH-687903 giao thành công</span>
+              <span class="timeline-time">45 phút trước • Khách hàng: Công ty ABC</span>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-icon bg-yellow"><i class="fa-solid fa-gas-pump"></i></div>
+            <div class="timeline-content">
+              <span class="timeline-title">Cập nhật chi phí nhiên liệu</span>
+              <span class="timeline-time">2 giờ trước • 1.500.000 VNĐ</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

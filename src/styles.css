@@ -1,0 +1,136 @@
+/* CSS DATA THEME VARIABLES - DARK & LIGHT MODES */
+:root, [data-theme="dark"] {
+  --bg-app: #0b0f19;
+  --bg-sidebar: #0f172a;
+  --bg-sidebar-header: #090d16;
+  --bg-header: #0f172a;
+  --bg-card: #0f172a;
+  --bg-panel-header: #090d16;
+  --bg-input: #090d16;
+  --bg-hover: #1e293b;
+  
+  --text-main: #f1f5f9;
+  --text-title: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  --border-color: #1e293b;
+  --border-subtle: #334155;
+  --border-active: #38bdf8;
+  
+  --primary-accent: #2563eb;
+  --primary-accent-hover: #1d4ed8;
+  --cyan-accent: #38bdf8;
+  
+  --table-header-bg: #090d16;
+  --table-border: #1e293b;
+  --table-hover: #1e293b;
+
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] {
+  --bg-app: #f1f5f9;
+  --bg-sidebar: #ffffff;
+  --bg-sidebar-header: #f8fafc;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-panel-header: #f8fafc;
+  --bg-input: #f1f5f9;
+  --bg-hover: #f1f5f9;
+  
+  --text-main: #1e293b;
+  --text-title: #0f172a;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --border-active: #2563eb;
+  
+  --primary-accent: #2563eb;
+  --primary-accent-hover: #1d4ed8;
+  --cyan-accent: #0284c7;
+  
+  --table-header-bg: #f8fafc;
+  --table-border: #e2e8f0;
+  --table-hover: #f1f5f9;
+
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Background Blobs (for Login Page) */
+.bg-blobs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: float 20s infinite ease-in-out alternate;
+}
+
+.blob-1 { width: 450px; height: 450px; background: #6366f1; top: -100px; left: -100px; }
+.blob-2 { width: 500px; height: 500px; background: #06b6d4; bottom: -150px; right: -150px; animation-delay: -5s; }
+.blob-3 { width: 350px; height: 350px; background: #ec4899; top: 40%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 60px) scale(1.1); }
+  100% { transform: translate(-30px, -40px) scale(0.95); }
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  border-radius: 2px;
+}
+
+/* Toast Alert Styling */
+.toast-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 2px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.toast-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.toast-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}

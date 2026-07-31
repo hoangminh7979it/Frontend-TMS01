@@ -1,0 +1,102 @@
+<div class="bg-blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<div class="login-wrapper">
+  <div class="login-container glass-card">
+    
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <div class="logo-box">
+        <i class="fa-solid fa-truck-fast logo-icon"></i>
+      </div>
+      <h1 class="brand-title">TMS-01</h1>
+      <p class="brand-subtitle">Hệ Thống Quản Lý Vận Tải Doanh Nghiệp</p>
+    </div>
+
+    <!-- Notifications -->
+    <div *ngIf="errorMessage" class="toast-alert toast-error">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <div *ngIf="successMessage" class="toast-alert toast-success">
+      <i class="fa-solid fa-circle-check"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <!-- Form Login -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate class="login-form">
+      
+      <!-- Field Username -->
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <i class="fa-solid fa-user label-icon"></i> Tên đăng nhập
+        </label>
+        <div class="input-wrapper" [ngClass]="{'input-invalid': f['username'].invalid && f['username'].touched}">
+          <input 
+            type="text" 
+            id="username" 
+            formControlName="username" 
+            placeholder="Nhập username của bạn..." 
+            autocomplete="username"
+          />
+        </div>
+        <div *ngIf="f['username'].invalid && f['username'].touched" class="field-error">
+          <span *ngIf="f['username'].errors?.['required']">Vui lòng nhập tên đăng nhập</span>
+        </div>
+      </div>
+
+      <!-- Field Password -->
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="fa-solid fa-lock label-icon"></i> Mật khẩu
+        </label>
+        <div class="input-wrapper" [ngClass]="{'input-invalid': f['password'].invalid && f['password'].touched}">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            formControlName="password" 
+            placeholder="Nhập mật khẩu..."
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-password-btn" (click)="toggleShowPassword()">
+            <i class="fa-solid" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+        </div>
+        <div *ngIf="f['password'].invalid && f['password'].touched" class="field-error">
+          <span *ngIf="f['password'].errors?.['required']">Vui lòng nhập mật khẩu</span>
+          <span *ngIf="f['password'].errors?.['minlength']">Mật khẩu phải có ít nhất 4 ký tự</span>
+        </div>
+      </div>
+
+      <!-- Remember & Forgot Password -->
+      <div class="form-actions-row">
+        <label class="remember-me">
+          <input type="checkbox" id="remember" />
+          <span>Ghi nhớ đăng nhập</span>
+        </label>
+        <a href="javascript:void(0)" class="forgot-password">Quên mật khẩu?</a>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="submit-btn" [disabled]="loading">
+        <span *ngIf="!loading" class="btn-text">
+          Đăng Nhập <i class="fa-solid fa-arrow-right icon-right"></i>
+        </span>
+        <span *ngIf="loading" class="spinner-box">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Đang xác thực...
+        </span>
+      </button>
+
+    </form>
+
+    <!-- Footer Info -->
+    <div class="card-footer">
+      <p>&copy; 2026 TMS-01 Transportation System. All rights reserved.</p>
+    </div>
+
+  </div>
+</div>
