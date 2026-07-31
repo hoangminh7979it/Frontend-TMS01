@@ -1,0 +1,346 @@
+<div class="employee-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Hồ Sơ Nhân Sự & Loại Nhân Viên</h1>
+      <p class="page-subtitle">Quản lý danh sách tài xế vận tải, phụ xe, nhân viên điều hành và danh mục loại nhân sự.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button *ngIf="activeTab === 'employees'" class="btn btn-primary" (click)="openCreateEmployeeModal()">
+        <i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Mới
+      </button>
+      <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
+        <i class="fa-solid fa-folder-plus"></i> Tạo Loại Nhân Sự Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'employees'}" (click)="setActiveTab('employees')">
+      <i class="fa-solid fa-id-card"></i> Hồ Sơ Nhân Sự & Lái Xe ({{ employees.length }})
+    </button>
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'types'}" (click)="setActiveTab('types')">
+      <i class="fa-solid fa-tags"></i> Danh Mục Loại Nhân Sự ({{ employeeTypes.length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: EMPLOYEES & DRIVERS LIST -->
+  <div *ngIf="activeTab === 'employees'" class="tab-content">
+    
+    <!-- KPI Summary Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TỔNG NHÂN SỰ</span>
+          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Người</span></div>
+        <span class="metric-note">Nhân sự toàn hệ thống</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TÀI XẾ VẬN TẢI</span>
+          <div class="metric-icon-box bg-green"><i class="fa-solid fa-id-card"></i></div>
+        </div>
+        <div class="metric-value">{{ driverCount }} <span class="metric-unit">Lái Xe</span></div>
+        <span class="metric-note">Có bằng lái vận tải</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">PHỤ XE</span>
+          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-user-gear"></i></div>
+        </div>
+        <div class="metric-value">{{ coDriverCount }} <span class="metric-unit">Phụ Xe</span></div>
+        <span class="metric-note">Giao nhận & bốc xếp</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">VĂN PHÒNG & ĐIỀU HÀNH</span>
+          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-building-user"></i></div>
+        </div>
+        <div class="metric-value">{{ staffCount }} <span class="metric-unit">Nhân Viên</span></div>
+        <span class="metric-note">Điều hành, kế toán, kỹ thuật</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="filter-controls-card">
+      
+      <!-- Search Box -->
+      <div class="search-input-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (ngModelChange)="onSearchChange()" 
+          placeholder="Tìm kiếm theo Mã NV, Họ tên, Số điện thoại, CCCD, GPLX..." 
+        />
+      </div>
+
+      <!-- Employee Type Tabs Filter -->
+      <div class="type-filter-tabs">
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedTypeCode === 'ALL'}" (click)="onTypeFilterChange('ALL')">
+          Tất Cả ({{ totalCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedTypeCode === 'DRIVER'}" (click)="onTypeFilterChange('DRIVER')">
+          <i class="fa-solid fa-truck-front"></i> Tài Xế ({{ driverCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedTypeCode === 'CO_DRIVER'}" (click)="onTypeFilterChange('CO_DRIVER')">
+          <i class="fa-solid fa-user-group"></i> Phụ Xe ({{ coDriverCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedTypeCode === 'COORDINATOR'}" (click)="onTypeFilterChange('COORDINATOR')">
+          <i class="fa-solid fa-headset"></i> Điều Hành
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Employee List Table -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Nhân Sự</h3>
+        <span class="results-count">Hiển thị {{ filteredEmployees.length }} hồ sơ</span>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>MÃ NV</th>
+              <th>HỌ VÀ TÊN</th>
+              <th>LOẠI NHÂN VIÊN</th>
+              <th>SỐ ĐIỆN THOẠI</th>
+              <th>CCCD / CMND</th>
+              <th>BẰNG LÁI XE (GPLX)</th>
+              <th>TÀI KHOẢN HT</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emp of filteredEmployees">
+              <td><span class="emp-code-badge">{{ emp.employeeCode }}</span></td>
+              <td class="font-bold color-title">{{ emp.fullName }}</td>
+              <td>
+                <span class="type-badge" [ngClass]="{
+                  'badge-driver': emp.employeeTypeCode === 'DRIVER',
+                  'badge-co-driver': emp.employeeTypeCode === 'CO_DRIVER',
+                  'badge-coordinator': emp.employeeTypeCode === 'COORDINATOR',
+                  'badge-staff': emp.employeeTypeCode !== 'DRIVER' && emp.employeeTypeCode !== 'CO_DRIVER' && emp.employeeTypeCode !== 'COORDINATOR'
+                }">
+                  {{ emp.employeeTypeName || 'Chưa phân loại' }}
+                </span>
+              </td>
+              <td>{{ emp.phone || '-' }}</td>
+              <td><span class="mono-text">{{ emp.nationalId || '-' }}</span></td>
+              <td>
+                <span class="gplx-badge" *ngIf="emp.drivingLicenseId">
+                  <i class="fa-solid fa-id-card"></i> {{ emp.drivingLicenseId }}
+                </span>
+                <span class="text-muted" *ngIf="!emp.drivingLicenseId">-</span>
+              </td>
+              <td>
+                <span class="user-link-badge" *ngIf="emp.username">
+                  <i class="fa-solid fa-user-check"></i> {{ emp.username }}
+                </span>
+                <span class="text-muted" *ngIf="!emp.username">Chưa liên kết</span>
+              </td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditEmployeeModal(emp)" title="Sửa Hồ Sơ">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteEmployee(emp)" title="Xóa Hồ Sơ">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="filteredEmployees.length === 0">
+              <td colspan="8" class="text-center empty-cell">
+                <i class="fa-solid fa-folder-open empty-icon"></i>
+                <p>Không tìm thấy hồ sơ nhân sự nào phù hợp.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: EMPLOYEE TYPES CATEGORY -->
+  <div *ngIf="activeTab === 'types'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-tags"></i> Danh Mục Loại Nhân Sự Hàng Hóa & Vận Tải</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>MÃ LOẠI</th>
+              <th>TÊN LOẠI NHÂN VIÊN</th>
+              <th>MÔ TẢ VÀ NHỆM VỤ</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of employeeTypes">
+              <td>#{{ t.employeeTypeId }}</td>
+              <td><span class="emp-code-badge">{{ t.employeeTypeCode }}</span></td>
+              <td class="font-bold color-cyan">{{ t.employeeTypeName }}</td>
+              <td class="text-muted">{{ t.description || 'Không có mô tả' }}</td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditTypeModal(t)" title="Sửa Loại Nhân Sự">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteType(t)" title="Xóa Loại Nhân Sự">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE / EDIT EMPLOYEE -->
+  <div class="modal-backdrop" *ngIf="showEmployeeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-address-card"></i> {{ isEditEmployeeMode ? 'Chỉnh Sửa Hồ Sơ Nhân Sự' : 'Khai Báo Nhân Sự Mới' }}</h3>
+        <button class="modal-close" (click)="closeEmployeeModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="employeeForm" (ngSubmit)="onSaveEmployee()">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mã Nhân Viên *</label>
+              <input type="text" formControlName="employeeCode" placeholder="Ví dụ: NV-001..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Loại Nhân Sự *</label>
+              <select formControlName="employeeTypeId">
+                <option [ngValue]="null">-- Chọn loại nhân sự --</option>
+                <option *ngFor="let t of employeeTypes" [value]="t.employeeTypeId">
+                  {{ t.employeeTypeName }} ({{ t.employeeTypeCode }})
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Họ & Tên Đệm *</label>
+              <input type="text" formControlName="firstname" placeholder="Nguyễn Văn..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Tên *</label>
+              <input type="text" formControlName="lastname" placeholder="Hùng..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Số CCCD / CMND</label>
+              <input type="text" formControlName="nationalId" placeholder="12 chữ số CCCD..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Số Giấy Phép Lái Xe (GPLX)</label>
+              <input type="text" formControlName="drivingLicenseId" placeholder="Bằng C, FC, E..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Số Điện Thoại</label>
+              <input type="text" formControlName="phone" placeholder="0987..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" formControlName="email" placeholder="hung.nguyen@tms.com" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Địa Chỉ Thường Trú</label>
+            <textarea formControlName="address" rows="2" placeholder="Địa chỉ chi tiết..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Liên Kết Tài Khoản Hệ Thống (Đăng Nhập)</label>
+            <select formControlName="userId">
+              <option [ngValue]="null">-- Không liên kết (Không đăng nhập system) --</option>
+              <option *ngFor="let u of users" [value]="u.userId">
+                {{ u.username }} - {{ u.firstname }} {{ u.lastname }}
+              </option>
+            </select>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEmployeeModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CREATE / EDIT EMPLOYEE TYPE -->
+  <div class="modal-backdrop" *ngIf="showTypeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus"></i> {{ isEditTypeMode ? 'Chỉnh Sửa Loại Nhân Sự' : 'Tạo Loại Nhân Sự Mới' }}</h3>
+        <button class="modal-close" (click)="closeTypeModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="typeForm" (ngSubmit)="onSaveType()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Mã Loại Nhân Sự *</label>
+            <input type="text" formControlName="employeeTypeCode" placeholder="Ví dụ: DRIVER, MECHANIC..." />
+          </div>
+
+          <div class="form-group">
+            <label>Tên Loại Nhân Sự *</label>
+            <input type="text" formControlName="employeeTypeName" placeholder="Ví dụ: Tài Xế Vận Tải Đường Dài..." />
+          </div>
+
+          <div class="form-group">
+            <label>Mô Tả & Nhiệm Vụ</label>
+            <textarea formControlName="description" rows="3" placeholder="Mô tả chức năng nhiệm vụ..."></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeTypeModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Loại Nhân Sự
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
