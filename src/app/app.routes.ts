@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/components/login/login.component';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { DashboardHomeComponent } from './features/dashboard/pages/dashboard-home/dashboard-home.component';
+import { RolesPermissionsComponent } from './features/users/pages/roles-permissions/roles-permissions.component';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,10 @@ export const routes: Routes = [
         component: DashboardHomeComponent
       },
       {
+        path: 'users',
+        component: RolesPermissionsComponent
+      },
+      {
         path: 'shipments',
         component: DashboardHomeComponent
       },
@@ -39,10 +44,6 @@ export const routes: Routes = [
       },
       {
         path: 'finance',
-        component: DashboardHomeComponent
-      },
-      {
-        path: 'users',
         component: DashboardHomeComponent
       },
       {
