@@ -5,6 +5,7 @@ import { DashboardHomeComponent } from './features/dashboard/pages/dashboard-hom
 import { RolesPermissionsComponent } from './features/users/pages/roles-permissions/roles-permissions.component';
 import { EmployeeListComponent } from './features/employees/pages/employee-list/employee-list.component';
 import { VehicleListComponent } from './features/vehicles/pages/vehicle-list/vehicle-list.component';
+import { CustomerListComponent } from './features/customers/pages/customer-list/customer-list.component';
 
 export const routes: Routes = [
   {
@@ -35,6 +36,10 @@ export const routes: Routes = [
       {
         path: 'vehicles',
         component: VehicleListComponent
+      },
+      {
+        path: 'customers',
+        component: CustomerListComponent
       },
       {
         path: 'shipments',

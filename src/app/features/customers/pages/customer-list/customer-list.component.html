@@ -1,0 +1,424 @@
+<div class="customer-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Khách Hàng & Đối Tác Doanh Nghiệp</h1>
+      <p class="page-subtitle">Quản lý hồ sơ khách hàng doanh nghiệp, cá nhân, mã số thuế MST và công ty đối tác.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button *ngIf="activeTab === 'customers'" class="btn btn-primary" (click)="openCreateCustomerModal()">
+        <i class="fa-solid fa-building-circle-check"></i> Khai Báo Khách Hàng Mới
+      </button>
+      <button *ngIf="activeTab === 'companies'" class="btn btn-primary" (click)="openCreateCompanyModal()">
+        <i class="fa-solid fa-building-flag"></i> Tạo Công Ty Đối Tác Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage && !showCustomerModal && !showCompanyModal" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage && !showCustomerModal && !showCompanyModal" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'customers'}" (click)="setActiveTab('customers')">
+      <i class="fa-solid fa-users-between-lines"></i> Danh Sách Khách Hàng ({{ customers.length }})
+    </button>
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'companies'}" (click)="setActiveTab('companies')">
+      <i class="fa-solid fa-city"></i> Công Ty Đối Tác ({{ companies.length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: CUSTOMERS LIST -->
+  <div *ngIf="activeTab === 'customers'" class="tab-content">
+    
+    <!-- KPI Summary Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TỔNG KHÁCH HÀNG</span>
+          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Khách</span></div>
+        <span class="metric-note">Toàn bộ danh mục đối tác</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">KHÁCH DOANH NGHIỆP</span>
+          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-building"></i></div>
+        </div>
+        <div class="metric-value">{{ corporateCount }} <span class="metric-unit">Công ty</span></div>
+        <span class="metric-note">Có Mã Số Thuế MST</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">KHÁCH CÁ NHÂN</span>
+          <div class="metric-icon-box bg-cyan"><i class="fa-solid fa-user"></i></div>
+        </div>
+        <div class="metric-value">{{ individualCount }} <span class="metric-unit">Khách</span></div>
+        <span class="metric-note">Khách lẻ ký chuyến</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">CÔNG TY ĐỐI TÁC</span>
+          <div class="metric-icon-box bg-green"><i class="fa-solid fa-handshake"></i></div>
+        </div>
+        <div class="metric-value">{{ companyCount }} <span class="metric-unit">Đối tác</span></div>
+        <span class="metric-note">Mạng lưới công ty liên kết</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="filter-controls-card">
+      
+      <!-- Search Box -->
+      <div class="search-input-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (ngModelChange)="onSearchChange()" 
+          placeholder="Tìm kiếm theo Mã KH, Tên công ty, Đại diện, MST, SĐT, Email..." 
+        />
+      </div>
+
+      <!-- Type Tabs Filter -->
+      <div class="type-filter-tabs">
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedType === 'ALL'}" (click)="onTypeFilterChange('ALL')">
+          Tất Cả ({{ totalCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedType === 'CORPORATE'}" (click)="onTypeFilterChange('CORPORATE')">
+          <i class="fa-solid fa-building"></i> Doanh Nghiệp ({{ corporateCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedType === 'INDIVIDUAL'}" (click)="onTypeFilterChange('INDIVIDUAL')">
+          <i class="fa-solid fa-user"></i> Cá Nhân ({{ individualCount }})
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Customers List Table -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Khách Hàng</h3>
+        <span class="results-count">Hiển thị {{ filteredCustomers.length }} hồ sơ</span>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>MÃ KH</th>
+              <th>TÊN CÔNG TY / KHÁCH HÀNG</th>
+              <th>NGƯỜI ĐẠI DIỆN</th>
+              <th>MÃ SỐ THUẾ (MST)</th>
+              <th>SỐ ĐIỆN THOẠI</th>
+              <th>EMAIL</th>
+              <th>LOẠI KHÁCH HÀNG</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of filteredCustomers">
+              
+              <!-- Code Badge -->
+              <td>
+                <span class="emp-code-badge">{{ c.customerCode }}</span>
+              </td>
+
+              <!-- Company Name -->
+              <td>
+                <div class="font-bold color-title">{{ c.companyName || c.fullName }}</div>
+                <div class="text-muted text-xs" *ngIf="c.address"><i class="fa-solid fa-location-dot"></i> {{ c.address }}</div>
+              </td>
+
+              <!-- Representative -->
+              <td>
+                <span class="color-cyan font-bold"><i class="fa-solid fa-user-tie"></i> {{ c.fullName }}</span>
+              </td>
+
+              <!-- Tax Code Badge -->
+              <td>
+                <span class="tax-badge" *ngIf="c.taxCode">
+                  <i class="fa-solid fa-receipt"></i> {{ c.taxCode }}
+                </span>
+                <span class="text-muted" *ngIf="!c.taxCode">-</span>
+              </td>
+
+              <!-- Phone -->
+              <td>{{ c.phone || '-' }}</td>
+
+              <!-- Email -->
+              <td>{{ c.email || '-' }}</td>
+
+              <!-- Type Badge -->
+              <td>
+                <span class="type-badge" [ngClass]="{
+                  'badge-corporate': c.customerType === 'CORPORATE',
+                  'badge-individual': c.customerType === 'INDIVIDUAL'
+                }">
+                  {{ c.customerType === 'CORPORATE' ? 'Doanh Nghiệp' : 'Cá Nhân' }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditCustomerModal(c)" title="Sửa Hồ Sơ">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteCustomer(c)" title="Xóa Hồ Sơ">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="filteredCustomers.length === 0">
+              <td colspan="8" class="text-center empty-cell">
+                <i class="fa-solid fa-building-circle-xmark empty-icon"></i>
+                <p>Không tìm thấy hồ sơ khách hàng nào phù hợp.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: PARTNER COMPANIES CATEGORY -->
+  <div *ngIf="activeTab === 'companies'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-city"></i> Danh Mục Công Ty Đối Tác Liên Kết</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>MÃ CTY</th>
+              <th>TÊN CÔNG TY ĐỐI TÁC</th>
+              <th>MÃ SỐ THUẾ (MST)</th>
+              <th>NGƯỜI LIÊN HỆ</th>
+              <th>SỐ ĐIỆN THOẠI</th>
+              <th>KHÁCH HÀNG ĐẠI DIỆN</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let comp of companies">
+              <td><span class="emp-code-badge">{{ comp.companyCode || ('CTY-' + comp.companyId) }}</span></td>
+              <td class="font-bold color-title">{{ comp.name }}</td>
+              <td>
+                <span class="tax-badge" *ngIf="comp.taxCode"><i class="fa-solid fa-receipt"></i> {{ comp.taxCode }}</span>
+                <span class="text-muted" *ngIf="!comp.taxCode">-</span>
+              </td>
+              <td class="color-cyan font-bold">{{ comp.contactPerson || '-' }}</td>
+              <td>{{ comp.phone || '-' }}</td>
+              <td>
+                <span class="user-link-badge" *ngIf="comp.customerName">{{ comp.customerName }}</span>
+                <span class="text-muted" *ngIf="!comp.customerName">-</span>
+              </td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditCompanyModal(comp)" title="Sửa Công Ty">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteCompany(comp)" title="Xóa Công Ty">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE / EDIT CUSTOMER -->
+  <div class="modal-backdrop" *ngIf="showCustomerModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-building-circle-check"></i> {{ isEditCustomerMode ? 'Chỉnh Sửa Hồ Sơ Khách Hàng' : 'Khai Báo Khách Hàng Mới' }}</h3>
+        <button class="modal-close" (click)="closeCustomerModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="customerForm" (ngSubmit)="onSaveCustomer()">
+        <div class="modal-body">
+          
+          <!-- Modal Error Alert -->
+          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mã Khách Hàng *</label>
+              <input 
+                type="text" 
+                formControlName="customerCode" 
+                placeholder="Ví dụ: KH-001..." 
+                [ngClass]="{'input-error': customerForm.controls['customerCode'].invalid && customerForm.controls['customerCode'].touched}"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label>Loại Khách Hàng *</label>
+              <select formControlName="customerType">
+                <option value="CORPORATE">Doanh Nghiệp / Công Ty (MST)</option>
+                <option value="INDIVIDUAL">Cá Nhân / Khách Lẻ</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tên Công Ty / Doanh Nghiệp</label>
+            <input type="text" formControlName="companyName" placeholder="Công ty TNHH Vận Tải Logistics..." />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mã Số Thuế (MST)</label>
+              <input type="text" formControlName="taxCode" placeholder="Mã số thuế doanh nghiệp..." />
+            </div>
+
+            <div class="form-group">
+              <label>Số Điện Thoại Liên Hệ</label>
+              <input type="text" formControlName="phone" placeholder="0912..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Họ & Tên Đệm Đại Diện *</label>
+              <input 
+                type="text" 
+                formControlName="firstname" 
+                placeholder="Nguyễn Văn..." 
+                [ngClass]="{'input-error': customerForm.controls['firstname'].invalid && customerForm.controls['firstname'].touched}"
+              />
+            </div>
+            
+            <div class="form-group">
+              <label>Tên Đại Diện</label>
+              <input type="text" formControlName="lastname" placeholder="Minh..." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email Liên Hệ / Hóa Đơn</label>
+            <input type="email" formControlName="email" placeholder="contact@company.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Địa Chỉ Trụ Sở / Giao Nhận Hàng</label>
+            <textarea formControlName="address" rows="2" placeholder="Địa chỉ giao nhận hàng hóa chi tiết..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Ghi Chú Hợp Đồng / Ưu Đãi</label>
+            <textarea formControlName="notes" rows="2" placeholder="Ghi chú chiết khấu, điều khoản hợp đồng..."></textarea>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCustomerModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ Khách Hàng
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CREATE / EDIT COMPANY -->
+  <div class="modal-backdrop" *ngIf="showCompanyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-building-flag"></i> {{ isEditCompanyMode ? 'Chỉnh Sửa Công Ty Đối Tác' : 'Tạo Công Ty Đối Tác Mới' }}</h3>
+        <button class="modal-close" (click)="closeCompanyModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="companyForm" (ngSubmit)="onSaveCompany()">
+        <div class="modal-body">
+          
+          <!-- Modal Error Alert -->
+          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mã Công Ty</label>
+              <input type="text" formControlName="companyCode" placeholder="Ví dụ: CTY-001..." />
+            </div>
+
+            <div class="form-group">
+              <label>Mã Số Thuế (MST)</label>
+              <input type="text" formControlName="taxCode" placeholder="Mã số thuế..." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tên Công Ty Đối Tác *</label>
+            <input 
+              type="text" 
+              formControlName="name" 
+              placeholder="Công ty Cổ phần Vận tải..." 
+              [ngClass]="{'input-error': companyForm.controls['name'].invalid && companyForm.controls['name'].touched}"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Người Liên Hệ Chính</label>
+              <input type="text" formControlName="contactPerson" placeholder="Ông / Bà..." />
+            </div>
+
+            <div class="form-group">
+              <label>Số Điện Thoại</label>
+              <input type="text" formControlName="phone" placeholder="0987..." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="info@partner.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Địa Chỉ Trụ Sở</label>
+            <textarea formControlName="address" rows="2" placeholder="Địa chỉ chi tiết..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Khách Hàng Đại Diện Liên Kết</label>
+            <select formControlName="customerId">
+              <option [ngValue]="null">-- Không chọn đại diện --</option>
+              <option *ngFor="let cust of customers" [value]="cust.customerId">
+                {{ cust.customerCode }} - {{ cust.companyName || cust.fullName }}
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCompanyModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Công Ty Đối Tác
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

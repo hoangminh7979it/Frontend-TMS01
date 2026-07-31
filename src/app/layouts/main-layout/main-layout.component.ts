@@ -27,6 +27,7 @@ export class MainLayoutComponent implements OnInit {
   menuItems: MenuItem[] = [
     { title: 'Tổng Quan', icon: 'fa-solid fa-chart-pie', link: '/dashboard' },
     { title: 'Quản Lý Đơn Hàng', icon: 'fa-solid fa-truck-ramp-box', link: '/shipments', badge: '12' },
+    { title: 'Quản Lý Khách Hàng', icon: 'fa-solid fa-building-user', link: '/customers' },
     { title: 'Quản Lý Đội Xe', icon: 'fa-solid fa-truck-front', link: '/vehicles' },
     { title: 'Quản Lý Nhân Sự', icon: 'fa-solid fa-users-gear', link: '/employees' },
     { title: 'Quản Lý Chi Phí', icon: 'fa-solid fa-receipt', link: '/expenses' },
