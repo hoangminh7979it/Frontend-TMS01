@@ -1,0 +1,403 @@
+<div class="vehicle-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Phương Tiện & Đội Xe Vận Tải</h1>
+      <p class="page-subtitle">Theo dõi trạng thái vận hành, biển số, tải trọng, hạn đăng kiểm và phân công tài xế.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button *ngIf="activeTab === 'vehicles'" class="btn btn-primary" (click)="openCreateVehicleModal()">
+        <i class="fa-solid fa-truck-front"></i> Khai Báo Xe Mới
+      </button>
+      <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
+        <i class="fa-solid fa-folder-plus"></i> Tạo Loại Xe Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="nav-tabs">
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'vehicles'}" (click)="setActiveTab('vehicles')">
+      <i class="fa-solid fa-truck"></i> Danh Sách Đội Xe ({{ vehicles.length }})
+    </button>
+    <button class="tab-btn" [ngClass]="{'tab-active': activeTab === 'types'}" (click)="setActiveTab('types')">
+      <i class="fa-solid fa-tags"></i> Danh Mục Loại Xe ({{ vehicleTypes.length }})
+    </button>
+  </div>
+
+  <!-- TAB 1: VEHICLES LIST & INSPECTION ALERT -->
+  <div *ngIf="activeTab === 'vehicles'" class="tab-content">
+    
+    <!-- KPI Summary Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">TỔNG SỐ XE</span>
+          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-truck"></i></div>
+        </div>
+        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Chiếc</span></div>
+        <span class="metric-note">Phương tiện toàn hệ thống</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">SẴN SÀNG CHẠY CHUYẾN</span>
+          <div class="metric-icon-box bg-green"><i class="fa-solid fa-circle-check"></i></div>
+        </div>
+        <div class="metric-value">{{ availableCount }} <span class="metric-unit">Chiếc</span></div>
+        <span class="metric-note">Sẵn sàng nhận lệnh điều động</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">ĐANG VẬN CHUYỂN</span>
+          <div class="metric-icon-box bg-cyan"><i class="fa-solid fa-route"></i></div>
+        </div>
+        <div class="metric-value">{{ inTransitCount }} <span class="metric-unit">Chiếc</span></div>
+        <span class="metric-note">Đang trên tuyến đường</span>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-title">BẢO DƯỠNG / SỬA CHỮA</span>
+          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-wrench"></i></div>
+        </div>
+        <div class="metric-value">{{ maintenanceCount }} <span class="metric-unit">Chiếc</span></div>
+        <span class="metric-note">Đang tại gara bảo dưỡng</span>
+      </div>
+
+      <div class="metric-card" [ngClass]="{'border-alert-red': expiringInspectionCount > 0}">
+        <div class="metric-header">
+          <span class="metric-title color-red">CẢNH BÁO ĐĂNG KIỂM</span>
+          <div class="metric-icon-box bg-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+        <div class="metric-value color-red">{{ expiringInspectionCount }} <span class="metric-unit">Xe</span></div>
+        <span class="metric-note">Hết hạn trong 30 ngày tới</span>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls Bar -->
+    <div class="filter-controls-card">
+      
+      <!-- Search Box -->
+      <div class="search-input-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (ngModelChange)="onSearchChange()" 
+          placeholder="Tìm kiếm theo Biển số xe, Mã xe, Tên xe, Tài xế..." 
+        />
+      </div>
+
+      <!-- Status Tabs Filter -->
+      <div class="type-filter-tabs">
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'ALL'}" (click)="onStatusFilterChange('ALL')">
+          Tất Cả ({{ totalCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'AVAILABLE'}" (click)="onStatusFilterChange('AVAILABLE')">
+          Sẵn Sàng ({{ availableCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'IN_TRANSIT'}" (click)="onStatusFilterChange('IN_TRANSIT')">
+          Đang Chạy ({{ inTransitCount }})
+        </button>
+        <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'MAINTENANCE'}" (click)="onStatusFilterChange('MAINTENANCE')">
+          Bảo Dưỡng ({{ maintenanceCount }})
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Vehicles List Table -->
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-truck-ramp-box"></i> Danh Sách Phương Tiện Đội Xe</h3>
+        <span class="results-count">Hiển thị {{ filteredVehicles.length }} xe</span>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>BIỂN SỐ XE</th>
+              <th>MÃ XE & TÊN XE</th>
+              <th>LOẠI PHƯƠNG TIỆN</th>
+              <th>TẢI TRỌNG</th>
+              <th>TÀI XẾ PHỤ TRÁCH</th>
+              <th>HẠN ĐĂNG KIỂM</th>
+              <th>HẠN BẢO HIỂM</th>
+              <th>TRẠNG THÁI</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of filteredVehicles">
+              
+              <!-- License Plate Badge -->
+              <td>
+                <span class="license-plate-badge">{{ v.licensePlate }}</span>
+              </td>
+
+              <!-- Code & Name -->
+              <td>
+                <div class="font-bold color-title">{{ v.name || 'Xe Vận Tải' }}</div>
+                <div class="text-muted font-mono" *ngIf="v.vehicleCode">{{ v.vehicleCode }}</div>
+              </td>
+
+              <!-- Vehicle Type -->
+              <td>
+                <span class="type-badge badge-vehicle-type">
+                  {{ v.vehicleTypeName || 'Chưa phân loại' }}
+                </span>
+              </td>
+
+              <!-- Capacity -->
+              <td>
+                <span class="capacity-tag" *ngIf="v.payloadCapacity">
+                  <i class="fa-solid fa-weight-hanging"></i> {{ v.payloadCapacity }} Tấn
+                </span>
+                <span class="text-muted" *ngIf="!v.payloadCapacity">-</span>
+              </td>
+
+              <!-- Driver assigned -->
+              <td>
+                <div *ngIf="v.driverName" class="driver-info">
+                  <span class="font-bold color-cyan"><i class="fa-solid fa-id-card"></i> {{ v.driverName }}</span>
+                  <span class="text-muted text-xs" *ngIf="v.driverPhone">SĐT: {{ v.driverPhone }}</span>
+                </div>
+                <span class="text-muted" *ngIf="!v.driverName">Chưa gán tài xế</span>
+              </td>
+
+              <!-- Inspection Exp -->
+              <td>
+                <span *ngIf="v.inspectionExpirationDate" [ngClass]="{
+                  'date-badge-danger': isInspectionExpiringSoon(v.inspectionExpirationDate),
+                  'date-badge-normal': !isInspectionExpiringSoon(v.inspectionExpirationDate)
+                }">
+                  <i class="fa-solid fa-calendar-day"></i> {{ v.inspectionExpirationDate }}
+                </span>
+                <span class="text-muted" *ngIf="!v.inspectionExpirationDate">-</span>
+              </td>
+
+              <!-- Insurance Exp -->
+              <td>
+                <span class="mono-text" *ngIf="v.insuranceExpirationDate">{{ v.insuranceExpirationDate }}</span>
+                <span class="text-muted" *ngIf="!v.insuranceExpirationDate">-</span>
+              </td>
+
+              <!-- Status Badge -->
+              <td>
+                <span class="status-badge" [ngClass]="{
+                  'status-available': v.status === 'AVAILABLE',
+                  'status-in-transit': v.status === 'IN_TRANSIT',
+                  'status-maintenance': v.status === 'MAINTENANCE'
+                }">
+                  <i class="fa-solid" [ngClass]="{
+                    'fa-circle-check': v.status === 'AVAILABLE',
+                    'fa-truck-fast': v.status === 'IN_TRANSIT',
+                    'fa-wrench': v.status === 'MAINTENANCE'
+                  }"></i>
+                  {{ v.status === 'AVAILABLE' ? 'Sẵn sàng' : (v.status === 'IN_TRANSIT' ? 'Đang chạy' : 'Bảo dưỡng') }}
+                </span>
+              </td>
+
+              <!-- Actions -->
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditVehicleModal(v)" title="Sửa Xe">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteVehicle(v)" title="Xóa Xe">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="filteredVehicles.length === 0">
+              <td colspan="9" class="text-center empty-cell">
+                <i class="fa-solid fa-truck-front empty-icon"></i>
+                <p>Không tìm thấy phương tiện vận tải nào phù hợp.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: VEHICLE TYPES CATEGORY -->
+  <div *ngIf="activeTab === 'types'" class="tab-content">
+    <div class="panel-card">
+      <div class="panel-header">
+        <h3 class="panel-title"><i class="fa-solid fa-tags"></i> Danh Mục Loại Phương Tiện Vận Tải</h3>
+      </div>
+      <div class="panel-body">
+        <table class="tech-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>MÃ LOẠI XE</th>
+              <th>TÊN LOẠI PHƯƠNG TIỆN</th>
+              <th>MÔ TẢ CHI TIẾT</th>
+              <th class="text-right">THAO TÁC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of vehicleTypes">
+              <td>#{{ t.vehicleTypeId }}</td>
+              <td><span class="emp-code-badge">{{ t.vehicleTypeCode }}</span></td>
+              <td class="font-bold color-cyan">{{ t.vehicleTypeName }}</td>
+              <td class="text-muted">{{ t.description || 'Không có mô tả' }}</td>
+              <td class="text-right actions-cell">
+                <button class="action-btn btn-edit" (click)="openEditTypeModal(t)" title="Sửa Loại Xe">
+                  <i class="fa-solid fa-pen-to-square"></i> Sửa
+                </button>
+                <button class="action-btn btn-delete" (click)="onDeleteType(t)" title="Xóa Loại Xe">
+                  <i class="fa-solid fa-trash-can"></i> Xóa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: CREATE / EDIT VEHICLE -->
+  <div class="modal-backdrop" *ngIf="showVehicleModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-truck-front"></i> {{ isEditVehicleMode ? 'Chỉnh Sửa Hồ Sơ Phương Tiện' : 'Khai Báo Xe Vận Tải Mới' }}</h3>
+        <button class="modal-close" (click)="closeVehicleModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="vehicleForm" (ngSubmit)="onSaveVehicle()">
+        <div class="modal-body">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Biển Số Xe *</label>
+              <input type="text" formControlName="licensePlate" placeholder="Ví dụ: 29C-888.99..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Mã Phương Tiện</label>
+              <input type="text" formControlName="vehicleCode" placeholder="Ví dụ: XE-001..." />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tên Xe / Nhãn Hiệu</label>
+              <input type="text" formControlName="name" placeholder="Hyundai Trago 15T..." />
+            </div>
+
+            <div class="form-group">
+              <label>Loại Phương Tiện</label>
+              <select formControlName="vehicleTypeId">
+                <option [ngValue]="null">-- Chọn loại xe --</option>
+                <option *ngFor="let t of vehicleTypes" [value]="t.vehicleTypeId">
+                  {{ t.vehicleTypeName }} ({{ t.vehicleTypeCode }})
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tải Trọng Thiết Kế (Tấn)</label>
+              <input type="number" step="0.5" formControlName="payloadCapacity" placeholder="15.5..." />
+            </div>
+            
+            <div class="form-group">
+              <label>Trạng Thái Vận Hành *</label>
+              <select formControlName="status">
+                <option value="AVAILABLE">Sẵn sàng nhận chuyến</option>
+                <option value="IN_TRANSIT">Đang chạy tuyến đường</option>
+                <option value="MAINTENANCE">Đang bảo dưỡng / sửa chữa</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Hạn Đăng Kiểm</label>
+              <input type="date" formControlName="inspectionExpirationDate" />
+            </div>
+
+            <div class="form-group">
+              <label>Hạn Bảo Hiểm Phương Tiện</label>
+              <input type="date" formControlName="insuranceExpirationDate" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Phân Công Tài Xế Phụ Trách</label>
+            <select formControlName="employeeId">
+              <option [ngValue]="null">-- Chưa phân công tài xế --</option>
+              <option *ngFor="let d of drivers" [value]="d.employeeId">
+                {{ d.employeeCode }} - {{ d.fullName }} (SĐT: {{ d.phone || 'N/A' }})
+              </option>
+            </select>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeVehicleModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ Xe
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CREATE / EDIT VEHICLE TYPE -->
+  <div class="modal-backdrop" *ngIf="showTypeModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus"></i> {{ isEditTypeMode ? 'Chỉnh Sửa Loại Xe' : 'Tạo Loại Xe Mới' }}</h3>
+        <button class="modal-close" (click)="closeTypeModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="typeForm" (ngSubmit)="onSaveType()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Mã Loại Xe *</label>
+            <input type="text" formControlName="vehicleTypeCode" placeholder="Ví dụ: TRUCK_HEAD, VAN..." />
+          </div>
+
+          <div class="form-group">
+            <label>Tên Loại Xe *</label>
+            <input type="text" formControlName="vehicleTypeName" placeholder="Ví dụ: Xe Đầu Kéo Container..." />
+          </div>
+
+          <div class="form-group">
+            <label>Mô Tả Chi Tiết</label>
+            <textarea formControlName="description" rows="3" placeholder="Mô tả thông số chi tiết..."></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeTypeModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Loại Xe
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

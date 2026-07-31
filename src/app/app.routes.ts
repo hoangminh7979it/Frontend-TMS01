@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { DashboardHomeComponent } from './features/dashboard/pages/dashboard-home/dashboard-home.component';
 import { RolesPermissionsComponent } from './features/users/pages/roles-permissions/roles-permissions.component';
 import { EmployeeListComponent } from './features/employees/pages/employee-list/employee-list.component';
+import { VehicleListComponent } from './features/vehicles/pages/vehicle-list/vehicle-list.component';
 
 export const routes: Routes = [
   {
@@ -32,11 +33,11 @@ export const routes: Routes = [
         component: EmployeeListComponent
       },
       {
-        path: 'shipments',
-        component: DashboardHomeComponent
+        path: 'vehicles',
+        component: VehicleListComponent
       },
       {
-        path: 'vehicles',
+        path: 'shipments',
         component: DashboardHomeComponent
       },
       {
