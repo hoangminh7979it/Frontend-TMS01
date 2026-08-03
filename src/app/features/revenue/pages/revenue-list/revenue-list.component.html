@@ -1,0 +1,430 @@
+<div class="revenue-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Doanh Thu & Báo Cáo Lợi Nhuận Ròng</h1>
+      <p class="page-subtitle">Tổng hợp doanh thu cước vận chuyển gross, đối trừ chi phí vận hành đội xe, chi quỹ lương và chốt lợi nhuận ròng theo phương tiện.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="openCreateRevenueModal()">
+        <i class="fa-solid fa-calculator"></i> Lập Báo Cáo Chốt Doanh Thu Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage && !showRevenueModal" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage && !showRevenueModal" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- KPI Financial Summary Dashboard Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TỔNG DOANH THU GROSS (CƯỚC)</span>
+        <div class="metric-icon-box bg-blue"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+      </div>
+      <div class="metric-value">{{ (summaryData?.totalGrossRevenue || 0) | number }} <span class="metric-unit">VNĐ</span></div>
+      <span class="metric-note">Doanh thu cước các đơn hàng</span>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TỔNG CHI PHÍ VẬN HÀNH</span>
+        <div class="metric-icon-box bg-red"><i class="fa-solid fa-receipt"></i></div>
+      </div>
+      <div class="metric-value color-red">{{ (summaryData?.totalExpenses || 0) | number }} <span class="metric-unit">VNĐ</span></div>
+      <span class="metric-note">Nhiên liệu, BOT, bến bãi, sửa chữa</span>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TỔNG QUỸ LƯƠNG ĐÃ CHI TRẢ</span>
+        <div class="metric-icon-box bg-purple"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      </div>
+      <div class="metric-value color-purple">{{ (summaryData?.totalSalariesPaid || 0) | number }} <span class="metric-unit">VNĐ</span></div>
+      <span class="metric-note">Lương tài xế & nhân sự vận tải</span>
+    </div>
+
+    <div class="metric-card profit-card">
+      <div class="metric-header">
+        <span class="metric-title">LỢI NHUẬN THUẦN RÒNG (NET PROFIT)</span>
+        <div class="metric-icon-box bg-green"><i class="fa-solid fa-vault"></i></div>
+      </div>
+      <div class="metric-value color-green">{{ (summaryData?.netProfit || 0) | number }} <span class="metric-unit">VNĐ</span></div>
+      <span class="metric-note">Doanh thu trừ Chi phí trừ Quỹ lương</span>
+    </div>
+  </div>
+
+  <!-- Filter & Search Controls Bar -->
+  <div class="filter-controls-card">
+    <div class="search-input-box">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()" 
+        placeholder="Tìm theo Mã báo cáo, Tiêu đề, Biển số xe, Ghi chú..." 
+      />
+    </div>
+    <span class="results-count">Hiển thị {{ filteredRevenues.length }} báo cáo chốt</span>
+  </div>
+
+  <!-- Data Table -->
+  <div class="panel-card">
+    <div class="panel-header">
+      <h3 class="panel-title"><i class="fa-solid fa-chart-line"></i> Danh Sách Báo Cáo Chốt Doanh Thu & Lợi Nhuận</h3>
+    </div>
+    <div class="panel-body">
+      <table class="tech-table">
+        <thead>
+          <tr>
+            <th>MÃ BÁO CÁO</th>
+            <th>TIÊU ĐỀ CHỐT KỲ</th>
+            <th>PHƯƠNG TIỆN (XE)</th>
+            <th>KỲ TỔNG HỢP</th>
+            <th>SỐ CHUYẾN</th>
+            <th>DOANH THU GROSS</th>
+            <th>CHI PHÍ PHÁT SINH</th>
+            <th>QUỸ LƯƠNG CHI TRẢ</th>
+            <th>LỢI NHUẬN RÒNG (VNĐ)</th>
+            <th class="text-right">THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filteredRevenues">
+            <td><span class="emp-code-badge">{{ r.revenueCode }}</span></td>
+            
+            <td>
+              <div class="font-bold color-title"><i class="fa-solid fa-file-invoice color-cyan"></i> {{ r.title || 'Báo cáo chốt doanh thu' }}</div>
+              <div class="text-muted text-xs" *ngIf="r.createDate"><i class="fa-regular fa-clock"></i> {{ r.createDate | date:'dd/MM/yyyy' }}</div>
+            </td>
+
+            <td>
+              <span class="vehicle-tag-sm" *ngIf="r.licensePlate">
+                <i class="fa-solid fa-truck"></i> {{ r.licensePlate }}
+              </span>
+              <span class="text-muted text-xs" *ngIf="!r.licensePlate">Tất cả xe</span>
+            </td>
+
+            <td>
+              <div class="date-badge" *ngIf="r.startDate && r.endDate">
+                <i class="fa-regular fa-calendar-days color-cyan"></i> {{ r.startDate | date:'dd/MM/yyyy' }} - {{ r.endDate | date:'dd/MM/yyyy' }}
+              </div>
+              <span class="text-muted text-xs" *ngIf="!r.startDate">-</span>
+            </td>
+
+            <td>
+              <span class="shipment-badge"><i class="fa-solid fa-boxes-stacked"></i> {{ r.totalShipment || 0 }} đơn</span>
+            </td>
+
+            <td><span class="font-bold color-title">{{ r.grossRevenue | number }} VNĐ</span></td>
+            <td><span class="color-red font-bold">-{{ r.totalExpense | number }}</span></td>
+            <td><span class="color-purple font-bold">-{{ r.totalSalary | number }}</span></td>
+            
+            <td>
+              <div class="font-bold color-green text-base"><i class="fa-solid fa-coins"></i> {{ r.revenueFinalCosts | number }} VNĐ</div>
+            </td>
+
+            <td class="text-right actions-cell">
+              <button class="action-btn btn-edit" (click)="openEditRevenueModal(r)" title="Sửa Báo Cáo">
+                <i class="fa-solid fa-pen-to-square"></i> Sửa
+              </button>
+              <button class="action-btn btn-delete" (click)="onDeleteRevenue(r)" title="Xóa Báo Cáo">
+                <i class="fa-solid fa-trash-can"></i> Xóa
+              </button>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="filteredRevenues.length === 0">
+            <td colspan="10" class="text-center empty-cell">
+              <i class="fa-solid fa-folder-open empty-icon"></i>
+              <p>Chưa có chứng từ chốt doanh thu & lợi nhuận nào được tạo.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE / EDIT REVENUE FINAL (MODAL-XL 1160PX FULL BREAKDOWN POPUP) -->
+  <div class="modal-backdrop" *ngIf="showRevenueModal">
+    <div class="modal-card modal-xl">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-chart-pie color-cyan"></i> {{ isEditRevenueMode ? 'Chỉnh Sửa Báo Cáo Doanh Thu' : 'Lập Báo Cáo Chốt Doanh Thu & Lợi Nhuận Ròng Mới' }}</h3>
+        <button class="modal-close" (click)="closeRevenueModal()">&times;</button>
+      </div>
+      
+      <form [formGroup]="revenueForm" (ngSubmit)="onSaveRevenue()">
+        <div class="modal-body">
+          
+          <!-- Modal Error Alert -->
+          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+          </div>
+
+          <!-- SECTION 1: THÔNG TIN CHUNG BÁO CÁO & CHỌN PHƯƠNG TIỆN -->
+          <div class="form-card-box">
+            <div class="box-header color-cyan">
+              <i class="fa-solid fa-circle-info"></i> PHẦN 1 — THÔNG TIN CHUNG & CHỌN PHƯƠNG TIỆN TỔNG HỢP
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Mã Báo Cáo Doanh Thu *</label>
+                <input 
+                  type="text" 
+                  formControlName="revenueCode" 
+                  placeholder="Ví dụ: DT-202608-001..." 
+                  [ngClass]="{'input-error': revenueForm.controls['revenueCode'].invalid && revenueForm.controls['revenueCode'].touched}"
+                />
+              </div>
+
+              <div class="form-group span-2">
+                <label>Tiêu Đề Báo Cáo Chốt Kỳ *</label>
+                <input 
+                  type="text" 
+                  formControlName="title" 
+                  placeholder="Ví dụ: Báo cáo chốt doanh thu xe 29C-12345..." 
+                  [ngClass]="{'input-error': revenueForm.controls['title'].invalid && revenueForm.controls['title'].touched}"
+                />
+              </div>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Chọn Phương Tiện (Xe) *</label>
+                <select formControlName="vehicleId" (change)="onVehicleOrDateChange()">
+                  <option [ngValue]="null">-- Tất cả phương tiện --</option>
+                  <option *ngFor="let v of vehicles" [value]="v.id">
+                    {{ v.licensePlate }}{{ v.name ? ' — ' + v.name : '' }} (Mã: {{ v.vehicleCode || '-' }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Từ Ngày Lập Kỳ Báo Cáo</label>
+                <input type="date" formControlName="startDate" (change)="onVehicleOrDateChange()"/>
+              </div>
+
+              <div class="form-group">
+                <label>Đến Ngày Kỳ Báo Cáo</label>
+                <input type="date" formControlName="endDate" (change)="onVehicleOrDateChange()"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: CHI TIẾT DỮ LIỆU ĐỐI TRỪ TỪ CÁC MODULE SHIPMENT, EXPENSE, SALARY -->
+          <div class="form-card-box breakdown-box">
+            <div class="box-header color-blue title-with-action">
+              <span><i class="fa-solid fa-list-check"></i> PHẦN 2 — TỔNG HỢP CHI TIẾT TỪ CHUYẾN HÀNG, CHI PHÍ & LƯƠNG</span>
+              <span class="sync-badge" *ngIf="!autoScanLoading">
+                <i class="fa-solid fa-circle-check"></i> Đã tự động sync từ các module
+              </span>
+              <span class="sync-badge loading" *ngIf="autoScanLoading">
+                <i class="fa-solid fa-spinner fa-spin"></i> Đang tự động quét dữ liệu...
+              </span>
+            </div>
+
+            <!-- Vertical Stack for 3 Breakdown Tables (not 1 row, full width) -->
+            <div class="breakdown-vertical-stack">
+              
+              <!-- Sub-panel 1: Shipments (Cước Gross) -->
+              <div class="sub-breakdown-card border-cyan">
+                <div class="sub-card-header color-cyan">
+                  <i class="fa-solid fa-truck-fast"></i>
+                  <span>Danh Sách Chuyến Hàng Vận Chuyển ({{ scannedShipments.length }})</span>
+                  <span class="sub-total-val color-cyan">Tổng cước: {{ formattedGrossRevenue }} VNĐ</span>
+                </div>
+                <div class="sub-table-wrap">
+                  <table class="sub-table">
+                    <thead>
+                      <tr>
+                        <th>STT</th>
+                        <th>Nơi Nhận (Điểm Đi)</th>
+                        <th>Nơi Giao (Điểm Đến)</th>
+                        <th>Ngày Nhận</th>
+                        <th>Ngày Giao</th>
+                        <th class="text-right">Cước Doanh Thu (VNĐ)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let s of scannedShipments; let i = index">
+                        <td class="text-center font-bold color-cyan">{{ i + 1 }}</td>
+                        <td class="text-xs font-bold color-title">{{ s.receiptPlace || '-' }}</td>
+                        <td class="text-xs font-bold color-title">{{ s.deliveryPlace || '-' }}</td>
+                        <td class="text-xs">{{ s.dateOfReceipt ? (s.dateOfReceipt | date:'dd/MM/yyyy') : '-' }}</td>
+                        <td class="text-xs">{{ s.deliveryDate ? (s.deliveryDate | date:'dd/MM/yyyy') : '-' }}</td>
+                        <td class="text-right font-bold color-cyan">{{ s.revenue | number }} VNĐ</td>
+                      </tr>
+                      <tr *ngIf="scannedShipments.length === 0">
+                        <td colspan="6" class="text-center text-xs text-muted py-3">
+                          <i class="fa-solid fa-circle-info color-cyan"></i> Vui lòng chọn phương tiện (xe) ở Phần 1 để tự động hiển thị danh sách chuyến hàng
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Sub-panel 2: Expenses (Chi Phí Vận Hành Xe) -->
+              <div class="sub-breakdown-card border-red">
+                <div class="sub-card-header color-red">
+                  <i class="fa-solid fa-receipt"></i>
+                  <span>Danh Sách Chi Phí Vận Hành Xe ({{ scannedExpenses.length }})</span>
+                  <span class="sub-total-val color-red">Tổng chi phí: -{{ formattedTotalExpenses }} VNĐ</span>
+                </div>
+                <div class="sub-table-wrap">
+                  <table class="sub-table">
+                    <thead>
+                      <tr>
+                        <th>STT</th>
+                        <th>Mã Chi Phí</th>
+                        <th>Nội Dung / Tiêu Đề Chi Phí</th>
+                        <th>Ngày Chi</th>
+                        <th class="text-right">Số Tiền (VNĐ)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let e of scannedExpenses; let i = index">
+                        <td class="text-center font-bold color-red">{{ i + 1 }}</td>
+                        <td><span class="emp-code-badge small red">{{ e.expenseCode }}</span></td>
+                        <td class="text-xs font-bold color-title">{{ e.title || '-' }}</td>
+                        <td class="text-xs">{{ e.expenseDate ? (e.expenseDate | date:'dd/MM/yyyy') : '-' }}</td>
+                        <td class="text-right font-bold color-red">{{ e.totalExpense | number }} VNĐ</td>
+                      </tr>
+                      <tr *ngIf="scannedExpenses.length === 0">
+                        <td colspan="5" class="text-center text-xs text-muted py-3">Không có chi phí vận hành nào phát sinh cho xe</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Sub-panel 3: Salaries (Quỹ Lương Tài Xế Phân Bổ) -->
+              <div class="sub-breakdown-card border-purple">
+                <div class="sub-card-header color-purple">
+                  <i class="fa-solid fa-hand-holding-dollar"></i>
+                  <span>Danh Sách Phiếu Lương Nhân Sự Phân Bổ ({{ scannedSalaries.length }})</span>
+                  <span class="sub-total-val color-purple">Tổng lương: -{{ formattedTotalSalaries }} VNĐ</span>
+                </div>
+                <div class="sub-table-wrap">
+                  <table class="sub-table">
+                    <thead>
+                      <tr>
+                        <th>STT</th>
+                        <th>Mã Bảng Lương</th>
+                        <th>Họ Tên Tài Xế / Nhân Sự</th>
+                        <th>Kỳ Tính Lương</th>
+                        <th>% Hoa Hồng Chuyến</th>
+                        <th class="text-right">Tiền Lương Phân Bổ (VNĐ)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let sal of scannedSalaries; let i = index">
+                        <td class="text-center font-bold color-purple">{{ i + 1 }}</td>
+                        <td><span class="emp-code-badge small purple">{{ sal.salaryCode }}</span></td>
+                        <td class="text-xs font-bold color-title">{{ sal.employeeName || '-' }}</td>
+                        <td class="text-xs">{{ sal.startDate | date:'dd/MM/yyyy' }} - {{ sal.endDate | date:'dd/MM/yyyy' }}</td>
+                        <td class="text-xs color-purple font-bold">{{ sal.tripSalaryPercentage || 0 }}%</td>
+                        <td class="text-right font-bold color-purple">{{ sal.salaryCosts | number }} VNĐ</td>
+                      </tr>
+                      <tr *ngIf="scannedSalaries.length === 0">
+                        <td colspan="6" class="text-center text-xs text-muted py-3">Không có phiếu lương nhân sự phù hợp</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SECTION 3: TỔNG HỢP DOANH THU & CHI PHÍ ĐỐI TRỪ -->
+          <div class="form-card-box">
+            <div class="box-header color-green title-with-action">
+              <span><i class="fa-solid fa-calculator"></i> PHẦN 3 — ĐỐI TRỪ CƯỚC GROSS, CHI PHÍ VẬN HÀNH & QUỸ LƯƠNG</span>
+              <button type="button" class="btn-scan-mini" (click)="autoScanPeriodFinancials()">
+                <i class="fa-solid fa-rotate"></i> Quét Tự Động Lại
+              </button>
+            </div>
+
+            <div class="form-row-3">
+              <div class="form-group">
+                <label>Tổng Doanh Thu Cước Gross (+ VNĐ) <span class="auto-badge">AUTO</span></label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formattedGrossRevenue" 
+                  [ngModelOptions]="{standalone: true}" 
+                  (input)="onGrossRevenueInput($event)" 
+                  class="font-bold color-cyan text-right input-synced"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Tổng Chi Phí Vận Hành Xe (- VNĐ) <span class="auto-badge">AUTO</span></label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formattedTotalExpenses" 
+                  [ngModelOptions]="{standalone: true}" 
+                  (input)="onTotalExpenseInput($event)" 
+                  class="font-bold color-red text-right input-synced"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Tổng Quỹ Lương Chi Trả (- VNĐ) <span class="auto-badge">AUTO</span></label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="formattedTotalSalaries" 
+                  [ngModelOptions]="{standalone: true}" 
+                  (input)="onTotalSalaryInput($event)" 
+                  class="font-bold color-purple text-right input-synced"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- SUMMARY NET PROFIT BAR -->
+          <div class="total-summary-card">
+            <div class="total-label-box">
+              <i class="fa-solid fa-vault color-green font-size-lg"></i>
+              <span>LỢI NHUẬN THUẦN RÒNG CHỐT KỲ (DOANH THU GROSS − CHI PHÍ − LƯƠNG):</span>
+            </div>
+            <div class="total-input-wrapper">
+              <input 
+                type="text" 
+                [(ngModel)]="formattedNetProfit" 
+                [ngModelOptions]="{standalone: true}" 
+                class="total-profit-input"
+                readonly
+              />
+              <span class="unit-text-green">VNĐ</span>
+            </div>
+          </div>
+
+          <!-- SECTION 4: NOTES -->
+          <div class="form-group margin-top-4">
+            <label><i class="fa-solid fa-note-sticky color-cyan"></i> Ghi Chú Đánh Giá Kết Quả Kinh Doanh</label>
+            <textarea formControlName="notes" rows="2" placeholder="Ghi chú đánh giá chỉ số lợi nhuận ròng, lý do chi phí biến động..."></textarea>
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeRevenueModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <i class="fa-solid fa-floppy-disk"></i> Lưu Báo Cáo Doanh Thu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

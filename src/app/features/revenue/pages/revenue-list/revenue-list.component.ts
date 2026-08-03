@@ -1,0 +1,452 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { RevenueService } from '@core/services/revenue.service';
+import { ExpenseService } from '@core/services/expense.service';
+import { PayrollService } from '@core/services/payroll.service';
+import { ShipmentService } from '@core/services/shipment.service';
+import { VehicleService } from '@core/services/vehicle.service';
+import { RevenueFinalModel, RevenueSummaryModel } from '@core/models/revenue.model';
+import { VehicleModel } from '@core/models/vehicle.model';
+import { ShipmentModel } from '@core/models/shipment.model';
+import { ExpenseModel } from '@core/models/expense.model';
+import { SalaryModel } from '@core/models/payroll.model';
+
+@Component({
+  selector: 'app-revenue-list',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  templateUrl: './revenue-list.component.html',
+  styleUrls: ['./revenue-list.component.css']
+})
+export class RevenueListComponent implements OnInit {
+
+  loading: boolean = false;
+  autoScanLoading: boolean = false;
+  errorMessage: string | null = null;
+  successMessage: string | null = null;
+
+  // Data State
+  revenues: RevenueFinalModel[] = [];
+  filteredRevenues: RevenueFinalModel[] = [];
+  summaryData: RevenueSummaryModel | null = null;
+  vehicles: VehicleModel[] = [];
+
+  // Scanned breakdown data by selected vehicle
+  scannedShipments: ShipmentModel[] = [];
+  scannedExpenses: ExpenseModel[] = [];
+  scannedSalaries: SalaryModel[] = [];
+
+  // Filter State
+  searchQuery: string = '';
+
+  // Modal State - Revenue Final Report
+  showRevenueModal: boolean = false;
+  isEditRevenueMode: boolean = false;
+  selectedRevenue: RevenueFinalModel | null = null;
+  revenueForm!: FormGroup;
+
+  // Formatted Financial Inputs State
+  formattedGrossRevenue: string = '0';
+  formattedTotalExpenses: string = '0';
+  formattedTotalSalaries: string = '0';
+  formattedNetProfit: string = '0';
+
+  constructor(
+    private fb: FormBuilder,
+    private revenueService: RevenueService,
+    private expenseService: ExpenseService,
+    private payrollService: PayrollService,
+    private shipmentService: ShipmentService,
+    private vehicleService: VehicleService
+  ) {}
+
+  ngOnInit(): void {
+    this.initForm();
+    this.loadVehicles();
+    this.loadRevenueSummary();
+    this.loadRevenues();
+  }
+
+  private initForm(): void {
+    this.revenueForm = this.fb.group({
+      revenueCode: ['', [Validators.required]],
+      title: ['', [Validators.required]],
+      vehicleId: [null],
+      startDate: [null],
+      endDate: [null],
+      totalShipment: [0],
+      grossRevenue: [0],
+      totalExpense: [0],
+      totalSalary: [0],
+      revenueFinalCosts: [0],
+      notes: ['']
+    });
+  }
+
+  clearAlerts(): void {
+    this.errorMessage = null;
+    this.successMessage = null;
+  }
+
+  // --- COMMA FORMATTING HELPERS ---
+  formatNumberWithCommas(val: any): string {
+    if (val === null || val === undefined || val === '') return '0';
+    const digitsOnly = val.toString().replace(/\D/g, '');
+    if (!digitsOnly) return '0';
+    return Number(digitsOnly).toLocaleString('en-US');
+  }
+
+  parseCommasToNumber(val: string): number {
+    if (!val) return 0;
+    const digitsOnly = val.toString().replace(/\D/g, '');
+    return digitsOnly ? Number(digitsOnly) : 0;
+  }
+
+  // --- FINANCIAL CALCULATIONS ---
+  onGrossRevenueInput(event: any): void {
+    const num = this.parseCommasToNumber(event.target.value);
+    this.formattedGrossRevenue = num > 0 ? num.toLocaleString('en-US') : (event.target.value === '' ? '' : '0');
+    this.revenueForm.patchValue({ grossRevenue: num });
+    this.recalculateNetProfit();
+  }
+
+  onTotalExpenseInput(event: any): void {
+    const num = this.parseCommasToNumber(event.target.value);
+    this.formattedTotalExpenses = num > 0 ? num.toLocaleString('en-US') : (event.target.value === '' ? '' : '0');
+    this.revenueForm.patchValue({ totalExpense: num });
+    this.recalculateNetProfit();
+  }
+
+  onTotalSalaryInput(event: any): void {
+    const num = this.parseCommasToNumber(event.target.value);
+    this.formattedTotalSalaries = num > 0 ? num.toLocaleString('en-US') : (event.target.value === '' ? '' : '0');
+    this.revenueForm.patchValue({ totalSalary: num });
+    this.recalculateNetProfit();
+  }
+
+  recalculateNetProfit(): void {
+    const gross = this.parseCommasToNumber(this.formattedGrossRevenue);
+    const expenses = this.parseCommasToNumber(this.formattedTotalExpenses);
+    const salaries = this.parseCommasToNumber(this.formattedTotalSalaries);
+
+    const net = gross - expenses - salaries;
+    this.formattedNetProfit = net.toLocaleString('en-US');
+    this.revenueForm.patchValue({ revenueFinalCosts: net });
+  }
+
+  // --- DATA LOADING ---
+  loadVehicles(): void {
+    this.vehicleService.getAllVehicles().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.vehicles = res.data;
+        }
+      }
+    });
+  }
+
+  loadRevenueSummary(): void {
+    this.revenueService.getRevenueSummary().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.summaryData = res.data;
+        }
+      }
+    });
+  }
+
+  loadRevenues(): void {
+    this.loading = true;
+    this.revenueService.getAllRevenues().subscribe({
+      next: (res) => {
+        this.loading = false;
+        if (res.success && res.data) {
+          this.revenues = res.data;
+          this.applyFilter();
+        }
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err.error?.message || 'Không thể tải danh sách báo cáo chốt doanh thu.';
+      }
+    });
+  }
+
+  applyFilter(): void {
+    let result = [...this.revenues];
+    if (this.searchQuery && this.searchQuery.trim() !== '') {
+      const q = this.searchQuery.toLowerCase().trim();
+      result = result.filter(r =>
+        (r.revenueCode && r.revenueCode.toLowerCase().includes(q)) ||
+        (r.title && r.title.toLowerCase().includes(q)) ||
+        (r.licensePlate && r.licensePlate.toLowerCase().includes(q)) ||
+        (r.notes && r.notes.toLowerCase().includes(q))
+      );
+    }
+    this.filteredRevenues = result;
+  }
+
+  onSearchChange(): void {
+    this.applyFilter();
+  }
+
+  // --- VEHICLE SELECTION OR DATE CHANGE LISTENER ---
+  onVehicleOrDateChange(): void {
+    this.autoScanPeriodFinancials();
+  }
+
+  // --- AUTO SCAN FINANCIALS BASED ON VEHICLE & DATE RANGE ---
+  autoScanPeriodFinancials(): void {
+    const selectedVehicleId = this.revenueForm.get('vehicleId')?.value ? Number(this.revenueForm.get('vehicleId')?.value) : null;
+    const startDate = this.revenueForm.get('startDate')?.value;
+    const endDate = this.revenueForm.get('endDate')?.value;
+
+    const selectedVehicleObj = this.vehicles.find(v => v.id === selectedVehicleId);
+
+    // Auto-update report title if vehicle is selected
+    if (selectedVehicleObj) {
+      const month = String(new Date().getMonth() + 1).padStart(2, '0');
+      const year = new Date().getFullYear();
+      this.revenueForm.patchValue({
+        title: `Báo cáo chốt doanh thu xe ${selectedVehicleObj.licensePlate} kỳ ${month}/${year}`
+      });
+    }
+
+    this.autoScanLoading = true;
+    this.scannedShipments = [];
+    this.scannedExpenses = [];
+    this.scannedSalaries = [];
+
+    // Fetch all 3 modules in parallel / chain
+    this.shipmentService.getAllShipments().subscribe({
+      next: (shipRes) => {
+        let shipments = shipRes.data || [];
+        
+        // Chỉ lấy chuyến hàng nếu ĐÃ CHỌN PHƯƠNG TIỆN
+        if (selectedVehicleId) {
+          shipments = shipments.filter(s => s.vehicleId === selectedVehicleId);
+          if (startDate) {
+            shipments = shipments.filter(s => s.dateOfReceipt && s.dateOfReceipt >= startDate);
+          }
+          if (endDate) {
+            shipments = shipments.filter(s => s.dateOfReceipt && s.dateOfReceipt <= endDate + 'T23:59:59');
+          }
+        } else {
+          shipments = [];
+        }
+
+        this.scannedShipments = shipments;
+
+        const totalGross = shipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
+        this.formattedGrossRevenue = totalGross.toLocaleString('en-US');
+        this.revenueForm.patchValue({ 
+          grossRevenue: totalGross,
+          totalShipment: shipments.length 
+        });
+
+        // Next, fetch expenses
+        this.expenseService.getAllExpenses().subscribe({
+          next: (expRes) => {
+            let expenses = expRes.data || [];
+            if (selectedVehicleId) {
+              expenses = expenses.filter(e => e.vehicleId === selectedVehicleId);
+            }
+            if (startDate) {
+              expenses = expenses.filter(e => e.expenseDate && e.expenseDate >= startDate);
+            }
+            if (endDate) {
+              expenses = expenses.filter(e => e.expenseDate && e.expenseDate <= endDate + 'T23:59:59');
+            }
+            this.scannedExpenses = expenses;
+
+            const totalExp = expenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+            this.formattedTotalExpenses = totalExp.toLocaleString('en-US');
+            this.revenueForm.patchValue({ totalExpense: totalExp });
+
+            // Next, fetch salaries
+            this.payrollService.getAllSalaries().subscribe({
+              next: (salRes) => {
+                this.autoScanLoading = false;
+                let salaries = salRes.data || [];
+
+                // Tính tiền lương phân bổ cho phương tiện được chọn:
+                // Lấy các phiếu lương có chứa phương tiện (hoặc nếu chọn Tất cả xe thì lấy toàn bộ)
+                // Với từng phiếu lương: Tiền lương = (% hoa hồng chuyến * Tổng doanh thu các chuyến hàng của phương tiện đó trong kỳ)
+                let calculatedVehicleSalaryTotal = 0;
+                let matchingSalaries: SalaryModel[] = [];
+
+                const vehicleShipmentCodes = new Set(shipments.map(s => s.shipmentCode));
+
+                salaries.forEach(sal => {
+                  // Kiểm tra phiếu lương có chứa phương tiện hoặc chứa chuyến hàng của phương tiện
+                  const hasVehicleMatch = !selectedVehicleObj ||
+                    (sal.licensePlates && sal.licensePlates.some(lp => lp.toLowerCase() === selectedVehicleObj.licensePlate.toLowerCase())) ||
+                    (sal.shipmentCodes && sal.shipmentCodes.some(code => vehicleShipmentCodes.has(code)));
+
+                  if (hasVehicleMatch) {
+                    if (startDate && sal.startDate && sal.startDate < startDate) return;
+                    if (endDate && sal.endDate && sal.endDate > endDate) return;
+
+                    matchingSalaries.push(sal);
+
+                    const tripPercent = sal.tripSalaryPercentage || 0;
+                    // Nếu phiếu lương có thiết lập % hoa hồng và có phương tiện được chọn
+                    if (tripPercent > 0 && selectedVehicleId) {
+                      // Tổng doanh thu các chuyến của phương tiện này thuộc về phiếu lương đó
+                      const vehicleShipmentsForSalary = shipments.filter(s => 
+                        s.vehicleId === selectedVehicleId && 
+                        (!sal.shipmentCodes || sal.shipmentCodes.length === 0 || sal.shipmentCodes.includes(s.shipmentCode))
+                      );
+                      const vehicleRevForSalary = vehicleShipmentsForSalary.reduce((sum, s) => sum + (s.revenue || 0), 0);
+                      const allocatedTripSalary = (vehicleRevForSalary * tripPercent) / 100;
+                      calculatedVehicleSalaryTotal += Math.round(allocatedTripSalary);
+                    } else {
+                      // Nếu không chọn xe cụ thể hoặc không có % hoa hồng, cộng tổng lương phiếu
+                      calculatedVehicleSalaryTotal += (sal.salaryCosts || 0);
+                    }
+                  }
+                });
+
+                this.scannedSalaries = matchingSalaries;
+                this.formattedTotalSalaries = calculatedVehicleSalaryTotal.toLocaleString('en-US');
+                this.revenueForm.patchValue({ totalSalary: calculatedVehicleSalaryTotal });
+
+                this.recalculateNetProfit();
+              },
+              error: () => { this.autoScanLoading = false; }
+            });
+          },
+          error: () => { this.autoScanLoading = false; }
+        });
+      },
+      error: () => { this.autoScanLoading = false; }
+    });
+  }
+
+  // --- REVENUE MODAL HANDLERS ---
+  openCreateRevenueModal(): void {
+    this.clearAlerts();
+    this.isEditRevenueMode = false;
+    this.selectedRevenue = null;
+    this.scannedShipments = [];
+    this.scannedExpenses = [];
+    this.scannedSalaries = [];
+
+    this.revenueForm.reset();
+
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const nextNum = String(this.revenues.length + 1).padStart(3, '0');
+
+    this.revenueForm.patchValue({
+      revenueCode: `DT-${year}${month}-${nextNum}`,
+      title: `Báo cáo chốt doanh thu & lợi nhuận kỳ ${month}/${year}`,
+      vehicleId: null,
+      totalShipment: 0
+    });
+
+    this.autoScanPeriodFinancials();
+
+    this.revenueForm.controls['revenueCode'].enable();
+    this.showRevenueModal = true;
+  }
+
+  openEditRevenueModal(r: RevenueFinalModel): void {
+    this.clearAlerts();
+    this.isEditRevenueMode = true;
+    this.selectedRevenue = r;
+
+    this.formattedGrossRevenue = this.formatNumberWithCommas(r.grossRevenue || 0);
+    this.formattedTotalExpenses = this.formatNumberWithCommas(r.totalExpense || 0);
+    this.formattedTotalSalaries = this.formatNumberWithCommas(r.totalSalary || 0);
+    this.formattedNetProfit = this.formatNumberWithCommas(r.revenueFinalCosts || 0);
+
+    this.revenueForm.patchValue({
+      revenueCode: r.revenueCode,
+      title: r.title,
+      vehicleId: r.vehicleId || null,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      totalShipment: r.totalShipment || 0,
+      grossRevenue: r.grossRevenue || 0,
+      totalExpense: r.totalExpense || 0,
+      totalSalary: r.totalSalary || 0,
+      revenueFinalCosts: r.revenueFinalCosts || 0,
+      notes: r.notes
+    });
+
+    this.revenueForm.controls['revenueCode'].disable();
+    this.showRevenueModal = true;
+  }
+
+  closeRevenueModal(): void {
+    this.showRevenueModal = false;
+  }
+
+  onSaveRevenue(): void {
+    this.clearAlerts();
+    if (this.revenueForm.invalid) {
+      this.revenueForm.markAllAsTouched();
+      this.errorMessage = 'Vui lòng kiểm tra và nhập đầy đủ Mã và Tiêu đề báo cáo (*) !';
+      return;
+    }
+
+    this.loading = true;
+    const val = { ...this.revenueForm.getRawValue() };
+
+    val.grossRevenue = this.parseCommasToNumber(this.formattedGrossRevenue);
+    val.totalExpense = this.parseCommasToNumber(this.formattedTotalExpenses);
+    val.totalSalary = this.parseCommasToNumber(this.formattedTotalSalaries);
+    val.revenueFinalCosts = this.parseCommasToNumber(this.formattedNetProfit);
+    val.shipmentIds = this.scannedShipments.map(s => s.shipmentId);
+
+    if (this.isEditRevenueMode && this.selectedRevenue) {
+      this.revenueService.updateRevenue(this.selectedRevenue.revenueId, val).subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.successMessage = res.message || 'Cập nhật báo cáo chốt doanh thu thành công';
+          this.closeRevenueModal();
+          this.loadRevenues();
+          this.loadRevenueSummary();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMessage = err.error?.message || 'Cập nhật báo cáo doanh thu thất bại.';
+        }
+      });
+    } else {
+      this.revenueService.createRevenue(val).subscribe({
+        next: (res) => {
+          this.loading = false;
+          this.successMessage = res.message || 'Lập báo cáo chốt doanh thu & lợi nhuận ròng thành công';
+          this.closeRevenueModal();
+          this.loadRevenues();
+          this.loadRevenueSummary();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.errorMessage = err.error?.message || 'Lập báo cáo doanh thu thất bại.';
+        }
+      });
+    }
+  }
+
+  onDeleteRevenue(r: RevenueFinalModel): void {
+    this.clearAlerts();
+    if (!confirm(`Bạn có chắc chắn muốn xóa báo cáo doanh thu "${r.revenueCode}" (${r.title})?`)) return;
+    this.loading = true;
+    this.revenueService.deleteRevenue(r.revenueId).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.successMessage = res.message || 'Xóa báo cáo doanh thu thành công';
+        this.loadRevenues();
+        this.loadRevenueSummary();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err.error?.message || 'Xóa báo cáo doanh thu thất bại.';
+      }
+    });
+  }
+}
