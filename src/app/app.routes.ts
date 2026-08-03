@@ -8,6 +8,8 @@ import { VehicleListComponent } from './features/vehicles/pages/vehicle-list/veh
 import { CustomerListComponent } from './features/customers/pages/customer-list/customer-list.component';
 import { ShipmentListComponent } from './features/shipments/pages/shipment-list/shipment-list.component';
 import { ExpenseListComponent } from './features/expenses/pages/expense-list/expense-list.component';
+import { PayrollListComponent } from './features/payroll/pages/payroll-list/payroll-list.component';
+import { RevenueListComponent } from './features/revenue/pages/revenue-list/revenue-list.component';
 
 export const routes: Routes = [
   {
@@ -52,8 +54,17 @@ export const routes: Routes = [
         component: ExpenseListComponent
       },
       {
+        path: 'salaries',
+        component: PayrollListComponent
+      },
+      {
+        path: 'revenues',
+        component: RevenueListComponent
+      },
+      {
         path: 'finance',
-        component: DashboardHomeComponent
+        redirectTo: 'revenues',
+        pathMatch: 'full'
       },
       {
         path: 'settings',
