@@ -31,7 +31,8 @@ export class MainLayoutComponent implements OnInit {
     { title: 'Quản Lý Đội Xe', icon: 'fa-solid fa-truck-front', link: '/vehicles' },
     { title: 'Quản Lý Nhân Sự', icon: 'fa-solid fa-users-gear', link: '/employees' },
     { title: 'Quản Lý Chi Phí', icon: 'fa-solid fa-receipt', link: '/expenses' },
-    { title: 'Lương & Doanh Thu', icon: 'fa-solid fa-wallet', link: '/finance' },
+    { title: 'Quản Lý Lương', icon: 'fa-solid fa-money-check-dollar', link: '/salaries' },
+    { title: 'Báo Cáo Doanh Thu', icon: 'fa-solid fa-chart-line', link: '/revenues' },
     { title: 'Tài Khoản & Quyền', icon: 'fa-solid fa-user-shield', link: '/users' },
     { title: 'Cài Đặt Hệ Thống', icon: 'fa-solid fa-gears', link: '/settings' }
   ];

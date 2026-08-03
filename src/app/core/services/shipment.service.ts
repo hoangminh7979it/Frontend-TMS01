@@ -41,6 +41,16 @@ export class ShipmentService {
     return this.http.get<ApiResponse<ShipmentModel[]>>(`${this.SHIPMENTS_API}/status/${statusCode}`);
   }
 
+  public getShipmentsByEmployee(
+    employeeId: number,
+    startDate?: string,
+    endDate?: string
+  ): Observable<ApiResponse<ShipmentModel[]>> {
+    let params = `employeeId=${employeeId}`;
+    if (startDate) params += `&startDate=${startDate}`;
+    if (endDate) params += `&endDate=${endDate}`;
+    return this.http.get<ApiResponse<ShipmentModel[]>>(`${this.SHIPMENTS_API}/by-employee?${params}`);
+  }
   // --- STATUS ENUM APIS ---
 
   public getAllStatuses(): Observable<ApiResponse<StatusEnumModel[]>> {
