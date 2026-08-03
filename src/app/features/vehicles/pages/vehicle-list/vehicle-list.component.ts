@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { VehicleModel, VehicleTypeModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 
@@ -53,7 +54,8 @@ export class VehicleListComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private vehicleService: VehicleService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +93,16 @@ export class VehicleListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- DATA LOADING ---
@@ -248,45 +260,53 @@ export class VehicleListComponent implements OnInit {
 
     if (this.isEditVehicleMode && this.selectedVehicle) {
       this.vehicleService.updateVehicle(this.selectedVehicle.id, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật thông tin phương tiện thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeVehicleModal();
           this.loadVehicles();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật thông tin xe thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.vehicleService.createVehicle(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo mới hồ sơ phương tiện thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeVehicleModal();
           this.loadVehicles();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Khai báo phương tiện thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
   }
 
   onDeleteVehicle(v: VehicleModel): void {
-    if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ xe biển số "${v.licensePlate}"?`)) return;
-    this.loading = true;
-    this.vehicleService.deleteVehicle(v.id).subscribe({
-      next: () => {
-        this.loading = false;
-        this.successMessage = 'Xóa hồ sơ phương tiện thành công';
-        this.loadVehicles();
-      },
-      error: () => {
-        this.loading = false;
-        this.errorMessage = 'Xóa hồ sơ phương tiện thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Hồ Sơ Phương Tiện',
+      message: `Bạn có chắc chắn muốn xóa hồ sơ xe biển số "${v.licensePlate}" (${v.name || 'Phương tiện'})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.vehicleService.deleteVehicle(v.id).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadVehicles();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
@@ -323,45 +343,53 @@ export class VehicleListComponent implements OnInit {
 
     if (this.isEditTypeMode && this.selectedType) {
       this.vehicleService.updateVehicleType(this.selectedType.vehicleTypeId, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật loại phương tiện thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadVehicleTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật loại phương tiện thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.vehicleService.createVehicleType(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo loại phương tiện mới thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadVehicleTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Tạo loại phương tiện thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
   }
 
   onDeleteType(t: VehicleTypeModel): void {
-    if (!confirm(`Bạn có chắc chắn muốn xóa loại phương tiện "${t.vehicleTypeName}" (${t.vehicleTypeCode})?`)) return;
-    this.loading = true;
-    this.vehicleService.deleteVehicleType(t.vehicleTypeId).subscribe({
-      next: () => {
-        this.loading = false;
-        this.successMessage = 'Xóa loại phương tiện thành công';
-        this.loadVehicleTypes();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa loại phương tiện thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Loại Phương Tiện',
+      message: `Bạn có chắc chắn muốn xóa loại phương tiện "${t.vehicleTypeName}" (${t.vehicleTypeCode})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.vehicleService.deleteVehicleType(t.vehicleTypeId).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadVehicleTypes();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

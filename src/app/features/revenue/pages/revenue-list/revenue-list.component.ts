@@ -6,8 +6,11 @@ import { ExpenseService } from '@core/services/expense.service';
 import { PayrollService } from '@core/services/payroll.service';
 import { ShipmentService } from '@core/services/shipment.service';
 import { VehicleService } from '@core/services/vehicle.service';
+import { EmployeeService } from '@core/services/employee.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { RevenueFinalModel, RevenueSummaryModel } from '@core/models/revenue.model';
 import { VehicleModel } from '@core/models/vehicle.model';
+import { EmployeeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { ExpenseModel } from '@core/models/expense.model';
 import { SalaryModel } from '@core/models/payroll.model';
@@ -39,6 +42,9 @@ export class RevenueListComponent implements OnInit {
 
   // Filter State
   searchQuery: string = '';
+  selectedDriverFilter: number | null = null;
+  selectedVehicleFilter: number | null = null;
+  drivers: EmployeeModel[] = [];
 
   // Modal State - Revenue Final Report
   showRevenueModal: boolean = false;
@@ -58,14 +64,27 @@ export class RevenueListComponent implements OnInit {
     private expenseService: ExpenseService,
     private payrollService: PayrollService,
     private shipmentService: ShipmentService,
-    private vehicleService: VehicleService
+    private vehicleService: VehicleService,
+    private employeeService: EmployeeService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.loadVehicles();
+    this.loadDrivers();
     this.loadRevenueSummary();
     this.loadRevenues();
+  }
+
+  loadDrivers(): void {
+    this.employeeService.getAllEmployees().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.drivers = res.data.filter(e => e.employeeTypeCode === 'DRIVER' || e.employeeTypeName?.toLowerCase().includes('lái'));
+        }
+      }
+    });
   }
 
   private initForm(): void {
@@ -87,6 +106,16 @@ export class RevenueListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- COMMA FORMATTING HELPERS ---
@@ -175,6 +204,18 @@ export class RevenueListComponent implements OnInit {
 
   applyFilter(): void {
     let result = [...this.revenues];
+
+    if (this.selectedVehicleFilter) {
+      const selectedV = this.vehicles.find(v => v.id === Number(this.selectedVehicleFilter));
+      if (selectedV && selectedV.licensePlate) {
+        const plate = selectedV.licensePlate.toLowerCase();
+        result = result.filter(r => 
+          (r.vehicleId === selectedV.id) ||
+          (r.licensePlate && r.licensePlate.toLowerCase() === plate)
+        );
+      }
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(r =>
@@ -245,18 +286,20 @@ export class RevenueListComponent implements OnInit {
           totalShipment: shipments.length 
         });
 
-        // Next, fetch expenses
+        // Chi Phí Vận Hành Xe: Chỉ nạp khi ĐÃ CHỌN PHƯƠNG TIỆN
         this.expenseService.getAllExpenses().subscribe({
           next: (expRes) => {
             let expenses = expRes.data || [];
             if (selectedVehicleId) {
               expenses = expenses.filter(e => e.vehicleId === selectedVehicleId);
-            }
-            if (startDate) {
-              expenses = expenses.filter(e => e.expenseDate && e.expenseDate >= startDate);
-            }
-            if (endDate) {
-              expenses = expenses.filter(e => e.expenseDate && e.expenseDate <= endDate + 'T23:59:59');
+              if (startDate) {
+                expenses = expenses.filter(e => e.expenseDate && e.expenseDate >= startDate);
+              }
+              if (endDate) {
+                expenses = expenses.filter(e => e.expenseDate && e.expenseDate <= endDate + 'T23:59:59');
+              }
+            } else {
+              expenses = [];
             }
             this.scannedExpenses = expenses;
 
@@ -264,49 +307,43 @@ export class RevenueListComponent implements OnInit {
             this.formattedTotalExpenses = totalExp.toLocaleString('en-US');
             this.revenueForm.patchValue({ totalExpense: totalExp });
 
-            // Next, fetch salaries
+            // Phiếu Lương Nhân Sự: Chỉ nạp khi ĐÃ CHỌN PHƯƠNG TIỆN
             this.payrollService.getAllSalaries().subscribe({
               next: (salRes) => {
                 this.autoScanLoading = false;
                 let salaries = salRes.data || [];
-
-                // Tính tiền lương phân bổ cho phương tiện được chọn:
-                // Lấy các phiếu lương có chứa phương tiện (hoặc nếu chọn Tất cả xe thì lấy toàn bộ)
-                // Với từng phiếu lương: Tiền lương = (% hoa hồng chuyến * Tổng doanh thu các chuyến hàng của phương tiện đó trong kỳ)
                 let calculatedVehicleSalaryTotal = 0;
                 let matchingSalaries: SalaryModel[] = [];
 
-                const vehicleShipmentCodes = new Set(shipments.map(s => s.shipmentCode));
+                if (selectedVehicleId && selectedVehicleObj) {
+                  const vehicleShipmentCodes = new Set(shipments.map(s => s.shipmentCode));
 
-                salaries.forEach(sal => {
-                  // Kiểm tra phiếu lương có chứa phương tiện hoặc chứa chuyến hàng của phương tiện
-                  const hasVehicleMatch = !selectedVehicleObj ||
-                    (sal.licensePlates && sal.licensePlates.some(lp => lp.toLowerCase() === selectedVehicleObj.licensePlate.toLowerCase())) ||
-                    (sal.shipmentCodes && sal.shipmentCodes.some(code => vehicleShipmentCodes.has(code)));
+                  salaries.forEach(sal => {
+                    const hasVehicleMatch =
+                      (sal.licensePlates && sal.licensePlates.some(lp => lp.toLowerCase() === selectedVehicleObj.licensePlate.toLowerCase())) ||
+                      (sal.shipmentCodes && sal.shipmentCodes.some(code => vehicleShipmentCodes.has(code)));
 
-                  if (hasVehicleMatch) {
-                    if (startDate && sal.startDate && sal.startDate < startDate) return;
-                    if (endDate && sal.endDate && sal.endDate > endDate) return;
+                    if (hasVehicleMatch) {
+                      if (startDate && sal.startDate && sal.startDate < startDate) return;
+                      if (endDate && sal.endDate && sal.endDate > endDate) return;
 
-                    matchingSalaries.push(sal);
+                      matchingSalaries.push(sal);
 
-                    const tripPercent = sal.tripSalaryPercentage || 0;
-                    // Nếu phiếu lương có thiết lập % hoa hồng và có phương tiện được chọn
-                    if (tripPercent > 0 && selectedVehicleId) {
-                      // Tổng doanh thu các chuyến của phương tiện này thuộc về phiếu lương đó
-                      const vehicleShipmentsForSalary = shipments.filter(s => 
-                        s.vehicleId === selectedVehicleId && 
-                        (!sal.shipmentCodes || sal.shipmentCodes.length === 0 || sal.shipmentCodes.includes(s.shipmentCode))
-                      );
-                      const vehicleRevForSalary = vehicleShipmentsForSalary.reduce((sum, s) => sum + (s.revenue || 0), 0);
-                      const allocatedTripSalary = (vehicleRevForSalary * tripPercent) / 100;
-                      calculatedVehicleSalaryTotal += Math.round(allocatedTripSalary);
-                    } else {
-                      // Nếu không chọn xe cụ thể hoặc không có % hoa hồng, cộng tổng lương phiếu
-                      calculatedVehicleSalaryTotal += (sal.salaryCosts || 0);
+                      const tripPercent = sal.tripSalaryPercentage || 0;
+                      if (tripPercent > 0) {
+                        const vehicleShipmentsForSalary = shipments.filter(s => 
+                          s.vehicleId === selectedVehicleId && 
+                          (!sal.shipmentCodes || sal.shipmentCodes.length === 0 || sal.shipmentCodes.includes(s.shipmentCode))
+                        );
+                        const vehicleRevForSalary = vehicleShipmentsForSalary.reduce((sum, s) => sum + (s.revenue || 0), 0);
+                        const allocatedTripSalary = (vehicleRevForSalary * tripPercent) / 100;
+                        calculatedVehicleSalaryTotal += Math.round(allocatedTripSalary);
+                      } else {
+                        calculatedVehicleSalaryTotal += (sal.salaryCosts || 0);
+                      }
                     }
-                  }
-                });
+                  });
+                }
 
                 this.scannedSalaries = matchingSalaries;
                 this.formattedTotalSalaries = calculatedVehicleSalaryTotal.toLocaleString('en-US');
@@ -405,28 +442,28 @@ export class RevenueListComponent implements OnInit {
       this.revenueService.updateRevenue(this.selectedRevenue.revenueId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật báo cáo chốt doanh thu thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeRevenueModal();
           this.loadRevenues();
           this.loadRevenueSummary();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật báo cáo doanh thu thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.revenueService.createRevenue(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Lập báo cáo chốt doanh thu & lợi nhuận ròng thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeRevenueModal();
           this.loadRevenues();
           this.loadRevenueSummary();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Lập báo cáo doanh thu thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
@@ -434,18 +471,26 @@ export class RevenueListComponent implements OnInit {
 
   onDeleteRevenue(r: RevenueFinalModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa báo cáo doanh thu "${r.revenueCode}" (${r.title})?`)) return;
-    this.loading = true;
-    this.revenueService.deleteRevenue(r.revenueId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa báo cáo doanh thu thành công';
-        this.loadRevenues();
-        this.loadRevenueSummary();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa báo cáo doanh thu thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Báo Cáo Doanh Thu',
+      message: `Bạn có chắc chắn muốn xóa báo cáo chốt doanh thu "${r.revenueCode}" (${r.title})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.revenueService.deleteRevenue(r.revenueId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadRevenues();
+            this.loadRevenueSummary();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

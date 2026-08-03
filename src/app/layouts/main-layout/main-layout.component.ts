@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { ThemeService, ThemeMode } from '@core/services/theme.service';
+import { ShipmentService } from '@core/services/shipment.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 interface MenuItem {
   title: string;
@@ -14,7 +16,7 @@ interface MenuItem {
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ConfirmDialogComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.css']
 })
@@ -24,9 +26,12 @@ export class MainLayoutComponent implements OnInit {
   currentUser: any = null;
   currentTheme: ThemeMode = 'dark';
 
+  activeShipmentCount: number = 0;
+  pendingNotificationCount: number = 0;
+
   menuItems: MenuItem[] = [
     { title: 'Tổng Quan', icon: 'fa-solid fa-chart-pie', link: '/dashboard' },
-    { title: 'Quản Lý Đơn Hàng', icon: 'fa-solid fa-truck-ramp-box', link: '/shipments', badge: '12' },
+    { title: 'Quản Lý Đơn Hàng', icon: 'fa-solid fa-truck-ramp-box', link: '/shipments' },
     { title: 'Quản Lý Khách Hàng', icon: 'fa-solid fa-building-user', link: '/customers' },
     { title: 'Quản Lý Đội Xe', icon: 'fa-solid fa-truck-front', link: '/vehicles' },
     { title: 'Quản Lý Nhân Sự', icon: 'fa-solid fa-users-gear', link: '/employees' },
@@ -40,6 +45,7 @@ export class MainLayoutComponent implements OnInit {
   constructor(
     private authService: AuthService,
     public themeService: ThemeService,
+    private shipmentService: ShipmentService,
     private router: Router
   ) {}
 
@@ -53,6 +59,27 @@ export class MainLayoutComponent implements OnInit {
 
     this.themeService.currentTheme$.subscribe(theme => {
       this.currentTheme = theme;
+    });
+
+    this.loadRealSystemCounts();
+  }
+
+  loadRealSystemCounts(): void {
+    this.shipmentService.getAllShipments().subscribe({
+      next: (res) => {
+        const shipments = res.data || [];
+        this.activeShipmentCount = shipments.length;
+        
+        // Count shipments currently in-progress (CREATED, DISPATCHED, PICKED_UP)
+        const pendingShipments = shipments.filter(s => s.statusEnumCode !== 'DELIVERED' && s.statusEnumCode !== 'CANCELLED');
+        this.pendingNotificationCount = pendingShipments.length;
+
+        // Dynamically set badge for Shipment menu item
+        const shipmentMenu = this.menuItems.find(m => m.link === '/shipments');
+        if (shipmentMenu) {
+          shipmentMenu.badge = this.activeShipmentCount > 0 ? String(this.activeShipmentCount) : undefined;
+        }
+      }
     });
   }
 

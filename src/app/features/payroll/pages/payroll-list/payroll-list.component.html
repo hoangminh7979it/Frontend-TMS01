@@ -63,6 +63,29 @@
       <i class="fa-solid fa-magnifying-glass search-icon"></i>
       <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Tìm theo Mã bảng lương, Tên tài xế, Bằng lái, Ghi chú..." />
     </div>
+
+    <!-- Select Dropdown Lọc Theo Nhân Sự -->
+    <div class="filter-select-box">
+      <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
+      <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
+        <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
+        <option *ngFor="let d of drivers" [value]="d.employeeId">
+          {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
+        </option>
+      </select>
+    </div>
+
+    <!-- Select Dropdown Lọc Theo Phương Tiện -->
+    <div class="filter-select-box">
+      <i class="fa-solid fa-truck select-icon color-cyan"></i>
+      <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
+        <option [ngValue]="null">-- Tất cả phương tiện --</option>
+        <option *ngFor="let v of vehicles" [value]="v.id">
+          {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
+        </option>
+      </select>
+    </div>
+
     <span class="results-count">Hiển thị {{ filteredSalaries.length }} phiếu lương</span>
   </div>
 
@@ -88,7 +111,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of filteredSalaries">
+          <tr *ngFor="let s of filteredSalaries" (click)="openEditSalaryModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
             <td><span class="emp-code-badge">{{ s.salaryCode }}</span></td>
             <td>
               <div class="font-bold color-title"><i class="fa-solid fa-user-check color-cyan"></i> {{ s.employeeName || 'N/A' }}</div>
@@ -117,7 +140,8 @@
             <td>
               <div class="font-bold color-green text-base"><i class="fa-solid fa-coins"></i> {{ s.salaryCosts | number }} VNĐ</div>
             </td>
-            <td class="text-right actions-cell">
+            <td class="text-right actions-cell" (click)="$event.stopPropagation()">
+              <button class="action-btn btn-view" (click)="openEditSalaryModal(s)" title="Xem Chi Tiết / Sửa"><i class="fa-solid fa-eye"></i> Xem</button>
               <button class="action-btn btn-edit" (click)="openEditSalaryModal(s)" title="Sửa Bảng Lương"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
               <button class="action-btn btn-delete" (click)="onDeleteSalary(s)" title="Xóa Bảng Lương"><i class="fa-solid fa-trash-can"></i> Xóa</button>
             </td>
