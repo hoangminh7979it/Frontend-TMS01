@@ -7,6 +7,7 @@ import { EmployeeListComponent } from './features/employees/pages/employee-list/
 import { VehicleListComponent } from './features/vehicles/pages/vehicle-list/vehicle-list.component';
 import { CustomerListComponent } from './features/customers/pages/customer-list/customer-list.component';
 import { ShipmentListComponent } from './features/shipments/pages/shipment-list/shipment-list.component';
+import { ExpenseListComponent } from './features/expenses/pages/expense-list/expense-list.component';
 
 export const routes: Routes = [
   {
@@ -48,7 +49,7 @@ export const routes: Routes = [
       },
       {
         path: 'expenses',
-        component: DashboardHomeComponent
+        component: ExpenseListComponent
       },
       {
         path: 'finance',
