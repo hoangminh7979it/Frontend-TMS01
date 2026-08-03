@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RoleService } from '@core/services/role.service';
 import { UserManagementService } from '@core/services/user-management.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { RoleModel, PermissionModel } from '@core/models/role.model';
 import { UserModel } from '@core/models/user.model';
 
@@ -55,7 +56,8 @@ export class RolesPermissionsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
-    private userService: UserManagementService
+    private userService: UserManagementService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -93,6 +95,16 @@ export class RolesPermissionsComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- ROLES & PERMISSIONS DATA ---
@@ -263,45 +275,53 @@ export class RolesPermissionsComponent implements OnInit {
 
     if (this.isEditRoleMode && this.selectedRole) {
       this.roleService.updateRole(this.selectedRole.roleId, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật vai trò thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeRoleModal();
           this.loadRolesData();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Không thể cập nhật vai trò.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.roleService.createRole(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo mới vai trò thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeRoleModal();
           this.loadRolesData();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Không thể tạo mới vai trò.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
   }
 
   onDeleteRole(role: RoleModel): void {
-    if (!confirm(`Bạn có chắc chắn muốn xóa vai trò "${role.roleName}"?`)) return;
-    this.loading = true;
-    this.roleService.deleteRole(role.roleId).subscribe({
-      next: () => {
-        this.loading = false;
-        this.successMessage = 'Xóa vai trò thành công';
-        this.loadRolesData();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Không thể xóa vai trò.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Vai Trò Người Dùng',
+      message: `Bạn có chắc chắn muốn xóa vai trò "${role.roleName}"?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.roleService.deleteRole(role.roleId).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadRolesData();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
@@ -392,60 +412,76 @@ export class RolesPermissionsComponent implements OnInit {
 
     if (this.isEditUserMode && this.selectedUser) {
       this.userService.updateUser(this.selectedUser.userId, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật tài khoản người dùng thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeUserModal();
           this.loadUsersData();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật tài khoản thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.userService.createUser(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo mới tài khoản thành công với mật khẩu mặc định: Admin@6879';
+          this.showSuccess(res.message || 'Thao tác thành công với mật khẩu mặc định: Admin@6879');
           this.closeUserModal();
           this.loadUsersData();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Tạo mới tài khoản thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
   }
 
   onResetUserPassword(user: UserModel): void {
-    if (!confirm(`Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${user.username}" về "Admin@6879"?`)) return;
-    this.loading = true;
-    this.userService.resetPassword(user.userId).subscribe({
-      next: () => {
-        this.loading = false;
-        this.successMessage = `Đã đặt lại mật khẩu cho tài khoản ${user.username} về Admin@6879 thành công!`;
-      },
-      error: () => {
-        this.loading = false;
-        this.errorMessage = 'Đặt lại mật khẩu thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Đặt Lại Mật Khẩu Tải Khoản',
+      message: `Bạn có chắc chắn muốn đặt lại mật khẩu cho tài khoản "${user.username}" về mật khẩu mặc định "Admin@6879"?`,
+      confirmText: 'Xác Nhận Đặt Lại',
+      cancelText: 'Hủy Bỏ',
+      type: 'warning',
+      onConfirm: () => {
+        this.loading = true;
+        this.userService.resetPassword(user.userId).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            this.showSuccess(res.message || `Đã đặt lại mật khẩu cho tài khoản ${user.username} thành công`);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
 
   onDeleteUser(user: UserModel): void {
-    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản "${user.username}"?`)) return;
-    this.loading = true;
-    this.userService.deleteUser(user.userId).subscribe({
-      next: () => {
-        this.loading = false;
-        this.successMessage = 'Xóa tài khoản thành công';
-        this.loadUsersData();
-      },
-      error: () => {
-        this.loading = false;
-        this.errorMessage = 'Xóa tài khoản thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Tài Khoản Người Dùng',
+      message: `Bạn có chắc chắn muốn xóa tài khoản "${user.username}" khỏi hệ thống?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.userService.deleteUser(user.userId).subscribe({
+          next: (res: any) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadUsersData();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

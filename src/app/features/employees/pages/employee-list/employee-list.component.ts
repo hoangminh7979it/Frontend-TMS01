@@ -92,6 +92,16 @@ export class EmployeeListComponent implements OnInit {
     this.successMessage = null;
   }
 
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
+  }
+
   // --- DATA LOADING ---
   loadEmployeeTypes(): void {
     this.employeeService.getAllEmployeeTypes().subscribe({
@@ -212,28 +222,28 @@ export class EmployeeListComponent implements OnInit {
 
     if (this.isEditEmployeeMode && this.selectedEmployee) {
       this.employeeService.updateEmployee(this.selectedEmployee.employeeId, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật hồ sơ nhân viên thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeEmployeeModal();
           this.loadEmployees();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật hồ sơ thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.employeeService.createEmployee(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo mới hồ sơ nhân viên thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeEmployeeModal();
           this.loadEmployees();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Tạo hồ sơ nhân viên thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
@@ -243,14 +253,14 @@ export class EmployeeListComponent implements OnInit {
     if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ nhân viên "${emp.fullName}" (${emp.employeeCode})?`)) return;
     this.loading = true;
     this.employeeService.deleteEmployee(emp.employeeId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
-        this.successMessage = 'Xóa hồ sơ nhân viên thành công';
+        this.showSuccess(res.message || 'Thao tác thành công');
         this.loadEmployees();
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.errorMessage = 'Xóa hồ sơ nhân viên thất bại.';
+        this.showError(err.error?.message || 'Thao tác thất bại');
       }
     });
   }
@@ -287,28 +297,28 @@ export class EmployeeListComponent implements OnInit {
 
     if (this.isEditTypeMode && this.selectedType) {
       this.employeeService.updateEmployeeType(this.selectedType.employeeTypeId, val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Cập nhật loại nhân viên thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadEmployeeTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật loại nhân viên thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.employeeService.createEmployeeType(val).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.loading = false;
-          this.successMessage = 'Tạo loại nhân viên mới thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadEmployeeTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Tạo loại nhân viên thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
@@ -318,14 +328,14 @@ export class EmployeeListComponent implements OnInit {
     if (!confirm(`Bạn có chắc chắn muốn xóa loại nhân viên "${type.employeeTypeName}" (${type.employeeTypeCode})?`)) return;
     this.loading = true;
     this.employeeService.deleteEmployeeType(type.employeeTypeId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.loading = false;
-        this.successMessage = 'Xóa loại nhân viên thành công';
+        this.showSuccess(res.message || 'Thao tác thành công');
         this.loadEmployeeTypes();
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa loại nhân viên thất bại.';
+        this.showError(err.error?.message || 'Thao tác thất bại');
       }
     });
   }

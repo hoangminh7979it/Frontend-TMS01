@@ -91,6 +91,28 @@
         />
       </div>
 
+      <!-- Select Dropdown Lọc Theo Nhân Sự -->
+      <div class="filter-select-box">
+        <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
+        <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
+          <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
+          <option *ngFor="let d of drivers" [value]="d.employeeId">
+            {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Select Dropdown Lọc Theo Phương Tiện -->
+      <div class="filter-select-box">
+        <i class="fa-solid fa-truck select-icon color-cyan"></i>
+        <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
+          <option [ngValue]="null">-- Tất cả phương tiện --</option>
+          <option *ngFor="let v of vehicles" [value]="v.id">
+            {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
+          </option>
+        </select>
+      </div>
+
       <!-- Type Filter Tabs -->
       <div class="type-filter-tabs">
         <button class="filter-btn" [ngClass]="{'filter-active': selectedTypeFilter === 'ALL'}" (click)="onTypeFilterChange('ALL')">
@@ -132,7 +154,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let e of filteredExpenses">
+            <tr *ngFor="let e of filteredExpenses" (click)="openEditExpenseModal(e)" class="clickable-row" title="Bấm vào để xem chi tiết">
               
               <!-- Expense Code Badge -->
               <td class="col-code">
@@ -176,7 +198,10 @@
               </td>
 
               <!-- Actions -->
-              <td class="text-right actions-cell col-actions">
+              <td class="text-right actions-cell col-actions" (click)="$event.stopPropagation()">
+                <button class="action-btn btn-view" (click)="openEditExpenseModal(e)" title="Xem Chi Tiết / Sửa">
+                  <i class="fa-solid fa-eye"></i> Xem
+                </button>
                 <button class="action-btn btn-edit" (click)="openEditExpenseModal(e)" title="Sửa Phiếu Chi">
                   <i class="fa-solid fa-pen-to-square"></i> Sửa
                 </button>

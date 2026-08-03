@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CustomerService } from '@core/services/customer.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 
 @Component({
@@ -47,7 +48,8 @@ export class CustomerListComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private customerService: CustomerService
+    private customerService: CustomerService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +92,16 @@ export class CustomerListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- DATA LOADING ---
@@ -213,26 +225,26 @@ export class CustomerListComponent implements OnInit {
       this.customerService.updateCustomer(this.selectedCustomer.customerId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật hồ sơ khách hàng thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeCustomerModal();
           this.loadCustomers();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật hồ sơ khách hàng thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.customerService.createCustomer(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Tạo mới hồ sơ khách hàng thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeCustomerModal();
           this.loadCustomers();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Khai báo khách hàng thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
@@ -240,17 +252,25 @@ export class CustomerListComponent implements OnInit {
 
   onDeleteCustomer(c: CustomerModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa hồ sơ khách hàng "${c.companyName || c.fullName}" (${c.customerCode})?`)) return;
-    this.loading = true;
-    this.customerService.deleteCustomer(c.customerId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa hồ sơ khách hàng thành công';
-        this.loadCustomers();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa hồ sơ khách hàng thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Hồ Sơ Khách Hàng',
+      message: `Bạn có chắc chắn muốn xóa hồ sơ khách hàng "${c.companyName || c.fullName}" (${c.customerCode})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.customerService.deleteCustomer(c.customerId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadCustomers();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
@@ -332,17 +352,25 @@ export class CustomerListComponent implements OnInit {
 
   onDeleteCompany(comp: CompanyModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa công ty đối tác "${comp.name}"?`)) return;
-    this.loading = true;
-    this.customerService.deleteCompany(comp.companyId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa công ty đối tác thành công';
-        this.loadCompanies();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa công ty đối tác thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Công Ty Đối Tác',
+      message: `Bạn có chắc chắn muốn xóa công ty đối tác "${comp.name}"?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.customerService.deleteCompany(comp.companyId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadCompanies();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

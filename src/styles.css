@@ -27,6 +27,7 @@
   --table-hover: #1e293b;
 
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --date-icon-filter: invert(0.85) sepia(0.2) saturate(2) hue-rotate(170deg);
 }
 
 [data-theme="light"] {
@@ -57,6 +58,7 @@
   --table-hover: #f1f5f9;
 
   --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --date-icon-filter: invert(0.2) sepia(0.5) saturate(3) hue-rotate(190deg);
 }
 
 * {
@@ -133,4 +135,89 @@ body {
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: #34d399;
+}
+
+/* Select Dropdown Filter Control Box */
+.filter-select-box {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.filter-select-box .select-icon {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+  z-index: 2;
+  font-size: 0.85rem;
+}
+
+.filter-select-box select {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  color: var(--text-title);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0 12px 0 34px;
+  cursor: pointer;
+  height: 38px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.filter-select-box select:focus {
+  border-color: var(--cyan-accent);
+}
+
+.filter-select-box select option {
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 10px;
+}
+
+/* Clickable Table Row & View Detail Button Styles */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.clickable-row:hover td {
+  background-color: var(--table-hover) !important;
+}
+
+.btn-view {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: var(--cyan-accent) !important;
+  background: rgba(56, 189, 248, 0.1) !important;
+}
+
+.btn-view:hover {
+  background: var(--cyan-accent) !important;
+  color: #ffffff !important;
+  border-color: var(--cyan-accent) !important;
+}
+
+/* =====================================================
+   THEME-AWARE DATE / TIME PICKER ICON STYLING
+   ===================================================== */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: var(--date-icon-filter);
+  opacity: 0.9;
+  transition: transform 0.15s ease, opacity 0.15s ease, filter 0.25s ease;
+  padding: 4px;
+  border-radius: 3px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  background: rgba(56, 189, 248, 0.15);
 }

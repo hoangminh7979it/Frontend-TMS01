@@ -66,10 +66,10 @@
           <span class="theme-label">{{ currentTheme === 'dark' ? 'Giao diện Tối' : 'Giao diện Sáng' }}</span>
         </button>
 
-        <!-- Notification Bell -->
-        <button class="icon-btn" title="Thông báo hệ thống">
+        <!-- Notification Bell (Dynamic system count) -->
+        <button class="icon-btn" title="Đơn hàng đang chờ xử lý / vận chuyển">
           <i class="fa-solid fa-bell"></i>
-          <span class="notification-count">3</span>
+          <span class="notification-count" *ngIf="pendingNotificationCount > 0">{{ pendingNotificationCount }}</span>
         </button>
 
         <!-- System Clock Badge -->
@@ -106,3 +106,6 @@
   </div>
 
 </div>
+
+<!-- GLOBAL PREMIUM CONFIRMATION DIALOG -->
+<app-confirm-dialog></app-confirm-dialog>

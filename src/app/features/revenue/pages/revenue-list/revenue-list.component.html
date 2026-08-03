@@ -72,6 +72,29 @@
         placeholder="Tìm theo Mã báo cáo, Tiêu đề, Biển số xe, Ghi chú..." 
       />
     </div>
+
+    <!-- Select Dropdown Lọc Theo Nhân Sự -->
+    <div class="filter-select-box">
+      <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
+      <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
+        <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
+        <option *ngFor="let d of drivers" [value]="d.employeeId">
+          {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
+        </option>
+      </select>
+    </div>
+
+    <!-- Select Dropdown Lọc Theo Phương Tiện -->
+    <div class="filter-select-box">
+      <i class="fa-solid fa-truck select-icon color-cyan"></i>
+      <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
+        <option [ngValue]="null">-- Tất cả phương tiện --</option>
+        <option *ngFor="let v of vehicles" [value]="v.id">
+          {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
+        </option>
+      </select>
+    </div>
+
     <span class="results-count">Hiển thị {{ filteredRevenues.length }} báo cáo chốt</span>
   </div>
 
@@ -97,7 +120,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of filteredRevenues">
+          <tr *ngFor="let r of filteredRevenues" (click)="openEditRevenueModal(r)" class="clickable-row" title="Bấm vào để xem chi tiết">
             <td><span class="emp-code-badge">{{ r.revenueCode }}</span></td>
             
             <td>
@@ -131,7 +154,10 @@
               <div class="font-bold color-green text-base"><i class="fa-solid fa-coins"></i> {{ r.revenueFinalCosts | number }} VNĐ</div>
             </td>
 
-            <td class="text-right actions-cell">
+            <td class="text-right actions-cell" (click)="$event.stopPropagation()">
+              <button class="action-btn btn-view" (click)="openEditRevenueModal(r)" title="Xem Chi Tiết / Sửa">
+                <i class="fa-solid fa-eye"></i> Xem
+              </button>
               <button class="action-btn btn-edit" (click)="openEditRevenueModal(r)" title="Sửa Báo Cáo">
                 <i class="fa-solid fa-pen-to-square"></i> Sửa
               </button>
@@ -300,7 +326,9 @@
                         <td class="text-right font-bold color-red">{{ e.totalExpense | number }} VNĐ</td>
                       </tr>
                       <tr *ngIf="scannedExpenses.length === 0">
-                        <td colspan="5" class="text-center text-xs text-muted py-3">Không có chi phí vận hành nào phát sinh cho xe</td>
+                        <td colspan="5" class="text-center text-xs text-muted py-3">
+                          <i class="fa-solid fa-circle-info color-red"></i> Vui lòng chọn phương tiện (xe) ở Phần 1 để tự động hiển thị danh sách chi phí
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -336,7 +364,9 @@
                         <td class="text-right font-bold color-purple">{{ sal.salaryCosts | number }} VNĐ</td>
                       </tr>
                       <tr *ngIf="scannedSalaries.length === 0">
-                        <td colspan="6" class="text-center text-xs text-muted py-3">Không có phiếu lương nhân sự phù hợp</td>
+                        <td colspan="6" class="text-center text-xs text-muted py-3">
+                          <i class="fa-solid fa-circle-info color-purple"></i> Vui lòng chọn phương tiện (xe) ở Phần 1 để tự động hiển thị danh sách phiếu lương
+                        </td>
                       </tr>
                     </tbody>
                   </table>
