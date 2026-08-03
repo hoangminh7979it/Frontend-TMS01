@@ -91,6 +91,28 @@
         />
       </div>
 
+      <!-- Select Dropdown Lọc Theo Nhân Sự -->
+      <div class="filter-select-box">
+        <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
+        <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
+          <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
+          <option *ngFor="let d of drivers" [value]="d.employeeId">
+            {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
+          </option>
+        </select>
+      </div>
+
+      <!-- Select Dropdown Lọc Theo Phương Tiện -->
+      <div class="filter-select-box">
+        <i class="fa-solid fa-truck select-icon color-cyan"></i>
+        <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
+          <option [ngValue]="null">-- Tất cả phương tiện --</option>
+          <option *ngFor="let v of vehicles" [value]="v.id">
+            {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
+          </option>
+        </select>
+      </div>
+
       <!-- Status Filter Tabs -->
       <div class="type-filter-tabs">
         <button class="filter-btn" [ngClass]="{'filter-active': selectedStatus === 'ALL'}" (click)="onStatusFilterChange('ALL')">
@@ -139,7 +161,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let s of filteredShipments">
+            <tr *ngFor="let s of filteredShipments" (click)="openEditShipmentModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
               
               <!-- Shipment Code Badge -->
               <td class="col-code">
@@ -232,7 +254,7 @@
               </td>
 
               <!-- Status Switcher Dropdown (1-Click) -->
-              <td class="col-status">
+              <td class="col-status" (click)="$event.stopPropagation()">
                 <select 
                   class="status-select-btn" 
                   [ngModel]="s.statusEnumCode" 
@@ -252,7 +274,10 @@
               </td>
 
               <!-- Actions -->
-              <td class="text-right actions-cell col-actions">
+              <td class="text-right actions-cell col-actions" (click)="$event.stopPropagation()">
+                <button class="action-btn btn-view" (click)="openEditShipmentModal(s)" title="Xem Chi Tiết / Sửa">
+                  <i class="fa-solid fa-eye"></i> Xem
+                </button>
                 <button class="action-btn btn-edit" (click)="openEditShipmentModal(s)" title="Sửa Đơn Hàng">
                   <i class="fa-solid fa-pen-to-square"></i> Sửa
                 </button>

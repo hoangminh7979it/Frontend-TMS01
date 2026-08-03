@@ -5,6 +5,7 @@ import { ShipmentService } from '@core/services/shipment.service';
 import { CustomerService } from '@core/services/customer.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { ShipmentModel, StatusEnumModel } from '@core/models/shipment.model';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 import { VehicleModel } from '@core/models/vehicle.model';
@@ -36,6 +37,8 @@ export class ShipmentListComponent implements OnInit {
   // Filter State
   searchQuery: string = '';
   selectedStatus: string = 'ALL';
+  selectedDriverFilter: number | null = null;
+  selectedVehicleFilter: number | null = null;
 
   // Modal State - Shipment
   showShipmentModal: boolean = false;
@@ -76,6 +79,7 @@ export class ShipmentListComponent implements OnInit {
     private customerService: CustomerService,
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
+    private confirmDialog: ConfirmDialogService,
     private eRef: ElementRef
   ) {}
 
@@ -135,6 +139,16 @@ export class ShipmentListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- CURRENCY & NUMBER COMMA FORMATTING HELPERS ---
@@ -246,6 +260,14 @@ export class ShipmentListComponent implements OnInit {
 
     if (this.selectedStatus && this.selectedStatus !== 'ALL') {
       result = result.filter(s => s.statusEnumCode === this.selectedStatus);
+    }
+
+    if (this.selectedDriverFilter) {
+      result = result.filter(s => s.employeeId === Number(this.selectedDriverFilter));
+    }
+
+    if (this.selectedVehicleFilter) {
+      result = result.filter(s => s.vehicleId === Number(this.selectedVehicleFilter));
     }
 
     if (this.searchQuery && this.searchQuery.trim() !== '') {
@@ -408,12 +430,12 @@ export class ShipmentListComponent implements OnInit {
     this.shipmentService.updateShipmentStatus(shipment.shipmentId, newStatusCode).subscribe({
       next: (res) => {
         this.loading = false;
-        this.successMessage = res.message || `Đã chuyển đơn hàng ${shipment.shipmentCode} sang trạng thái mới!`;
+        this.showSuccess(res.message || 'Cập nhật trạng thái thành công');
         this.loadShipments();
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || err.error?.data || 'Cập nhật trạng thái lộ trình thất bại.';
+        this.showError(err.error?.message || err.error?.data || 'Cập nhật trạng thái thất bại');
       }
     });
   }
@@ -550,26 +572,26 @@ export class ShipmentListComponent implements OnInit {
       this.shipmentService.updateShipment(this.selectedShipment.shipmentId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật thông tin đơn hàng thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeShipmentModal();
           this.loadShipments();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Cập nhật đơn hàng thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     } else {
       this.shipmentService.createShipment(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Tạo mới đơn hàng vận chuyển thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeShipmentModal();
           this.loadShipments();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Khai báo đơn hàng thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     }
@@ -577,17 +599,25 @@ export class ShipmentListComponent implements OnInit {
 
   onDeleteShipment(s: ShipmentModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa đơn hàng vận chuyển "${s.shipmentCode}"?`)) return;
-    this.loading = true;
-    this.shipmentService.deleteShipment(s.shipmentId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa đơn hàng thành công';
-        this.loadShipments();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || err.error?.data || 'Xóa đơn hàng thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Đơn Hàng Vận Chuyển',
+      message: `Bạn có chắc chắn muốn xóa đơn hàng vận chuyển "${s.shipmentCode}" khỏi hệ thống?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.shipmentService.deleteShipment(s.shipmentId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadShipments();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
@@ -632,26 +662,26 @@ export class ShipmentListComponent implements OnInit {
       this.shipmentService.updateStatus(this.selectedStatusItem.statusEnumId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật trạng thái vận chuyển thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeStatusModal();
           this.loadStatuses();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Cập nhật trạng thái thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     } else {
       this.shipmentService.createStatus(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Tạo mới trạng thái vận chuyển thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeStatusModal();
           this.loadStatuses();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Tạo trạng thái thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     }
@@ -659,17 +689,25 @@ export class ShipmentListComponent implements OnInit {
 
   onDeleteStatus(st: StatusEnumModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa trạng thái "${st.statusEnumName}" (${st.statusEnumCode})?`)) return;
-    this.loading = true;
-    this.shipmentService.deleteStatus(st.statusEnumId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa trạng thái thành công';
-        this.loadStatuses();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || err.error?.data || 'Xóa trạng thái thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Trạng Thái Vận Chuyển',
+      message: `Bạn có chắc chắn muốn xóa trạng thái "${st.statusEnumName}" (${st.statusEnumCode})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.shipmentService.deleteStatus(st.statusEnumId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadStatuses();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

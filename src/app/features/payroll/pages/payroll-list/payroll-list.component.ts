@@ -4,9 +4,12 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { PayrollService } from '@core/services/payroll.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ShipmentService } from '@core/services/shipment.service';
+import { VehicleService } from '@core/services/vehicle.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { SalaryModel } from '@core/models/payroll.model';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
+import { VehicleModel } from '@core/models/vehicle.model';
 
 @Component({
   selector: 'app-payroll-list',
@@ -36,6 +39,9 @@ export class PayrollListComponent implements OnInit {
 
   // Filter State
   searchQuery: string = '';
+  selectedDriverFilter: number | null = null;
+  selectedVehicleFilter: number | null = null;
+  vehicles: VehicleModel[] = [];
 
   // Modal State - Salary
   showSalaryModal: boolean = false;
@@ -59,14 +65,27 @@ export class PayrollListComponent implements OnInit {
     private fb: FormBuilder,
     private payrollService: PayrollService,
     private employeeService: EmployeeService,
-    private shipmentService: ShipmentService
+    private shipmentService: ShipmentService,
+    private vehicleService: VehicleService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
     this.initForm();
     this.loadEmployeeTypes();
     this.loadDrivers();
+    this.loadVehicles();
     this.loadSalaries();
+  }
+
+  loadVehicles(): void {
+    this.vehicleService.getAllVehicles().subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.vehicles = res.data;
+        }
+      }
+    });
   }
 
   private initForm(): void {
@@ -92,6 +111,16 @@ export class PayrollListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- COMMA FORMATTING HELPERS ---
@@ -305,6 +334,22 @@ export class PayrollListComponent implements OnInit {
 
   applyFilter(): void {
     let result = [...this.salaries];
+
+    if (this.selectedDriverFilter) {
+      result = result.filter(s => s.employeeId === Number(this.selectedDriverFilter));
+    }
+
+    if (this.selectedVehicleFilter) {
+      const selectedV = this.vehicles.find(v => v.id === Number(this.selectedVehicleFilter));
+      if (selectedV && selectedV.licensePlate) {
+        const plate = selectedV.licensePlate.toLowerCase();
+        result = result.filter(s => 
+          (s.vehicleId === selectedV.id) ||
+          (s.licensePlates && s.licensePlates.some(lp => lp.toLowerCase() === plate))
+        );
+      }
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(s =>
@@ -460,26 +505,26 @@ export class PayrollListComponent implements OnInit {
       this.payrollService.updateSalary(this.selectedSalary.salaryId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật phiếu tính lương thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeSalaryModal();
           this.loadSalaries();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Cập nhật phiếu lương thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     } else {
       this.payrollService.createSalary(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Lập phiếu tính lương tài xế thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeSalaryModal();
           this.loadSalaries();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || 'Lập phiếu tính lương thất bại.';
+          this.showError(err.error?.message || 'Thao tác thất bại');
         }
       });
     }
@@ -487,17 +532,25 @@ export class PayrollListComponent implements OnInit {
 
   onDeleteSalary(s: SalaryModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa bảng lương "${s.salaryCode}" của tài xế ${s.employeeName}?`)) return;
-    this.loading = true;
-    this.payrollService.deleteSalary(s.salaryId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa phiếu lương thành công';
-        this.loadSalaries();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Xóa phiếu lương thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Bảng Lương Nhân Sự',
+      message: `Bạn có chắc chắn muốn xóa bảng tính lương "${s.salaryCode}" của nhân sự ${s.employeeName || ''}?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.payrollService.deleteSalary(s.salaryId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadSalaries();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }

@@ -4,39 +4,97 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Bảng Điều Khiển Tổng Quan</h1>
-      <p class="page-subtitle">Giám sát hoạt động vận tải, chuyến xe và chỉ số tài chính thời gian thực.</p>
+      <p class="page-subtitle">Giám sát hoạt động vận tải, chuyến xe và chỉ số tài chính thời gian thực từ hệ thống.</p>
     </div>
     <div class="page-actions">
-      <button class="btn btn-secondary">
-        <i class="fa-solid fa-download"></i> Xuất Báo Cáo
+      <button class="btn btn-secondary" (click)="loadDashboardData()">
+        <i class="fa-solid fa-rotate" [ngClass]="{'fa-spin': loading}"></i> Làm Mới Dữ Liệu
       </button>
-      <button class="btn btn-primary">
-        <i class="fa-solid fa-plus"></i> Tạo Đơn Hàng Mới
-      </button>
+      <a routerLink="/shipments" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Lập Chuyến Hàng Mới
+      </a>
     </div>
   </div>
 
-  <!-- KPI Metrics Cards Grid -->
+  <!-- KPI Metrics Cards Grid (Real-time system data) -->
   <div class="metrics-grid">
-    <div class="metric-card" *ngFor="let item of metrics">
+    
+    <div class="metric-card">
       <div class="metric-header">
-        <span class="metric-title">{{ item.title }}</span>
-        <div class="metric-icon-box" [style.color]="item.color" [style.background-color]="item.color + '15'">
-          <i [class]="item.icon"></i>
+        <span class="metric-title">TỔNG ĐƠN HÀNG HỆ THỐNG</span>
+        <div class="metric-icon-box bg-blue">
+          <i class="fa-solid fa-truck-loading"></i>
         </div>
       </div>
       <div class="metric-body">
-        <span class="metric-value">{{ item.value }}</span>
-        <span class="metric-unit">{{ item.unit }}</span>
+        <span class="metric-value">{{ recentShipments.length > 0 ? recentShipments.length : 0 }}</span>
+        <span class="metric-unit">Đơn</span>
       </div>
       <div class="metric-footer">
-        <span class="trend-badge" [ngClass]="item.isPositive ? 'trend-up' : 'trend-down'">
-          <i class="fa-solid" [ngClass]="item.isPositive ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'"></i>
-          {{ item.trend }}
+        <span class="trend-badge trend-up">
+          <i class="fa-solid fa-circle-check"></i> {{ totalShipmentsToday }} đơn hôm nay
         </span>
-        <span class="metric-note">So với tuần trước</span>
+        <span class="metric-note">Cập nhật thời gian thực</span>
       </div>
     </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">ĐỘI XE VẬN HÀNH</span>
+        <div class="metric-icon-box bg-green">
+          <i class="fa-solid fa-route"></i>
+        </div>
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ activeVehiclesCount }} / {{ totalVehiclesCount }}</span>
+        <span class="metric-unit">Xe</span>
+      </div>
+      <div class="metric-footer">
+        <span class="trend-badge trend-up">
+          <i class="fa-solid fa-truck"></i> {{ totalVehiclesCount > 0 ? (activeVehiclesCount / totalVehiclesCount * 100 | number:'1.0-0') : 0 }}% Công suất
+        </span>
+        <span class="metric-note">Xe sẵn sàng & đang đi</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TỔNG DOANH THU CƯỚC (GROSS)</span>
+        <div class="metric-icon-box bg-purple">
+          <i class="fa-solid fa-sack-dollar"></i>
+        </div>
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ monthlyGrossRevenue | number }}</span>
+        <span class="metric-unit">VNĐ</span>
+      </div>
+      <div class="metric-footer">
+        <span class="trend-badge trend-up">
+          <i class="fa-solid fa-arrow-trend-up"></i> Tổng hợp các chuyến
+        </span>
+        <span class="metric-note">Lũy kế hệ thống</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-header">
+        <span class="metric-title">TỔNG CHI PHÍ VẬN HÀNH</span>
+        <div class="metric-icon-box bg-yellow">
+          <i class="fa-solid fa-gas-pump"></i>
+        </div>
+      </div>
+      <div class="metric-body">
+        <span class="metric-value color-red">{{ monthlyExpenses | number }}</span>
+        <span class="metric-unit">VNĐ</span>
+      </div>
+      <div class="metric-footer">
+        <span class="trend-badge trend-down">
+          <i class="fa-solid fa-receipt"></i> Chi phí nhiên liệu, BOT...
+        </span>
+        <span class="metric-note">Toàn bộ chứng từ chi</span>
+      </div>
+    </div>
+
   </div>
 
   <!-- Main Data Section: Tables & Quick Status -->
@@ -46,15 +104,15 @@
     <div class="panel-card main-table-panel">
       <div class="panel-header">
         <h3 class="panel-title">
-          <i class="fa-solid fa-clock-rotate-left"></i> Chuyến Hàng Gần Đây
+          <i class="fa-solid fa-clock-rotate-left"></i> Danh Sách Chuyến Hàng Mới Nhất
         </h3>
-        <a href="javascript:void(0)" class="view-all-link">Xem Tất Cả <i class="fa-solid fa-chevron-right"></i></a>
+        <a routerLink="/shipments" class="view-all-link">Xem Tất Cả <i class="fa-solid fa-chevron-right"></i></a>
       </div>
       <div class="panel-body">
         <table class="tech-table">
           <thead>
             <tr>
-              <th>MÃ ĐƠN</th>
+              <th>MÃ CHUYẾN</th>
               <th>TÀI XẾ PHỤ TRÁCH</th>
               <th>BIỂN SỐ XE</th>
               <th>LỘ TRÌNH</th>
@@ -64,20 +122,23 @@
           </thead>
           <tbody>
             <tr *ngFor="let ship of recentShipments">
-              <td class="code-cell">{{ ship.code }}</td>
-              <td class="font-semibold">{{ ship.driver }}</td>
-              <td><span class="plate-badge">{{ ship.licensePlate }}</span></td>
-              <td>{{ ship.from }} &rarr; {{ ship.to }}</td>
+              <td class="code-cell">{{ ship.shipmentCode }}</td>
+              <td class="font-semibold">{{ ship.driverName || 'Chưa gán' }}</td>
+              <td><span class="plate-badge">{{ ship.licensePlate || 'N/A' }}</span></td>
+              <td>{{ ship.receiptPlace || '-' }} &rarr; {{ ship.deliveryPlace || '-' }}</td>
               <td>
                 <span class="status-pill" [ngClass]="{
-                  'status-delivering': ship.status === 'Đang Giao',
-                  'status-pending': ship.status === 'Chờ Xử Lý',
-                  'status-completed': ship.status === 'Hoàn Thành'
+                  'status-delivering': ship.statusEnumCode === 'DISPATCHED' || ship.statusEnumCode === 'PICKED_UP',
+                  'status-pending': ship.statusEnumCode === 'CREATED',
+                  'status-completed': ship.statusEnumCode === 'DELIVERED'
                 }">
-                  {{ ship.status }}
+                  {{ ship.statusEnumName || ship.statusEnumCode }}
                 </span>
               </td>
-              <td>{{ ship.date }}</td>
+              <td>{{ ship.dateOfReceipt ? (ship.dateOfReceipt | date:'dd/MM/yyyy') : '-' }}</td>
+            </tr>
+            <tr *ngIf="recentShipments.length === 0">
+              <td colspan="6" class="text-center text-muted py-4">Chưa có chuyến hàng nào trên hệ thống</td>
             </tr>
           </tbody>
         </table>
@@ -88,34 +149,24 @@
     <div class="panel-card side-activity-panel">
       <div class="panel-header">
         <h3 class="panel-title">
-          <i class="fa-solid fa-bolt"></i> Nhật Ký Vận Hành
+          <i class="fa-solid fa-bolt"></i> Nhật Ký Hoạt Động Vận Hành
         </h3>
       </div>
       <div class="panel-body">
         <div class="activity-timeline">
           
-          <div class="timeline-item">
-            <div class="timeline-icon bg-blue"><i class="fa-solid fa-truck-arrow-right"></i></div>
+          <div class="timeline-item" *ngFor="let act of recentActivities">
+            <div class="timeline-icon" [ngClass]="act.bgClass">
+              <i [class]="act.icon"></i>
+            </div>
             <div class="timeline-content">
-              <span class="timeline-title">Xe 29C-888.99 đã xuất kho</span>
-              <span class="timeline-time">10 phút trước • Lái xe: Nguyễn Văn Hùng</span>
+              <span class="timeline-title">{{ act.title }}</span>
+              <span class="timeline-time">{{ act.subtitle }}</span>
             </div>
           </div>
 
-          <div class="timeline-item">
-            <div class="timeline-icon bg-green"><i class="fa-solid fa-circle-check"></i></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Đơn DH-687903 giao thành công</span>
-              <span class="timeline-time">45 phút trước • Khách hàng: Công ty ABC</span>
-            </div>
-          </div>
-
-          <div class="timeline-item">
-            <div class="timeline-icon bg-yellow"><i class="fa-solid fa-gas-pump"></i></div>
-            <div class="timeline-content">
-              <span class="timeline-title">Cập nhật chi phí nhiên liệu</span>
-              <span class="timeline-time">2 giờ trước • 1.500.000 VNĐ</span>
-            </div>
+          <div *ngIf="recentActivities.length === 0" class="text-center text-muted text-xs py-4">
+            Chưa có nhật ký hoạt động gần đây
           </div>
 
         </div>

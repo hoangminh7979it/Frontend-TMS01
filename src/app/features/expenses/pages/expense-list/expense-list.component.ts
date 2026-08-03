@@ -5,6 +5,7 @@ import { ExpenseService } from '@core/services/expense.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ShipmentService } from '@core/services/shipment.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { ExpenseModel, ExpenseTypeModel } from '@core/models/expense.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
@@ -42,6 +43,8 @@ export class ExpenseListComponent implements OnInit {
   // Filter State
   searchQuery: string = '';
   selectedTypeFilter: string = 'ALL';
+  selectedDriverFilter: number | null = null;
+  selectedVehicleFilter: number | null = null;
 
   // Modal State - Expense
   showExpenseModal: boolean = false;
@@ -72,7 +75,8 @@ export class ExpenseListComponent implements OnInit {
     private expenseService: ExpenseService,
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
-    private shipmentService: ShipmentService
+    private shipmentService: ShipmentService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -110,6 +114,16 @@ export class ExpenseListComponent implements OnInit {
   clearAlerts(): void {
     this.errorMessage = null;
     this.successMessage = null;
+  }
+
+  showSuccess(msg: string): void {
+    this.successMessage = msg;
+    setTimeout(() => { this.successMessage = null; }, 1790);
+  }
+
+  showError(msg: string): void {
+    this.errorMessage = msg;
+    setTimeout(() => { this.errorMessage = null; }, 1790);
   }
 
   // --- COMMA FORMATTING HELPERS ---
@@ -267,6 +281,14 @@ export class ExpenseListComponent implements OnInit {
       result = result.filter(e => 
         e.details && e.details.some(d => d.expenseTypeCode === this.selectedTypeFilter)
       );
+    }
+
+    if (this.selectedDriverFilter) {
+      result = result.filter(e => e.employeeId === Number(this.selectedDriverFilter));
+    }
+
+    if (this.selectedVehicleFilter) {
+      result = result.filter(e => e.vehicleId === Number(this.selectedVehicleFilter));
     }
 
     if (this.searchQuery && this.searchQuery.trim() !== '') {
@@ -454,26 +476,26 @@ export class ExpenseListComponent implements OnInit {
       this.expenseService.updateExpense(this.selectedExpense.expenseId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật phiếu chi phí thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeExpenseModal();
           this.loadExpenses();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Cập nhật phiếu chi phí thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     } else {
       this.expenseService.createExpense(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Tạo mới phiếu chi phí vận tải thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeExpenseModal();
           this.loadExpenses();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Khai báo phiếu chi phí thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     }
@@ -485,17 +507,25 @@ export class ExpenseListComponent implements OnInit {
 
   onDeleteExpense(e: ExpenseModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa phiếu chi phí "${e.expenseCode}" (${e.title})?`)) return;
-    this.loading = true;
-    this.expenseService.deleteExpense(e.expenseId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa phiếu chi phí thành công';
-        this.loadExpenses();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || err.error?.data || 'Xóa phiếu chi phí thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Chứng Từ Chi Phí',
+      message: `Bạn có chắc chắn muốn xóa phiếu chi phí "${e.expenseCode}" (${e.title || 'Phát sinh vận hành'})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.expenseService.deleteExpense(e.expenseId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadExpenses();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
@@ -540,26 +570,26 @@ export class ExpenseListComponent implements OnInit {
       this.expenseService.updateExpenseType(this.selectedTypeItem.expenseTypeId, val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Cập nhật loại chi phí thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadExpenseTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Cập nhật loại chi phí thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     } else {
       this.expenseService.createExpenseType(val).subscribe({
         next: (res) => {
           this.loading = false;
-          this.successMessage = res.message || 'Tạo mới loại chi phí thành công';
+          this.showSuccess(res.message || 'Thao tác thành công');
           this.closeTypeModal();
           this.loadExpenseTypes();
         },
         error: (err) => {
           this.loading = false;
-          this.errorMessage = err.error?.message || err.error?.data || 'Tạo loại chi phí thất bại.';
+          this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
         }
       });
     }
@@ -567,17 +597,25 @@ export class ExpenseListComponent implements OnInit {
 
   onDeleteType(t: ExpenseTypeModel): void {
     this.clearAlerts();
-    if (!confirm(`Bạn có chắc chắn muốn xóa loại chi phí "${t.expenseTypeName}" (${t.expenseTypeCode})?`)) return;
-    this.loading = true;
-    this.expenseService.deleteExpenseType(t.expenseTypeId).subscribe({
-      next: (res) => {
-        this.loading = false;
-        this.successMessage = res.message || 'Xóa loại chi phí thành công';
-        this.loadExpenseTypes();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || err.error?.data || 'Xóa loại chi phí thất bại.';
+    this.confirmDialog.confirm({
+      title: 'Xóa Loại Chi Phí',
+      message: `Bạn có chắc chắn muốn xóa loại chi phí "${t.expenseTypeName}" (${t.expenseTypeCode})?`,
+      confirmText: 'Đồng Ý Xóa',
+      cancelText: 'Hủy Bỏ',
+      type: 'danger',
+      onConfirm: () => {
+        this.loading = true;
+        this.expenseService.deleteExpenseType(t.expenseTypeId).subscribe({
+          next: (res) => {
+            this.loading = false;
+            this.showSuccess(res.message || 'Thao tác thành công');
+            this.loadExpenseTypes();
+          },
+          error: (err) => {
+            this.loading = false;
+            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
+          }
+        });
       }
     });
   }
