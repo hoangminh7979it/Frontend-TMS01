@@ -1,0 +1,85 @@
+<!-- MODAL: CREATE / EDIT SYSTEM FEATURE -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-cube color-cyan"></i> {{ isEditMode ? 'Chỉnh Sửa Tính Năng Hệ Thống' : 'Khai Báo Tính Năng Mới' }}</h3>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+    
+    <form [formGroup]="featureForm" (ngSubmit)="onSave()">
+      <div class="modal-body">
+        
+        <!-- Modal Error Alert -->
+        <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mã Tính Năng (FEATURE CODE) *</label>
+            <input 
+              type="text" 
+              formControlName="featureCode" 
+              placeholder="Ví dụ: FUEL_MANAGEMENT..." 
+              [ngClass]="{'input-error': featureForm.controls['featureCode'].invalid && featureForm.controls['featureCode'].touched}"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Tên Tính Năng *</label>
+            <input 
+              type="text" 
+              formControlName="featureName" 
+              placeholder="Ví dụ: Quản lý Xăng Dầu & Báo Cáo..." 
+              [ngClass]="{'input-error': featureForm.controls['featureName'].invalid && featureForm.controls['featureName'].touched}"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Đường Dẫn Route Angular (URL)</label>
+            <input type="text" formControlName="routePath" placeholder="Ví dụ: /fuel-management..." />
+          </div>
+
+          <div class="form-group">
+            <label>Class Icon FontAwesome</label>
+            <input type="text" formControlName="iconClass" placeholder="fa-solid fa-gas-pump..." />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tên Phân Hệ (Resource Group)</label>
+            <input type="text" formControlName="resourceGroup" placeholder="Ví dụ: Quản Lý Nhiên Liệu..." />
+          </div>
+
+          <div class="form-group">
+            <label>Thứ Tự Sắp Xếp Menu</label>
+            <input type="number" formControlName="sortOrder" placeholder="1, 2, 3..." />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mô Tả Chức Năng</label>
+          <textarea formControlName="description" rows="3" placeholder="Mô tả mục đích và chức năng chi tiết..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive" />
+            <span>Kích hoạt tính năng ngay lập tức</span>
+          </label>
+        </div>
+
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Tính Năng
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

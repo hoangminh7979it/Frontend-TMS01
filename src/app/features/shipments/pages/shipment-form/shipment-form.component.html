@@ -1,0 +1,281 @@
+<!-- MODAL 1: CREATE / EDIT SHIPMENT (REAL-TIME COMMA FORMATTED FINANCIAL INPUTS) -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card modal-ultra-wide">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-truck-ramp-box"></i> {{ isEditMode ? 'Chỉnh Sửa Hồ Sơ Đơn Hàng Vận Chuyển' : 'Khai Báo Đơn Hàng Vận Chuyển Mới' }}</h3>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+    
+    <form [formGroup]="shipmentForm" (ngSubmit)="onSave()">
+      <div class="modal-body">
+        
+        <!-- Modal Error Alert -->
+        <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+        </div>
+
+        <!-- SECTION 1: CHỨNG TỪ & KHÁCH HÀNG -->
+        <div class="form-section-title"><i class="fa-solid fa-file-invoice"></i> PHẦN 1: THÔNG TIN KHÁCH HÀNG & CHỨNG TỪ</div>
+        
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Mã Đơn Hàng *</label>
+            <input 
+              type="text" 
+              formControlName="shipmentCode" 
+              placeholder="Ví dụ: DH-2026-001..." 
+              [ngClass]="{'input-error': shipmentForm.controls['shipmentCode'].invalid && shipmentForm.controls['shipmentCode'].touched}"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Khách Hàng Đặt Đơn</label>
+            <select formControlName="customerId">
+              <option [ngValue]="null">-- Chọn khách hàng --</option>
+              <option *ngFor="let c of customers" [value]="c.customerId">
+                {{ c.customerCode }} - {{ c.companyName || c.fullName }} ({{ c.phone || 'Không SĐT' }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Trạng Thái Khởi Tạo</label>
+            <select formControlName="statusEnumId">
+              <option *ngFor="let st of statuses" [value]="st.statusEnumId">
+                {{ st.statusEnumName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- SECTION 2: HÀNG HÓA & TRỌNG LƯỢNG -->
+        <div class="form-section-title"><i class="fa-solid fa-boxes-stacked"></i> PHẦN 2: THÔNG TIN HÀNG HÓA VẬN CHUYỂN</div>
+
+        <div class="form-row-2-1">
+          <div class="form-group">
+            <label>Tên Hàng Hóa & Quy Cách Đóng Gói</label>
+            <input type="text" formControlName="cargoType" placeholder="Ví dụ: Linh kiện điện tử Samsung (12 Pallet, Thùng carton)..." />
+          </div>
+
+          <div class="form-group">
+            <label>Trọng Lượng (Tấn)</label>
+            <input type="number" step="0.1" formControlName="weight" placeholder="15.5" />
+          </div>
+        </div>
+
+        <!-- SECTION 3: LỘ TRÌNH ĐIỂM ĐI - ĐIỂM ĐẾN & THỜI GIAN -->
+        <div class="form-section-title"><i class="fa-solid fa-map-location-dot"></i> PHẦN 3: LỘ TRÌNH VẬN CHUYỂN & GỢI Ý CÔNG TY (AUTOCOMPLETE)</div>
+
+        <div class="form-row-2">
+          
+          <!-- Column Left: Pickup Place & Date -->
+          <div class="form-card-box">
+            <div class="box-header color-green"><i class="fa-solid fa-location-dot"></i> NƠI NHẬN HÀNG (Tự động lưu Công ty mới)</div>
+            
+            <div class="form-group">
+              <div class="label-with-action">
+                <label>Danh Sách Điểm Nhận Hàng</label>
+                <button type="button" class="btn-add-mini" (click)="onAddReceipt()">
+                  <i class="fa-solid fa-plus"></i> Thêm Điểm Nhận
+                </button>
+              </div>
+
+              <!-- Custom High-Contrast Autocomplete Wrapper -->
+              <div class="autocomplete-wrapper" *ngFor="let p of receiptPlacesList; let i = index; trackBy: trackByIndex">
+                <div class="dynamic-input-row">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="receiptPlacesList[i]" 
+                    [ngModelOptions]="{standalone: true}" 
+                    (focus)="onFocusReceiptInput(i)"
+                    (input)="onFocusReceiptInput(i)"
+                    placeholder="Gõ tên Công ty / Điểm nhận để xem gợi ý..." 
+                  />
+                  <button 
+                    type="button" 
+                    class="btn-remove-mini" 
+                    (click)="onRemoveReceipt(i)" 
+                    [disabled]="receiptPlacesList.length === 1 && i === 0"
+                    title="Xóa điểm nhận"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <!-- High-Contrast Floating Dropdown -->
+                <div 
+                  class="custom-autocomplete-dropdown" 
+                  *ngIf="activeReceiptIndex === i && getFilteredCompanies(receiptPlacesList[i]).length > 0"
+                >
+                  <div 
+                    class="dropdown-item" 
+                    *ngFor="let comp of getFilteredCompanies(receiptPlacesList[i])"
+                    (mousedown)="onSelectReceiptCompany(i, comp)"
+                  >
+                    <div class="item-title"><i class="fa-solid fa-building color-cyan"></i> {{ comp.name }}</div>
+                    <div class="item-sub" *ngIf="comp.address"><i class="fa-solid fa-location-dot"></i> {{ comp.address }}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-group">
+              <label>Ngày Nhận Hàng</label>
+              <input type="date" formControlName="dateOfReceipt" />
+            </div>
+          </div>
+
+          <!-- Column Right: Delivery Place & Date -->
+          <div class="form-card-box">
+            <div class="box-header color-red"><i class="fa-solid fa-flag-checkered"></i> NƠI GIAO HÀNG (Tự động lưu Công ty mới)</div>
+
+            <div class="form-group">
+              <div class="label-with-action">
+                <label>Danh Sách Điểm Giao Hàng</label>
+                <button type="button" class="btn-add-mini" (click)="onAddDelivery()">
+                  <i class="fa-solid fa-plus"></i> Thêm Điểm Giao
+                </button>
+              </div>
+
+              <!-- Custom High-Contrast Autocomplete Wrapper -->
+              <div class="autocomplete-wrapper" *ngFor="let p of deliveryPlacesList; let i = index; trackBy: trackByIndex">
+                <div class="dynamic-input-row">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="deliveryPlacesList[i]" 
+                    [ngModelOptions]="{standalone: true}" 
+                    (focus)="onFocusDeliveryInput(i)"
+                    (input)="onFocusDeliveryInput(i)"
+                    placeholder="Gõ tên Công ty / Điểm giao để xem gợi ý..." 
+                  />
+                  <button 
+                    type="button" 
+                    class="btn-remove-mini" 
+                    (click)="onRemoveDelivery(i)" 
+                    [disabled]="deliveryPlacesList.length === 1 && i === 0"
+                    title="Xóa điểm giao"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <!-- High-Contrast Floating Dropdown -->
+                <div 
+                  class="custom-autocomplete-dropdown" 
+                  *ngIf="activeDeliveryIndex === i && getFilteredCompanies(deliveryPlacesList[i]).length > 0"
+                >
+                  <div 
+                    class="dropdown-item" 
+                    *ngFor="let comp of getFilteredCompanies(deliveryPlacesList[i])"
+                    (mousedown)="onSelectDeliveryCompany(i, comp)"
+                  >
+                    <div class="item-title"><i class="fa-solid fa-building color-cyan"></i> {{ comp.name }}</div>
+                    <div class="item-sub" *ngIf="comp.address"><i class="fa-solid fa-location-dot"></i> {{ comp.address }}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="form-group">
+              <label>Ngày Giao Hàng Dự Kiến</label>
+              <input type="date" formControlName="deliveryDate" />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECTION 4: DOANH THU, CHI PHÍ & ĐIỀU XE (REAL-TIME COMMA SEPARATORS) -->
+        <div class="form-section-title"><i class="fa-solid fa-truck-gear"></i> PHẦN 4: DOANH THU, CHI PHÍ & ĐIỀU ĐỘNG XE/LÁI XE</div>
+
+        <div class="form-row-2">
+          
+          <!-- Column Left: Financial Revenue & Expenses -->
+          <div class="form-card-box">
+            <div class="box-header color-purple"><i class="fa-solid fa-coins"></i> CƯỚC VẬN CHUYỂN & CHI PHÍ (Phân cách dấu phẩy)</div>
+            
+            <div class="form-group">
+              <label>Doanh Thu Cước Vận Chuyển (VNĐ)</label>
+              <input 
+                type="text" 
+                [ngModel]="formattedRevenue" 
+                [ngModelOptions]="{standalone: true}" 
+                (input)="onRevenueInput($event)" 
+                placeholder="Ví dụ: 25,000,000" 
+                class="font-bold color-cyan"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Chi Phí Phát Sinh / Cầu Đường (VNĐ)</label>
+              <input 
+                type="text" 
+                [ngModel]="formattedIncurredCosts" 
+                [ngModelOptions]="{standalone: true}" 
+                (input)="onIncurredCostsInput($event)" 
+                placeholder="Ví dụ: 3,500,000" 
+                class="font-bold color-red"
+              />
+            </div>
+          </div>
+
+          <!-- Column Right: Vehicle & Driver Dispatch -->
+          <div class="form-card-box">
+            <div class="box-header color-cyan"><i class="fa-solid fa-truck"></i> ĐIỀU ĐỘNG PHƯƠNG TIỆN & LÁI XE</div>
+
+            <div class="form-group">
+              <label>Chọn Phương Tiện (Xe Tải / Đầu Kéo)</label>
+              <select formControlName="vehicleId" (change)="onVehicleChanged($event)">
+                <option [ngValue]="null">-- Chưa gán xe --</option>
+                <option *ngFor="let v of vehicles" [value]="v.id">
+                  {{ v.licensePlate }} - {{ v.name }} (Tải trọng: {{ v.payloadCapacity }} Tấn)
+                </option>
+              </select>
+
+              <div class="clean-checkbox-row margin-top-4">
+                <label class="checkbox-label-clean">
+                  <input 
+                    type="checkbox" 
+                    [ngModel]="useCustomDriver" 
+                    [ngModelOptions]="{standalone: true}" 
+                    (change)="onToggleCustomDriverChanged()" 
+                  />
+                  <span>Tùy chỉnh tài xế khác (Không dùng tài xế mặc định của xe)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Phân Công Tài Xế Vận Hành</label>
+              <select formControlName="employeeId" [attr.disabled]="!useCustomDriver ? true : null">
+                <option [ngValue]="null">-- Chưa chọn tài xế --</option>
+                <option *ngFor="let d of drivers" [value]="d.employeeId">
+                  {{ d.firstname }} {{ d.lastname }} (GPLX: {{ d.drivingLicenseId || 'Chưa rõ' }})
+                </option>
+              </select>
+              <span class="text-xs color-cyan margin-top-2" *ngIf="!useCustomDriver">
+                <i class="fa-solid fa-circle-info"></i> Tự động gán tài xế cố định của xe. Tích checkbox để tùy chỉnh tài xế khác.
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECTION 5: NOTES -->
+        <div class="form-group margin-top-12">
+          <label><i class="fa-solid fa-note-sticky"></i> Ghi Chú Đơn Hàng / Yêu Cầu Bảo Quản</label>
+          <textarea formControlName="notes" rows="2" placeholder="Yêu cầu nhiệt độ kho lạnh, che mui bạt chằng buộc hàng hóa chi tiết..."></textarea>
+        </div>
+
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ Đơn Hàng
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

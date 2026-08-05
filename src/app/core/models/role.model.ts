@@ -2,6 +2,8 @@ export interface PermissionModel {
   permissionId: number;
   permissionCode: string;
   permissionName: string;
+  resourceGroup?: string;
+  actionType?: string;
   description: string;
 }
 

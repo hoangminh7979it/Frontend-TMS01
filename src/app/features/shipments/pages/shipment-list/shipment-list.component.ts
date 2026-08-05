@@ -6,18 +6,24 @@ import { CustomerService } from '@core/services/customer.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ShipmentFormComponent } from '../shipment-form/shipment-form.component';
 import { ShipmentModel, StatusEnumModel } from '@core/models/shipment.model';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
+import { ReportExportService } from '@core/services/report-export.service';
+
+import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-shipment-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ShipmentFormComponent, ReportExportModalComponent],
   templateUrl: './shipment-list.component.html',
   styleUrls: ['./shipment-list.component.css']
 })
+
 export class ShipmentListComponent implements OnInit {
 
   activeTab: 'shipments' | 'statuses' = 'shipments';
@@ -42,6 +48,8 @@ export class ShipmentListComponent implements OnInit {
 
   // Modal State - Shipment
   showShipmentModal: boolean = false;
+  showExportModal: boolean = false;
+
   isEditShipmentMode: boolean = false;
   selectedShipment: ShipmentModel | null = null;
   shipmentForm!: FormGroup;
@@ -80,6 +88,7 @@ export class ShipmentListComponent implements OnInit {
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
     private confirmDialog: ConfirmDialogService,
+    private reportExportService: ReportExportService,
     private eRef: ElementRef
   ) {}
 
@@ -703,12 +712,33 @@ export class ShipmentListComponent implements OnInit {
             this.showSuccess(res.message || 'Thao tác thành công');
             this.loadStatuses();
           },
-          error: (err) => {
-            this.loading = false;
-            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
-          }
         });
       }
     });
   }
+
+  onExportExcel(): void {
+    this.showExportModal = true;
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  onConfirmExport(options: ReportFilterOptions): void {
+    this.showExportModal = false;
+    this.reportExportService.exportShipments(options).subscribe({
+      next: (blob) => {
+        const ext = options.format || 'xlsx';
+        this.reportExportService.downloadBlob(blob, `Bao_Cao_Don_Hang_Shipments.${ext}`);
+        this.showSuccess(`Xuất file báo cáo đơn hàng (${ext.toUpperCase()}) thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất file báo cáo đơn hàng.');
+      }
+    });
+  }
 }
+
+
+
