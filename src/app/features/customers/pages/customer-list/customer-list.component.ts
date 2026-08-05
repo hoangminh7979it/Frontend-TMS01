@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CustomerService } from '@core/services/customer.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { CustomerFormComponent } from '../customer-form/customer-form.component';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CustomerFormComponent],
   templateUrl: './customer-list.component.html',
   styleUrls: ['./customer-list.component.css']
 })

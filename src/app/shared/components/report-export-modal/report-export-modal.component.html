@@ -1,0 +1,178 @@
+<!-- MODAL EXPORT REPORT & FILTER PREVIEW -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-file-excel color-green"></i> 
+        {{ title }}
+      </h3>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      
+      <!-- Filter Criteria Controls Card -->
+      <div class="filter-box">
+        <h4 class="filter-box-title"><i class="fa-solid fa-filter color-cyan"></i> Thiết Lập Bộ Lọc Dữ Liệu</h4>
+        
+        <div class="form-row">
+          <!-- Vehicle Selector (For Shipment, Expense, Revenue) -->
+          <div class="form-group" *ngIf="reportType !== 'SALARY'">
+            <label>Phương Tiện / Biển Số Xe</label>
+            <select [(ngModel)]="selectedVehicleId" (change)="onFilterChange()">
+              <option [ngValue]="null">-- Tất cả xe vận tải --</option>
+              <option *ngFor="let v of vehicles" [ngValue]="v.id">
+                {{ v.licensePlate }} - {{ v.name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Employee Selector (For Salary) -->
+          <div class="form-group" *ngIf="reportType === 'SALARY'">
+            <label>Nhân Sự / Lái Xe</label>
+            <select [(ngModel)]="selectedEmployeeId" (change)="onFilterChange()">
+              <option [ngValue]="null">-- Tất cả nhân sự / tài xế --</option>
+              <option *ngFor="let e of employees" [ngValue]="e.employeeId">
+                {{ e.employeeCode }} - {{ e.firstname }} {{ e.lastname }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Date Range: Start Date -->
+          <div class="form-group">
+            <label>Từ Ngày Bắt Đầu</label>
+            <input type="date" [(ngModel)]="startDate" (change)="onFilterChange()" />
+          </div>
+
+          <!-- Date Range: End Date -->
+          <div class="form-group">
+            <label>Đến Ngày Kết Thúc</label>
+            <input type="date" [(ngModel)]="endDate" (change)="onFilterChange()" />
+          </div>
+        </div>
+
+        <div class="form-row margin-top-2">
+          <div class="form-group">
+            <label>Định Dạng File Xuất</label>
+            <div class="format-options">
+              <span class="badge-excel"><i class="fa-solid fa-file-excel color-green"></i> Microsoft Excel (.xlsx)</span>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+
+      <!-- Preview Summary Header -->
+      <div class="preview-header">
+        <h4 class="preview-title">
+          <i class="fa-solid fa-eye color-cyan"></i> Xem Trước Dữ Liệu Bản Ghi Lọc Được
+        </h4>
+        <span class="preview-badge">Tìm thấy {{ filteredPreview.length }} bản ghi</span>
+      </div>
+
+      <!-- Preview Data Table -->
+      <div class="table-container">
+        <table class="preview-table">
+          <thead>
+            <!-- Shipment Columns -->
+            <tr *ngIf="reportType === 'SHIPMENT'">
+              <th>MÃ ĐƠN</th>
+              <th>KHÁCH HÀNG</th>
+              <th>NƠI NHẬN</th>
+              <th>NƠI GIAO</th>
+              <th>TRỌNG LƯỢNG</th>
+              <th>TRẠNG THÁI</th>
+            </tr>
+            <!-- Expense Columns -->
+            <tr *ngIf="reportType === 'EXPENSE'">
+              <th>MÃ PHIẾU</th>
+              <th>TIÊU ĐỀ TRÍCH YẾU</th>
+              <th>BIỂN SỐ XE</th>
+              <th>TỔNG CHI PHÍ</th>
+              <th>NGÀY CHI</th>
+            </tr>
+            <!-- Salary Columns -->
+            <tr *ngIf="reportType === 'SALARY'">
+              <th>MÃ LƯƠNG</th>
+              <th>TÊN TÀI XẾ</th>
+              <th>KỲ TÍNH LƯƠNG</th>
+              <th>LƯƠNG CỨNG</th>
+              <th>THỰC NHẬN</th>
+            </tr>
+            <!-- Revenue Columns -->
+            <tr *ngIf="reportType === 'REVENUE'">
+              <th>MÃ CHỨNG TỪ</th>
+              <th>TỪ NGÀY</th>
+              <th>ĐẾN NGÀY</th>
+              <th>SỐ CHUYẾN</th>
+              <th>LỢI NHUẬN RÒNG</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of filteredPreview">
+              <!-- Shipment Data -->
+              <ng-container *ngIf="reportType === 'SHIPMENT'">
+                <td class="font-mono color-cyan font-bold">{{ item.shipmentCode }}</td>
+                <td>{{ item.customer?.companyName || item.customer?.firstname || '-' }}</td>
+                <td>{{ item.receiptPlace }}</td>
+                <td>{{ item.deliveryPlace }}</td>
+                <td>{{ item.weight }} Tấn</td>
+                <td><span class="status-tag">{{ item.statusEnum?.statusEnumName || 'CREATED' }}</span></td>
+              </ng-container>
+
+              <!-- Expense Data -->
+              <ng-container *ngIf="reportType === 'EXPENSE'">
+                <td class="font-mono color-cyan font-bold">{{ item.expenseCode }}</td>
+                <td>{{ item.title }}</td>
+                <td><span class="badge-plate">{{ item.vehicleLicensePlate || '-' }}</span></td>
+                <td class="color-red font-bold">{{ (item.totalExpense || 0) | number:'1.0-0' }} VNĐ</td>
+                <td>{{ item.expenseDate | date:'dd/MM/yyyy' }}</td>
+              </ng-container>
+
+              <!-- Salary Data -->
+              <ng-container *ngIf="reportType === 'SALARY'">
+                <td class="font-mono color-cyan font-bold">{{ item.salaryCode }}</td>
+                <td class="font-bold">{{ item.employee?.firstname }} {{ item.employee?.lastname }}</td>
+                <td>{{ item.startDate | date:'dd/MM/yy' }} - {{ item.endDate | date:'dd/MM/yy' }}</td>
+                <td>{{ (item.salaryBasicCosts || 0) | number:'1.0-0' }} VNĐ</td>
+                <td class="color-green font-bold">{{ (item.salaryCosts || 0) | number:'1.0-0' }} VNĐ</td>
+              </ng-container>
+
+              <!-- Revenue Data -->
+              <ng-container *ngIf="reportType === 'REVENUE'">
+                <td class="font-mono color-cyan font-bold">{{ item.revenueCode }}</td>
+                <td>{{ item.startDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ item.endDate | date:'dd/MM/yyyy' }}</td>
+                <td>{{ item.totalShipment }} Chuyến</td>
+                <td class="color-green font-bold">{{ (item.revenueFinalCosts || 0) | number:'1.0-0' }} VNĐ</td>
+              </ng-container>
+            </tr>
+
+            <tr *ngIf="filteredPreview.length === 0">
+              <td colspan="6" class="empty-preview">
+                <i class="fa-solid fa-folder-open empty-icon"></i>
+                <p>Không có bản ghi nào khớp với điều kiện bộ lọc đã chọn.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="onClose()">
+        <i class="fa-solid fa-xmark"></i> Hủy Bỏ
+      </button>
+      <button type="button" class="btn btn-primary" (click)="onExport()" [disabled]="filteredPreview.length === 0">
+        <i class="fa-solid fa-file-excel"></i> Xác Nhận Xuất File Excel (.xlsx)
+      </button>
+
+    </div>
+
+  </div>
+</div>

@@ -6,21 +6,25 @@ import { EmployeeService } from '@core/services/employee.service';
 import { ShipmentService } from '@core/services/shipment.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { PayrollFormComponent } from '../payroll-form/payroll-form.component';
 import { SalaryModel } from '@core/models/payroll.model';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { VehicleModel } from '@core/models/vehicle.model';
+import { ReportExportService } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-payroll-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PayrollFormComponent],
   templateUrl: './payroll-list.component.html',
   styleUrls: ['./payroll-list.component.css']
 })
+
 export class PayrollListComponent implements OnInit {
 
   loading: boolean = false;
+
   shipmentLoading: boolean = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
@@ -67,7 +71,8 @@ export class PayrollListComponent implements OnInit {
     private employeeService: EmployeeService,
     private shipmentService: ShipmentService,
     private vehicleService: VehicleService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private reportExportService: ReportExportService
   ) {}
 
   ngOnInit(): void {
@@ -546,12 +551,45 @@ export class PayrollListComponent implements OnInit {
             this.showSuccess(res.message || 'Thao tác thành công');
             this.loadSalaries();
           },
-          error: (err) => {
-            this.loading = false;
-            this.showError(err.error?.message || 'Thao tác thất bại');
-          }
         });
       }
     });
   }
+
+  onExportCurrentSalary(): void {
+    const salaryId = this.selectedSalary?.salaryId;
+    const salaryCode = this.salaryForm.get('salaryCode')?.value || 'Salary';
+    if (!salaryId) {
+      this.showError('Không xác định được ID phiếu lương này để xuất file.');
+      return;
+    }
+    this.reportExportService.exportSalaryById(salaryId).subscribe({
+      next: (blob) => {
+        const filename = `Phieu_Luong_${salaryCode}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất phiếu lương "${salaryCode}" thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất phiếu lương.');
+      }
+    });
+  }
+
+  onExportSalaryRecord(salary: SalaryModel): void {
+    if (!salary.salaryId) {
+      this.showError('Không xác định được ID phiếu lương này.');
+      return;
+    }
+    this.reportExportService.exportSalaryById(salary.salaryId).subscribe({
+      next: (blob) => {
+        const filename = `Phieu_Luong_${salary.salaryCode || salary.salaryId}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất phiếu lương "${salary.salaryCode}" thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất phiếu lương.');
+      }
+    });
+  }
 }
+

@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { EmployeeService } from '@core/services/employee.service';
 import { UserManagementService } from '@core/services/user-management.service';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { EmployeeFormComponent } from '../employee-form/employee-form.component';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { UserModel } from '@core/models/user.model';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, EmployeeFormComponent],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })

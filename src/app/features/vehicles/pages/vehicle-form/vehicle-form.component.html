@@ -1,0 +1,89 @@
+<!-- MODAL 1: CREATE / EDIT VEHICLE -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-truck-front"></i> {{ isEditMode ? 'Chỉnh Sửa Hồ Sơ Phương Tiện' : 'Khai Báo Xe Vận Tải Mới' }}</h3>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+    
+    <form [formGroup]="vehicleForm" (ngSubmit)="onSave()">
+      <div class="modal-body">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Biển Số Xe *</label>
+            <input type="text" formControlName="licensePlate" placeholder="Ví dụ: 29C-888.99..." />
+          </div>
+          
+          <div class="form-group">
+            <label>Mã Phương Tiện</label>
+            <input type="text" formControlName="vehicleCode" placeholder="Ví dụ: XE-001..." />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tên Xe / Nhãn Hiệu</label>
+            <input type="text" formControlName="name" placeholder="Hyundai Trago 15T..." />
+          </div>
+
+          <div class="form-group">
+            <label>Loại Phương Tiện</label>
+            <select formControlName="vehicleTypeId">
+              <option [ngValue]="null">-- Chọn loại xe --</option>
+              <option *ngFor="let t of vehicleTypes" [value]="t.vehicleTypeId">
+                {{ t.vehicleTypeName }} ({{ t.vehicleTypeCode }})
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tải Trọng Thiết Kế (Tấn)</label>
+            <input type="number" step="0.5" formControlName="payloadCapacity" placeholder="15.5..." />
+          </div>
+          
+          <div class="form-group">
+            <label>Trạng Thái Vận Hành *</label>
+            <select formControlName="status">
+              <option value="AVAILABLE">Sẵn sàng nhận chuyến</option>
+              <option value="IN_TRANSIT">Đang chạy tuyến đường</option>
+              <option value="MAINTENANCE">Đang bảo dưỡng / sửa chữa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Hạn Đăng Kiểm</label>
+            <input type="date" formControlName="inspectionExpirationDate" />
+          </div>
+
+          <div class="form-group">
+            <label>Hạn Bảo Hiểm Phương Tiện</label>
+            <input type="date" formControlName="insuranceExpirationDate" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Phân Công Tài Xế Phụ Trách</label>
+          <select formControlName="employeeId">
+            <option [ngValue]="null">-- Chưa phân công tài xế --</option>
+            <option *ngFor="let d of drivers" [value]="d.employeeId">
+              {{ d.employeeCode }} - {{ d.fullName }} (SĐT: {{ d.phone || 'N/A' }})
+            </option>
+          </select>
+        </div>
+
+      </div>
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ Xe
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

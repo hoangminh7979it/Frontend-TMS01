@@ -140,35 +140,15 @@
     </div>
   </div>
 
-  <!-- MODAL 1: CREATE/EDIT ROLE -->
-  <div class="modal-backdrop" *ngIf="showRoleModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-user-shield"></i> {{ isEditRoleMode ? 'Chỉnh Sửa Vai Trò' : 'Tạo Vai Trò Mới' }}</h3>
-        <button class="modal-close" (click)="closeRoleModal()">&times;</button>
-      </div>
-      <form [formGroup]="roleForm" (ngSubmit)="onSaveRole()">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Mã Vai Trò (ROLE CODE)</label>
-            <input type="text" formControlName="roleCode" placeholder="Ví dụ: DRIVER, ACCOUNTANT..." />
-          </div>
-          <div class="form-group">
-            <label>Tên Vai Trò</label>
-            <input type="text" formControlName="roleName" placeholder="Ví dụ: Nhân Viên Lái Xe..." />
-          </div>
-          <div class="form-group">
-            <label>Mô Tả</label>
-            <textarea formControlName="description" rows="3" placeholder="Mô tả chức năng vai trò..."></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeRoleModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">Lưu Vai Trò</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- SEPARATE ROLE CREATION & EDITING FORM COMPONENT -->
+  <app-role-form
+    [showModal]="showRoleModal"
+    [isEditMode]="isEditRoleMode"
+    [roleForm]="roleForm"
+    [loading]="loading"
+    (close)="closeRoleModal()"
+    (save)="onSaveRole()"
+  ></app-role-form>
 
   <!-- MODAL 2: ENTERPRISE ACTION MATRIX GRID TABLE -->
   <div class="modal-backdrop" *ngIf="showAssignModal">

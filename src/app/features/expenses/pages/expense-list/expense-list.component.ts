@@ -6,10 +6,12 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ShipmentService } from '@core/services/shipment.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ExpenseFormComponent } from '../expense-form/expense-form.component';
 import { ExpenseModel, ExpenseTypeModel } from '@core/models/expense.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
+import { ReportExportService } from '@core/services/report-export.service';
 
 export interface DetailRow {
   expenseTypeId: number | null;
@@ -18,13 +20,17 @@ export interface DetailRow {
   description: string;
 }
 
+import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { ReportFilterOptions } from '@core/services/report-export.service';
+
 @Component({
   selector: 'app-expense-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ExpenseFormComponent, ReportExportModalComponent],
   templateUrl: './expense-list.component.html',
   styleUrls: ['./expense-list.component.css']
 })
+
 export class ExpenseListComponent implements OnInit {
 
   activeTab: 'expenses' | 'types' = 'expenses';
@@ -48,6 +54,8 @@ export class ExpenseListComponent implements OnInit {
 
   // Modal State - Expense
   showExpenseModal: boolean = false;
+  showExportModal: boolean = false;
+
   isEditExpenseMode: boolean = false;
   selectedExpense: ExpenseModel | null = null;
   expenseForm!: FormGroup;
@@ -76,7 +84,8 @@ export class ExpenseListComponent implements OnInit {
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
     private shipmentService: ShipmentService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private reportExportService: ReportExportService
   ) {}
 
   ngOnInit(): void {
@@ -611,12 +620,33 @@ export class ExpenseListComponent implements OnInit {
             this.showSuccess(res.message || 'Thao tác thành công');
             this.loadExpenseTypes();
           },
-          error: (err) => {
-            this.loading = false;
-            this.showError(err.error?.message || err.error?.data || 'Thao tác thất bại');
-          }
         });
       }
     });
   }
+
+  onExportExcel(): void {
+    this.showExportModal = true;
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  onConfirmExport(options: ReportFilterOptions): void {
+    this.showExportModal = false;
+    this.reportExportService.exportExpenses(options).subscribe({
+      next: (blob) => {
+        const ext = options.format || 'xlsx';
+        this.reportExportService.downloadBlob(blob, `Bao_Cao_Chi_Phi_Expenses.${ext}`);
+        this.showSuccess(`Xuất file báo cáo chi phí (${ext.toUpperCase()}) thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất file báo cáo chi phí.');
+      }
+    });
+  }
 }
+
+
+

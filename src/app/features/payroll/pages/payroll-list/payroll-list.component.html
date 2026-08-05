@@ -13,6 +13,7 @@
     </div>
   </div>
 
+
   <!-- Alerts -->
   <div *ngIf="errorMessage && !showSalaryModal" class="toast-alert toast-error">
     <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
@@ -141,10 +142,11 @@
               <div class="font-bold color-green text-base"><i class="fa-solid fa-coins"></i> {{ s.salaryCosts | number }} VNĐ</div>
             </td>
             <td class="text-right actions-cell" (click)="$event.stopPropagation()">
-              <button class="action-btn btn-view" (click)="openEditSalaryModal(s)" title="Xem Chi Tiết / Sửa"><i class="fa-solid fa-eye"></i> Xem</button>
-              <button class="action-btn btn-edit" (click)="openEditSalaryModal(s)" title="Sửa Bảng Lương"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
+              <button class="action-btn btn-edit" (click)="openEditSalaryModal(s)" title="Xem Chi Tiết / Sửa Bảng Lương"><i class="fa-solid fa-pen-to-square"></i> Xem / Sửa</button>
               <button class="action-btn btn-delete" (click)="onDeleteSalary(s)" title="Xóa Bảng Lương"><i class="fa-solid fa-trash-can"></i> Xóa</button>
             </td>
+
+
           </tr>
           <tr *ngIf="filteredSalaries.length === 0">
             <td colspan="10" class="text-center empty-cell">
@@ -157,233 +159,37 @@
     </div>
   </div>
 
-  <!-- =====================================================================
-       MODAL: CREATE / EDIT SALARY (FULL-FEATURED AUTO-SYNC POPUP)
-       ===================================================================== -->
-  <div class="modal-backdrop" *ngIf="showSalaryModal">
-    <div class="modal-card modal-xl">
-      <div class="modal-header">
-        <h3>
-          <i class="fa-solid fa-file-invoice-dollar color-cyan"></i>
-          {{ isEditSalaryMode ? 'Chỉnh Sửa Hồ Sơ Bảng Lương' : 'Lập Phiếu Tính Lương Mới' }}
-        </h3>
-        <button class="modal-close" (click)="closeSalaryModal()">&times;</button>
-      </div>
-
-      <form [formGroup]="salaryForm" (ngSubmit)="onSaveSalary()">
-        <div class="modal-body">
-
-          <!-- Modal Error Alert -->
-          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
-            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-          </div>
-
-          <!-- ===== SECTION 1: THÔNG TIN PHIẾU LƯƠNG ===== -->
-          <div class="form-card-box">
-            <div class="box-header color-cyan">
-              <i class="fa-solid fa-id-card"></i> PHẦN 1 — THÔNG TIN PHIẾU LƯƠNG & CHỌN TÀI XẾ
-            </div>
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Mã Bảng Lương *</label>
-                <input type="text" formControlName="salaryCode" placeholder="LUONG-202608-001"
-                  [ngClass]="{'input-error': salaryForm.controls['salaryCode'].invalid && salaryForm.controls['salaryCode'].touched}"/>
-              </div>
-              <div class="form-group">
-                <label>Từ Ngày (Đầu Kỳ Lương) *</label>
-                <input type="date" formControlName="startDate" (change)="onStartDateChange()"/>
-              </div>
-              <div class="form-group">
-                <label>Đến Ngày (Cuối Kỳ Lương) *</label>
-                <input type="date" formControlName="endDate" (change)="onEndDateChange()"/>
-              </div>
-            </div>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>Chọn Tài Xế / Nhân Sự *</label>
-                <select formControlName="employeeId" (change)="onDriverChange($event)"
-                  [ngClass]="{'input-error': salaryForm.controls['employeeId'].invalid && salaryForm.controls['employeeId'].touched}">
-                  <option [ngValue]="null">-- Chọn nhân sự tính lương --</option>
-                  <option *ngFor="let d of drivers" [value]="d.employeeId">
-                    {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }}) - {{ d.employeeTypeName || 'Lái xe' }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Phương Tiện Vận Chuyển <span class="auto-badge">AUTO</span></label>
-                <div class="auto-vehicle-tags">
-                  <ng-container *ngIf="vehicleOptions.length > 0">
-                    <span class="vehicle-tag" *ngFor="let v of vehicleOptions">
-                      <i class="fa-solid fa-truck"></i> {{ v.licensePlate }}{{ v.vehicleName ? ' (' + v.vehicleName + ')' : '' }}
-                    </span>
-                  </ng-container>
-                  <span class="field-note" *ngIf="vehicleOptions.length === 0">
-                    <i class="fa-solid fa-circle-info"></i> Tự động tổng hợp tất cả biển số xe từ chuyến hàng
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ===== SECTION 2: DANH SÁCH CHUYẾN AUTO-LOADED ===== -->
-          <div class="form-card-box shipment-preview-box">
-            <div class="box-header color-blue">
-              <i class="fa-solid fa-truck-fast"></i> PHẦN 2 — CHUYẾN HÀNG CỦA TÀI XẾ TRONG KỲ LƯƠNG
-              <span class="sync-badge" *ngIf="!shipmentLoading">
-                <i class="fa-solid fa-circle-check"></i>
-                {{ driverShipmentsInRange.length }} chuyến hàng
-              </span>
-              <span class="sync-badge loading" *ngIf="shipmentLoading">
-                <i class="fa-solid fa-spinner fa-spin"></i> Đang tải dữ liệu chuyến...
-              </span>
-            </div>
-
-            <!-- Hint row -->
-            <div class="sync-hint" *ngIf="!shipmentLoading && driverShipmentsInRange.length === 0">
-              <i class="fa-solid fa-circle-info"></i>
-              Chọn tài xế và khoảng ngày ở Phần 1 để hệ thống tự động tải và sync dữ liệu chuyến hàng.
-            </div>
-
-            <!-- Shipment table (shown when loaded) -->
-            <div class="shipment-mini-table-wrap" *ngIf="driverShipmentsInRange.length > 0">
-              <table class="shipment-mini-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>TUYẾN ĐƯỜNG</th>
-                    <th>NGÀY NHẬN</th>
-                    <th>NGÀY GIAO</th>
-                    <th>TRẠNG THÁI</th>
-                    <th class="text-right">DOANH THU CƯỚC</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let ship of driverShipmentsInRange; let i = index">
-                    <td class="text-center color-cyan font-bold">{{ i + 1 }}</td>
-                    <td class="text-xs">
-                      <span class="color-title">{{ ship.customerName || '-' }}</span>
-                    </td>
-                    <td class="text-xs">{{ ship.dateOfReceipt ? (ship.dateOfReceipt | date:'dd/MM/yyyy') : '-' }}</td>
-                    <td class="text-xs">{{ ship.deliveryDate ? (ship.deliveryDate | date:'dd/MM/yyyy') : '-' }}</td>
-                    <td>
-                      <span class="status-chip" [ngClass]="{
-                        'chip-delivered': ship.statusEnumCode === 'DELIVERED',
-                        'chip-pickedup': ship.statusEnumCode === 'PICKED_UP',
-                        'chip-dispatched': ship.statusEnumCode === 'DISPATCHED',
-                        'chip-created': ship.statusEnumCode === 'CREATED',
-                        'chip-cancelled': ship.statusEnumCode === 'CANCELLED'
-                      }">{{ ship.statusEnumName || ship.statusEnumCode }}</span>
-                    </td>
-                    <td class="text-right font-bold color-green">{{ ship.revenue | number }} VNĐ</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Synced summary chips -->
-            <div class="sync-summary" *ngIf="driverShipmentsInRange.length > 0">
-              <div class="sync-chip">
-                <i class="fa-solid fa-route color-blue"></i>
-                <span>Số chuyến: <strong>{{ salaryForm.get('totalShipmentCount')?.value }}</strong></span>
-              </div>
-              <div class="sync-chip">
-                <i class="fa-solid fa-circle-dollar-to-slot color-green"></i>
-                <span>Doanh thu cước: <strong>{{ formattedDriverRevenue }} VNĐ</strong></span>
-              </div>
-              <div class="sync-chip sync-chip-note">
-                <i class="fa-solid fa-circle-info color-cyan"></i>
-                <span>Dữ liệu đã được sync tự động. Bạn có thể điều chỉnh thủ công ở Phần 3 nếu cần.</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- ===== SECTION 3: TÍNH LƯƠNG CỨNG ===== -->
-          <div class="form-card-box">
-            <div class="box-header color-green">
-              <i class="fa-solid fa-calendar-check"></i> PHẦN 3 — LƯƠNG CỨNG CỐ ĐỊNH (THÁNG HOẶC THEO NGÀY CÔNG)
-            </div>
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Lương Cứng Định Kỳ Tháng (VNĐ)</label>
-                <input type="text" [(ngModel)]="formattedBasicCosts" [ngModelOptions]="{standalone: true}"
-                  (input)="onBasicCostInput($event)" class="font-bold text-right"/>
-              </div>
-              <div class="form-group">
-                <label>Số Ngày Công Làm Việc</label>
-                <input type="number" formControlName="workDaysCount" (input)="onWorkDaysInput()" class="font-bold text-center"/>
-              </div>
-              <div class="form-group">
-                <label>Đơn Giá Lương / Ngày (VNĐ)</label>
-                <input type="text" [(ngModel)]="formattedBasicPerDay" [ngModelOptions]="{standalone: true}"
-                  (input)="onBasicPerDayInput($event)" class="font-bold text-right"/>
-              </div>
-            </div>
-          </div>
-
-          <!-- ===== SECTION 4: TÍNH LƯƠNG THƯỞNG CHUYẾN ===== -->
-          <div class="form-card-box">
-            <div class="box-header color-purple">
-              <i class="fa-solid fa-percent"></i> PHẦN 4 — LƯƠNG THƯỞNG CHUYẾN (% DOANH THU CƯỚC HOẶC TIỀN CỐ ĐỊNH)
-            </div>
-            <div class="form-row-3">
-              <div class="form-group">
-                <label>Tổng Doanh Thu Cước (VNĐ) <span class="auto-badge">AUTO</span></label>
-                <input type="text" [(ngModel)]="formattedDriverRevenue" [ngModelOptions]="{standalone: true}"
-                  (input)="onDriverRevenueInput($event)" class="font-bold color-cyan text-right input-synced"/>
-              </div>
-              <div class="form-group">
-                <label>Tỷ Lệ % Hoa Hồng Thưởng</label>
-                <input type="number" formControlName="tripSalaryPercentage" (input)="onTripPercentageInput()"
-                  placeholder="Ví dụ: 10" class="font-bold color-purple text-center"/>
-              </div>
-              <div class="form-group">
-                <label>Số Chuyến Hàng <span class="auto-badge">AUTO</span></label>
-                <input type="number" formControlName="totalShipmentCount" class="font-bold text-center input-synced" readonly/>
-              </div>
-            </div>
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>Phụ Cấp Ăn Uống / Lưu Đêm (+ VNĐ)</label>
-                <input type="text" [(ngModel)]="formattedAllowanceCosts" [ngModelOptions]="{standalone: true}"
-                  (input)="onAllowanceInput($event)" class="font-bold color-green text-right"/>
-              </div>
-              <div class="form-group">
-                <label>Khấu Trừ / Vi Phạm (- VNĐ)</label>
-                <input type="text" [(ngModel)]="formattedDeductionCosts" [ngModelOptions]="{standalone: true}"
-                  (input)="onDeductionInput($event)" class="font-bold color-red text-right"/>
-              </div>
-            </div>
-          </div>
-
-          <!-- ===== TOTAL SALARY BAR ===== -->
-          <div class="total-summary-card">
-            <div class="total-label-box">
-              <i class="fa-solid fa-hand-holding-dollar color-green font-size-lg"></i>
-              <span>TỔNG LƯƠNG THỰC NHẬN (CỨNG + THƯỞNG % CHUYẾN + PHỤ CẤP − KHẤU TRỪ):</span>
-            </div>
-            <div class="total-input-wrapper">
-              <input type="text" [(ngModel)]="formattedTotalSalaryCosts" [ngModelOptions]="{standalone: true}"
-                class="total-salary-input" readonly/>
-              <span class="unit-text-green">VNĐ</span>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div class="form-group">
-            <label><i class="fa-solid fa-note-sticky color-cyan"></i> Ghi Chú Hồ Sơ Lương</label>
-            <textarea formControlName="notes" rows="2" placeholder="Ghi chú các khoản thưởng phạt, phụ cấp..."></textarea>
-          </div>
-
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeSalaryModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">
-            <i class="fa-solid fa-floppy-disk"></i> Lưu Phiếu Lương
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- SEPARATE PAYROLL CREATION & EDITING FORM COMPONENT -->
+  <app-payroll-form
+    [showModal]="showSalaryModal"
+    [isEditMode]="isEditSalaryMode"
+    [salaryForm]="salaryForm"
+    [drivers]="drivers"
+    [employeeTypes]="employeeTypes"
+    [vehicles]="vehicles"
+    [driverShipmentsInRange]="driverShipmentsInRange"
+    [vehicleOptions]="vehicleOptions"
+    [shipmentLoading]="shipmentLoading"
+    [formattedBasicCosts]="formattedBasicCosts"
+    [formattedBasicPerDay]="formattedBasicPerDay"
+    [formattedAllowanceCosts]="formattedAllowanceCosts"
+    [formattedDeductionCosts]="formattedDeductionCosts"
+    [formattedTotalSalaryCosts]="formattedTotalSalaryCosts"
+    [errorMessage]="errorMessage"
+    [loading]="loading"
+    (close)="closeSalaryModal()"
+    (save)="onSaveSalary()"
+    (startDateChange)="onStartDateChange()"
+    (endDateChange)="onEndDateChange()"
+    (driverChange)="onDriverChange($event)"
+    (basicCostInput)="onBasicCostInput($event)"
+    (workDaysInput)="onWorkDaysInput()"
+    (basicPerDayInput)="onBasicPerDayInput($event)"
+    (driverRevenueInput)="onDriverRevenueInput($event)"
+    (tripPercentageInput)="onTripPercentageInput()"
+    (allowanceInput)="onAllowanceInput($event)"
+    (deductionInput)="onDeductionInput($event)"
+    (export)="onExportCurrentSalary()"
+  ></app-payroll-form>
 
 </div>
