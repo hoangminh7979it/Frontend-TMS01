@@ -217,95 +217,17 @@
     </div>
   </div>
 
-  <!-- MODAL 1: CREATE / EDIT EMPLOYEE -->
-  <div class="modal-backdrop" *ngIf="showEmployeeModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-address-card"></i> {{ isEditEmployeeMode ? 'Chỉnh Sửa Hồ Sơ Nhân Sự' : 'Khai Báo Nhân Sự Mới' }}</h3>
-        <button class="modal-close" (click)="closeEmployeeModal()">&times;</button>
-      </div>
-      
-      <form [formGroup]="employeeForm" (ngSubmit)="onSaveEmployee()">
-        <div class="modal-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Mã Nhân Viên *</label>
-              <input type="text" formControlName="employeeCode" placeholder="Ví dụ: NV-001..." />
-            </div>
-            
-            <div class="form-group">
-              <label>Loại Nhân Sự *</label>
-              <select formControlName="employeeTypeId">
-                <option [ngValue]="null">-- Chọn loại nhân sự --</option>
-                <option *ngFor="let t of employeeTypes" [value]="t.employeeTypeId">
-                  {{ t.employeeTypeName }} ({{ t.employeeTypeCode }})
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Họ & Tên Đệm *</label>
-              <input type="text" formControlName="firstname" placeholder="Nguyễn Văn..." />
-            </div>
-            
-            <div class="form-group">
-              <label>Tên *</label>
-              <input type="text" formControlName="lastname" placeholder="Hùng..." />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Số CCCD / CMND</label>
-              <input type="text" formControlName="nationalId" placeholder="12 chữ số CCCD..." />
-            </div>
-            
-            <div class="form-group">
-              <label>Số Giấy Phép Lái Xe (GPLX)</label>
-              <input type="text" formControlName="drivingLicenseId" placeholder="Bằng C, FC, E..." />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Số Điện Thoại</label>
-              <input type="text" formControlName="phone" placeholder="0987..." />
-            </div>
-            
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" formControlName="email" placeholder="hung.nguyen@tms.com" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Địa Chỉ Thường Trú</label>
-            <textarea formControlName="address" rows="2" placeholder="Địa chỉ chi tiết..."></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Liên Kết Tài Khoản Hệ Thống (Đăng Nhập)</label>
-            <select formControlName="userId">
-              <option [ngValue]="null">-- Không liên kết (Không đăng nhập system) --</option>
-              <option *ngFor="let u of users" [value]="u.userId">
-                {{ u.username }} - {{ u.firstname }} {{ u.lastname }}
-              </option>
-            </select>
-          </div>
-
-        </div>
-        
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeEmployeeModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">
-            <i class="fa-solid fa-floppy-disk"></i> Lưu Hồ Sơ
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- SEPARATE EMPLOYEE CREATION & EDITING FORM COMPONENT -->
+  <app-employee-form
+    [showModal]="showEmployeeModal"
+    [isEditMode]="isEditEmployeeMode"
+    [employeeForm]="employeeForm"
+    [employeeTypes]="employeeTypes"
+    [users]="users"
+    [loading]="loading"
+    (close)="closeEmployeeModal()"
+    (save)="onSaveEmployee()"
+  ></app-employee-form>
 
   <!-- MODAL 2: CREATE / EDIT EMPLOYEE TYPE -->
   <div class="modal-backdrop" *ngIf="showTypeModal">

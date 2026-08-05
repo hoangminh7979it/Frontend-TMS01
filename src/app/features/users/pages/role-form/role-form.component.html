@@ -1,0 +1,29 @@
+<!-- MODAL 1: CREATE/EDIT ROLE -->
+<div class="modal-backdrop" *ngIf="showModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-user-shield"></i> {{ isEditMode ? 'Chỉnh Sửa Vai Trò' : 'Tạo Vai Trò Mới' }}</h3>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+    <form [formGroup]="roleForm" (ngSubmit)="onSave()">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Mã Vai Trò (ROLE CODE)</label>
+          <input type="text" formControlName="roleCode" placeholder="Ví dụ: DRIVER, ACCOUNTANT..." />
+        </div>
+        <div class="form-group">
+          <label>Tên Vai Trò</label>
+          <input type="text" formControlName="roleName" placeholder="Ví dụ: Nhân Viên Lái Xe..." />
+        </div>
+        <div class="form-group">
+          <label>Mô Tả</label>
+          <textarea formControlName="description" rows="3" placeholder="Mô tả chức năng vai trò..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
+        <button type="submit" class="btn btn-primary" [disabled]="loading">Lưu Vai Trò</button>
+      </div>
+    </form>
+  </div>
+</div>

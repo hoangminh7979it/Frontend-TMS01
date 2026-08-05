@@ -10,6 +10,7 @@ import { ShipmentListComponent } from './features/shipments/pages/shipment-list/
 import { ExpenseListComponent } from './features/expenses/pages/expense-list/expense-list.component';
 import { PayrollListComponent } from './features/payroll/pages/payroll-list/payroll-list.component';
 import { RevenueListComponent } from './features/revenue/pages/revenue-list/revenue-list.component';
+import { SystemFeaturesListComponent } from './features/system-features/pages/system-features-list/system-features-list.component';
 
 export const routes: Routes = [
   {
@@ -62,13 +63,17 @@ export const routes: Routes = [
         component: RevenueListComponent
       },
       {
+        path: 'system-features',
+        component: SystemFeaturesListComponent
+      },
+      {
         path: 'finance',
         redirectTo: 'revenues',
         pathMatch: 'full'
       },
       {
         path: 'settings',
-        component: DashboardHomeComponent
+        component: SystemFeaturesListComponent
       }
     ]
   },

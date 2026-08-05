@@ -8,23 +8,31 @@ import { ShipmentService } from '@core/services/shipment.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { RevenueFormComponent } from '../revenue-form/revenue-form.component';
 import { RevenueFinalModel, RevenueSummaryModel } from '@core/models/revenue.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { ExpenseModel } from '@core/models/expense.model';
 import { SalaryModel } from '@core/models/payroll.model';
+import { ReportExportService } from '@core/services/report-export.service';
+
+import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-revenue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, ReportExportModalComponent],
   templateUrl: './revenue-list.component.html',
   styleUrls: ['./revenue-list.component.css']
 })
+
 export class RevenueListComponent implements OnInit {
 
   loading: boolean = false;
+  showExportModal: boolean = false;
+
   autoScanLoading: boolean = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
@@ -66,7 +74,8 @@ export class RevenueListComponent implements OnInit {
     private shipmentService: ShipmentService,
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private reportExportService: ReportExportService
   ) {}
 
   ngOnInit(): void {
@@ -486,12 +495,33 @@ export class RevenueListComponent implements OnInit {
             this.loadRevenues();
             this.loadRevenueSummary();
           },
-          error: (err) => {
-            this.loading = false;
-            this.showError(err.error?.message || 'Thao tác thất bại');
-          }
         });
       }
     });
   }
+
+  onExportExcel(): void {
+    this.showExportModal = true;
+  }
+
+  closeExportModal(): void {
+    this.showExportModal = false;
+  }
+
+  onConfirmExport(options: ReportFilterOptions): void {
+    this.showExportModal = false;
+    this.reportExportService.exportRevenues(options).subscribe({
+      next: (blob) => {
+        const ext = options.format || 'xlsx';
+        this.reportExportService.downloadBlob(blob, `Bao_Cao_Doanh_Thu_Revenues.${ext}`);
+        this.showSuccess(`Xuất file báo cáo doanh thu (${ext.toUpperCase()}) thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất file báo cáo doanh thu.');
+      }
+    });
+  }
 }
+
+
+

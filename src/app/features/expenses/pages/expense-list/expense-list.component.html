@@ -8,6 +8,9 @@
     </div>
     
     <div class="page-actions">
+      <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
+        <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
+      </button>
       <button *ngIf="activeTab === 'expenses'" class="btn btn-primary" (click)="openCreateExpenseModal()">
         <i class="fa-solid fa-file-circle-plus"></i> Lập Phiếu Chi Phí Mới
       </button>
@@ -264,165 +267,26 @@
     </div>
   </div>
 
-  <!-- MODAL 1: CREATE / EDIT EXPENSE (CLEAN 2x2 GRID & AUTO-SUM SHIPMENT COSTS) -->
-  <div class="modal-backdrop" *ngIf="showExpenseModal">
-    <div class="modal-card modal-balanced">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-file-invoice-dollar color-cyan"></i> {{ isEditExpenseMode ? 'Chỉnh Sửa Hồ Sơ Phiếu Chi Phí' : 'Lập Phiếu Chi Phí Vận Tải Mới' }}</h3>
-        <button class="modal-close" (click)="closeExpenseModal()">&times;</button>
-      </div>
-      
-      <form [formGroup]="expenseForm" (ngSubmit)="onSaveExpense()">
-        <div class="modal-body">
-          
-          <!-- Modal Error Alert -->
-          <div *ngIf="errorMessage" class="toast-alert toast-error modal-alert">
-            <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-          </div>
-
-          <!-- SECTION 1: THÔNG TIN CHUNG PHIẾU CHI (CLEAN 2x2 GRID) -->
-          <div class="form-card-box">
-            <div class="box-header color-cyan">
-              <i class="fa-solid fa-file-invoice"></i> PHẦN 1: THÔNG TIN CHUNG PHIẾU CHỨNG TỪ
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>Mã Phiếu Chi Phí *</label>
-                <input 
-                  type="text" 
-                  formControlName="expenseCode" 
-                  placeholder="Ví dụ: CP-2026-001..." 
-                  [ngClass]="{'input-error': expenseForm.controls['expenseCode'].invalid && expenseForm.controls['expenseCode'].touched}"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Tiêu Đề / Trích Yếu Phiếu Chi *</label>
-                <input 
-                  type="text" 
-                  formControlName="title" 
-                  placeholder="Ví dụ: Đổ dầu & mua vé BOT chuyến đi Hải Phòng..." 
-                  [ngClass]="{'input-error': expenseForm.controls['title'].invalid && expenseForm.controls['title'].touched}"
-                />
-              </div>
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-group">
-                <label>Chọn Phương Tiện (Tự động cộng chi phí từ Đơn hàng Shipment)</label>
-                <select formControlName="vehicleId" (change)="onVehicleChange($event)">
-                  <option [ngValue]="null">-- Chọn phương tiện (xe) --</option>
-                  <option *ngFor="let v of vehicles" [value]="v.id">
-                    {{ v.licensePlate }} - {{ v.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Ngày Phát Sinh Chi Phí</label>
-                <input type="date" formControlName="expenseDate" />
-              </div>
-            </div>
-          </div>
-
-          <!-- SECTION 2: CHI TIẾT CÁC KHOẢN CHI (DYNAMIC ELEGANT TABLE) -->
-          <div class="form-card-box">
-            <div class="box-header color-green title-with-action">
-              <span><i class="fa-solid fa-list-check"></i> PHẦN 2: CHI TIẾT CÁC KHOẢN CHI PHÍ (CÓ DẤU PHẨY ĐỊNH DẠNG)</span>
-              <button type="button" class="btn-add-mini" (click)="addDetailRow()">
-                <i class="fa-solid fa-plus"></i> Thêm Khoản Chi
-              </button>
-            </div>
-
-            <div class="detail-rows-table-box">
-              <table class="detail-input-table">
-                <thead>
-                  <tr>
-                    <th style="width: 28%;">LOẠI CHI PHÍ *</th>
-                    <th style="width: 24%;">SỐ TIỀN (VNĐ) *</th>
-                    <th style="width: 18%;">NGÀY CHI</th>
-                    <th style="width: 24%;">GHI CHÚ HÓA ĐƠN</th>
-                    <th style="width: 6%; text-align: center;">XÓA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of detailRows; let i = index; trackBy: trackByIndex">
-                    <td>
-                      <select [(ngModel)]="row.expenseTypeId" [ngModelOptions]="{standalone: true}">
-                        <option *ngFor="let t of expenseTypes" [value]="t.expenseTypeId">
-                          {{ t.expenseTypeName }} ({{ t.expenseTypeCode }})
-                        </option>
-                      </select>
-                    </td>
-                    <td>
-                      <input 
-                        type="text" 
-                        [(ngModel)]="row.formattedCost" 
-                        [ngModelOptions]="{standalone: true}"
-                        (input)="onDetailCostInput(i, $event)" 
-                        placeholder="0" 
-                        class="font-bold color-red text-right"
-                      />
-                    </td>
-                    <td>
-                      <input type="date" [(ngModel)]="row.date" [ngModelOptions]="{standalone: true}" />
-                    </td>
-                    <td>
-                      <input type="text" [(ngModel)]="row.description" [ngModelOptions]="{standalone: true}" placeholder="Chi tiết hóa đơn / cây xăng..." />
-                    </td>
-                    <td class="text-center">
-                      <button 
-                        type="button" 
-                        class="btn-remove-row" 
-                        (click)="removeDetailRow(i)" 
-                        [disabled]="detailRows.length === 1 && i === 0"
-                        title="Xóa dòng chi phí"
-                      >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- SUMMARY TOTAL EXPENSE BAR -->
-          <div class="total-summary-card">
-            <div class="total-label-box">
-              <i class="fa-solid fa-coins color-red font-size-lg"></i>
-              <span>TỔNG CỘNG CHI PHÍ PHIẾU:</span>
-            </div>
-            <div class="total-input-wrapper">
-              <input 
-                type="text" 
-                [(ngModel)]="formattedTotalExpense" 
-                [ngModelOptions]="{standalone: true}" 
-                (input)="onTotalExpenseInput($event)" 
-                class="total-expense-input"
-              />
-              <span class="unit-text">VNĐ</span>
-            </div>
-          </div>
-
-          <!-- SECTION 3: NOTES -->
-          <div class="form-group margin-top-4">
-            <label><i class="fa-solid fa-note-sticky color-cyan"></i> Ghi Chú Phiếu Chi Phí</label>
-            <textarea formControlName="notes" rows="2" placeholder="Ghi chú tổng hợp hóa đơn, lý do phát sinh chi phí..."></textarea>
-          </div>
-
-        </div>
-        
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeExpenseModal()">Hủy</button>
-          <button type="submit" class="btn btn-primary" [disabled]="loading">
-            <i class="fa-solid fa-floppy-disk"></i> Lưu Phiếu Chi Phí
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- SEPARATE EXPENSE CREATION & EDITING FORM COMPONENT -->
+  <app-expense-form
+    [showModal]="showExpenseModal"
+    [isEditMode]="isEditExpenseMode"
+    [expenseForm]="expenseForm"
+    [expenseTypes]="expenseTypes"
+    [vehicles]="vehicles"
+    [drivers]="drivers"
+    [detailRows]="detailRows"
+    [formattedTotalExpense]="formattedTotalExpense"
+    [errorMessage]="errorMessage"
+    [loading]="loading"
+    (close)="closeExpenseModal()"
+    (save)="onSaveExpense()"
+    (addDetail)="addDetailRow()"
+    (removeDetail)="removeDetailRow($event)"
+    (vehicleOrDriverChange)="onVehicleChange($event)"
+    (detailAmountInputChange)="onDetailCostInput($event.index, $event.event)"
+    (totalExpenseInputChange)="onTotalExpenseInput($event)"
+  ></app-expense-form>
 
   <!-- MODAL 2: CREATE / EDIT EXPENSE TYPE -->
   <div class="modal-backdrop" *ngIf="showTypeModal">
@@ -477,4 +341,16 @@
     </div>
   </div>
 
+  <!-- REUSABLE REPORT EXPORT MODAL -->
+  <app-report-export-modal
+    [showModal]="showExportModal"
+    reportType="EXPENSE"
+    title="Tùy Chọn Lọc & Xuất Báo Cáo Chi Phí"
+    [vehicles]="vehicles"
+    [previewItems]="expenses"
+    (close)="closeExportModal()"
+    (confirmExport)="onConfirmExport($event)"
+  ></app-report-export-modal>
+
 </div>
+

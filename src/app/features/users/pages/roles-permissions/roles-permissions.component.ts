@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { RoleService } from '@core/services/role.service';
 import { UserManagementService } from '@core/services/user-management.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { RoleFormComponent } from '../role-form/role-form.component';
 import { RoleModel, PermissionModel } from '@core/models/role.model';
 import { UserModel } from '@core/models/user.model';
 
@@ -18,7 +19,7 @@ export interface MatrixRow {
 @Component({
   selector: 'app-roles-permissions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RoleFormComponent],
   templateUrl: './roles-permissions.component.html',
   styleUrls: ['./roles-permissions.component.css']
 })
@@ -139,15 +140,17 @@ export class RolesPermissionsComponent implements OnInit {
     const map = new Map<string, MatrixRow>();
 
     perms.forEach(p => {
-      let moduleName = 'Khác';
-      if (p.description) moduleName = p.description;
-      else if (p.permissionCode.startsWith('SHIPMENT')) moduleName = 'Quản lý Đơn Hàng';
-      else if (p.permissionCode.startsWith('VEHICLE')) moduleName = 'Quản lý Đội Xe';
-      else if (p.permissionCode.startsWith('EMPLOYEE')) moduleName = 'Quản lý Nhân Sự';
-      else if (p.permissionCode.startsWith('EXPENSE')) moduleName = 'Quản lý Chi Phí';
-      else if (p.permissionCode.startsWith('FINANCE')) moduleName = 'Quản lý Tài Chính';
-      else if (p.permissionCode.startsWith('USER')) moduleName = 'Quản lý Người Dùng';
-      else if (p.permissionCode.startsWith('ROLE')) moduleName = 'Quản lý Phân Quyền';
+      let moduleName = p.resourceGroup || p.description || 'Khác';
+      if (!p.resourceGroup) {
+        if (p.permissionCode.startsWith('SHIPMENT')) moduleName = 'Quản lý Đơn Hàng';
+        else if (p.permissionCode.startsWith('VEHICLE')) moduleName = 'Quản lý Đội Xe';
+        else if (p.permissionCode.startsWith('EMPLOYEE')) moduleName = 'Quản lý Nhân Sự';
+        else if (p.permissionCode.startsWith('EXPENSE')) moduleName = 'Quản lý Chi Phí';
+        else if (p.permissionCode.startsWith('FINANCE')) moduleName = 'Quản lý Tài Chính';
+        else if (p.permissionCode.startsWith('USER')) moduleName = 'Quản lý Người Dùng';
+        else if (p.permissionCode.startsWith('ROLE')) moduleName = 'Quản lý Phân Quyền';
+        else if (p.permissionCode.startsWith('SYSTEM_FEATURE')) moduleName = 'Cài Đặt Hệ Thống';
+      }
 
       if (!map.has(moduleName)) {
         map.set(moduleName, { moduleName });
@@ -155,14 +158,14 @@ export class RolesPermissionsComponent implements OnInit {
 
       const row = map.get(moduleName)!;
       const code = p.permissionCode;
+      const act = p.actionType;
 
-      if (code.endsWith('_READ')) row.readPerm = p;
-      else if (code.endsWith('_CREATE') || code.endsWith('_WRITE')) row.createPerm = p;
-      else if (code.endsWith('_UPDATE')) row.updatePerm = p;
-      else if (code.endsWith('_DELETE')) row.deletePerm = p;
+      if (act === 'READ' || code.endsWith('_READ')) row.readPerm = p;
+      else if (act === 'CREATE' || code.endsWith('_CREATE') || code.endsWith('_WRITE')) row.createPerm = p;
+      else if (act === 'UPDATE' || code.endsWith('_UPDATE')) row.updatePerm = p;
+      else if (act === 'DELETE' || code.endsWith('_DELETE')) row.deletePerm = p;
       else {
         if (!row.readPerm) row.readPerm = p;
-        else if (!row.createPerm) row.createPerm = p;
       }
     });
 

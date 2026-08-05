@@ -1,0 +1,112 @@
+<div class="system-feature-page">
+  
+  <!-- Page Header & Action -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản Lý Tính Năng & Chức Năng Hệ Thống</h1>
+      <p class="page-subtitle">Khai báo phân hệ mới, cấu hình đường dẫn URL Angular, icon menu và tự động đồng bộ ma trận phân quyền.</p>
+    </div>
+    
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="openCreateFeatureModal()">
+        <i class="fa-solid fa-folder-plus"></i> Khai Báo Tính Năng Mới
+      </button>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMessage && !showFeatureModal" class="toast-alert toast-error">
+    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage && !showFeatureModal" class="toast-alert toast-success">
+    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
+  </div>
+
+  <!-- Filter & Search Controls Bar -->
+  <div class="filter-controls-card">
+    <div class="search-input-box">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()" 
+        placeholder="Tìm kiếm theo Mã tính năng, Tên tính năng, URL Route, Phân hệ..." 
+      />
+    </div>
+    <span class="results-count">Hiển thị {{ filteredFeatures.length }} tính năng</span>
+  </div>
+
+  <!-- Features List Table -->
+  <div class="panel-card">
+    <div class="panel-header">
+      <h3 class="panel-title"><i class="fa-solid fa-cubes"></i> Danh Mục Các Tính Năng Hệ Thống (Dynamic Features)</h3>
+    </div>
+    <div class="panel-body">
+      <table class="tech-table">
+        <thead>
+          <tr>
+            <th>THỨ TỰ</th>
+            <th>MÃ TÍNH NĂNG</th>
+            <th>TÊN TÍNH NĂNG</th>
+            <th>PHÂN HỆ (RESOURCE GROUP)</th>
+            <th>ĐƯỜNG DẪN ROUTE</th>
+            <th>ICON MENU</th>
+            <th>TRẠNG THÁI</th>
+            <th class="text-right">THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of filteredFeatures">
+            <td class="text-center font-bold color-cyan">#{{ f.sortOrder || 0 }}</td>
+            <td><span class="feature-code-badge">{{ f.featureCode }}</span></td>
+            <td class="font-bold color-title">{{ f.featureName }}</td>
+            <td><span class="type-badge">{{ f.resourceGroup || f.featureName }}</span></td>
+            <td><span class="route-badge">{{ f.routePath || '-' }}</span></td>
+            <td>
+              <i [class]="(f.iconClass || 'fa-solid fa-cube') + ' color-cyan font-size-lg'"></i>
+              <span class="text-xs text-muted margin-left-2">{{ f.iconClass }}</span>
+            </td>
+            <td>
+              <button 
+                type="button" 
+                class="status-badge" 
+                [ngClass]="f.isActive ? 'status-active' : 'status-inactive'"
+                (click)="toggleActive(f)"
+                title="Bấm để bật/tắt tính năng"
+              >
+                <i class="fa-solid" [ngClass]="f.isActive ? 'fa-circle-check' : 'fa-circle-xmark'"></i>
+                {{ f.isActive ? 'Đang hoạt động' : 'Tạm khóa' }}
+              </button>
+            </td>
+            <td class="text-right actions-cell">
+              <button class="action-btn btn-edit" (click)="openEditFeatureModal(f)" title="Sửa Tính Năng">
+                <i class="fa-solid fa-pen-to-square"></i> Sửa
+              </button>
+              <button class="action-btn btn-delete" (click)="onDeleteFeature(f)" title="Xóa Tính Năng">
+                <i class="fa-solid fa-trash-can"></i> Xóa
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredFeatures.length === 0">
+            <td colspan="8" class="text-center empty-cell">
+              <i class="fa-solid fa-folder-open empty-icon"></i>
+              <p>Chưa có tính năng hệ thống nào phù hợp.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SEPARATE FEATURE CREATION & EDITING FORM COMPONENT -->
+  <app-system-features-form
+    [showModal]="showFeatureModal"
+    [isEditMode]="isEditMode"
+    [featureForm]="featureForm"
+    [errorMessage]="errorMessage"
+    [loading]="loading"
+    (close)="closeFeatureModal()"
+    (save)="onSaveFeature()"
+  ></app-system-features-form>
+
+</div>
