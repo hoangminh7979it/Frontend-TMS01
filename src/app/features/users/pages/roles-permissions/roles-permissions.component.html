@@ -326,9 +326,11 @@
       </div>
       <form [formGroup]="userForm" (ngSubmit)="onSaveUser()">
         <div class="modal-body">
+
+          <!-- Row 1: Tên đăng nhập -->
           <div class="form-row">
             <div class="form-group">
-              <label>Tên Đăng Nhập</label>
+              <label>Tên Đăng Nhập (*)</label>
               <input type="text" formControlName="username" placeholder="Username..." />
             </div>
             <div class="form-group">
@@ -338,6 +340,21 @@
                 <option *ngFor="let r of roles" [value]="r.roleId">{{ r.roleName }} ({{ r.roleCode }})</option>
               </select>
             </div>
+          </div>
+
+          <!-- Row 2: Mật khẩu (Create: bắt buộc | Edit: tùy chọn) -->
+          <div class="form-group">
+            <label>{{ isEditUserMode ? 'Mật Khẩu Mới (tùy chọn)' : 'Mật Khẩu (*)' }}</label>
+            <div class="input-password-wrapper">
+              <input [type]="showCreateUserPassword ? 'text' : 'password'"
+                [formControlName]="isEditUserMode ? 'newPassword' : 'password'"
+                [placeholder]="isEditUserMode ? 'Để trống nếu không muốn đổi mật khẩu...' : 'Nhập mật khẩu cho tài khoản...'"
+              />
+              <button type="button" class="btn-toggle-eye" (click)="toggleShowCreateUserPassword()" [title]="showCreateUserPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">
+                <i class="fa-solid" [ngClass]="showCreateUserPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+            <span class="field-hint" *ngIf="isEditUserMode">Tối thiểu 4 ký tự. Để trống nếu không muốn đổi mật khẩu.</span>
           </div>
 
           <div class="form-row">
@@ -379,6 +396,7 @@
               <span>Trạng thái kích hoạt tài khoản</span>
             </label>
           </div>
+
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="closeUserModal()">Hủy</button>

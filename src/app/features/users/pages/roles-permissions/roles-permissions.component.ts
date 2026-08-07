@@ -44,6 +44,8 @@ export class RolesPermissionsComponent implements OnInit {
   showUserModal: boolean = false;
   isEditRoleMode: boolean = false;
   isEditUserMode: boolean = false;
+  showCreateUserPassword: boolean = false;
+
 
   // Forms
   roleForm!: FormGroup;
@@ -77,6 +79,8 @@ export class RolesPermissionsComponent implements OnInit {
 
     this.userForm = this.fb.group({
       username: ['', [Validators.required]],
+      password: [''],
+      newPassword: [''],
       firstname: [''],
       lastname: [''],
       email: ['', [Validators.email]],
@@ -86,6 +90,8 @@ export class RolesPermissionsComponent implements OnInit {
       workEndTime: [''],
       isActive: [true]
     });
+
+
   }
 
   setActiveTab(tab: 'roles' | 'users'): void {
@@ -380,17 +386,28 @@ export class RolesPermissionsComponent implements OnInit {
 
   openCreateUserModal(): void {
     this.isEditUserMode = false;
+    this.showCreateUserPassword = false;
     this.selectedUser = null;
     this.userForm.reset({ isActive: true });
     this.userForm.controls['username'].enable();
+    this.userForm.controls['password'].setValidators([Validators.required, Validators.minLength(4)]);
+    this.userForm.controls['password'].updateValueAndValidity();
     this.showUserModal = true;
   }
 
+  toggleShowCreateUserPassword(): void {
+    this.showCreateUserPassword = !this.showCreateUserPassword;
+  }
+
+
   openEditUserModal(user: UserModel): void {
     this.isEditUserMode = true;
+    this.showCreateUserPassword = false;
     this.selectedUser = user;
     this.userForm.patchValue({
       username: user.username,
+      password: '',
+      newPassword: '',
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email,
@@ -401,8 +418,12 @@ export class RolesPermissionsComponent implements OnInit {
       isActive: user.isActive
     });
     this.userForm.controls['username'].disable();
+    this.userForm.controls['password'].clearValidators();
+    this.userForm.controls['password'].updateValueAndValidity();
     this.showUserModal = true;
   }
+
+
 
   closeUserModal(): void {
     this.showUserModal = false;
@@ -430,7 +451,7 @@ export class RolesPermissionsComponent implements OnInit {
       this.userService.createUser(val).subscribe({
         next: (res: any) => {
           this.loading = false;
-          this.showSuccess(res.message || 'Thao tác thành công với mật khẩu mặc định: Admin@6879');
+          this.showSuccess(res.message || 'Tạo mới tài khoản thành công');
           this.closeUserModal();
           this.loadUsersData();
         },
@@ -440,6 +461,7 @@ export class RolesPermissionsComponent implements OnInit {
         }
       });
     }
+
   }
 
   onResetUserPassword(user: UserModel): void {

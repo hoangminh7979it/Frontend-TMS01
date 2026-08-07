@@ -5,6 +5,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ThemeService, ThemeMode } from '@core/services/theme.service';
 import { ShipmentService } from '@core/services/shipment.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 
 interface MenuItem {
   title: string;
@@ -46,8 +47,10 @@ export class MainLayoutComponent implements OnInit {
     private authService: AuthService,
     public themeService: ThemeService,
     private shipmentService: ShipmentService,
+    private confirmDialog: ConfirmDialogService,
     private router: Router
   ) {}
+
 
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser() || {
@@ -92,13 +95,23 @@ export class MainLayoutComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        this.router.navigate(['/login']);
+    this.confirmDialog.confirm({
+      title: 'Xác Nhận Đăng Xuất',
+      message: 'Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản lý TMS-01 không?',
+      confirmText: 'Đăng Xuất',
+      cancelText: 'Hủy Bỏ',
+      type: 'warning',
+      onConfirm: () => {
+        this.authService.logout().subscribe({
+          next: () => {
+            this.router.navigate(['/login']);
+          },
+          error: () => {
+            this.router.navigate(['/login']);
+          }
+        });
       }
     });
   }
 }
+
