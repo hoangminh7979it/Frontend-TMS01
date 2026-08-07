@@ -4,15 +4,17 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { CustomerService } from '@core/services/customer.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { CustomerFormComponent } from '../customer-form/customer-form.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CustomerFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, CustomerFormComponent, PaginationComponent],
   templateUrl: './customer-list.component.html',
   styleUrls: ['./customer-list.component.css']
 })
+
 export class CustomerListComponent implements OnInit {
 
   activeTab: 'customers' | 'companies' = 'customers';
@@ -28,6 +30,12 @@ export class CustomerListComponent implements OnInit {
   // Filter State
   searchQuery: string = '';
   selectedType: string = 'ALL';
+
+  // Pagination State
+  paginatedCustomers: CustomerModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Customer Modal State
   showCustomerModal: boolean = false;
@@ -161,7 +169,27 @@ export class CustomerListComponent implements OnInit {
     }
 
     this.filteredCustomers = result;
+    this.currentPage = 1;
+    this.updatePaginatedCustomers();
   }
+
+  updatePaginatedCustomers(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedCustomers = this.filteredCustomers.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedCustomers();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedCustomers();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();

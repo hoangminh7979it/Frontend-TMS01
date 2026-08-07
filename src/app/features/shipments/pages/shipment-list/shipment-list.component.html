@@ -164,7 +164,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let s of filteredShipments" (click)="openEditShipmentModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
+            <tr *ngFor="let s of paginatedShipments" (click)="openEditShipmentModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
+
               
               <!-- Shipment Code Badge -->
               <td class="col-code">
@@ -223,7 +224,8 @@
 
               <!-- Trọng Lượng -->
               <td class="col-weight">
-                <div class="weight-badge" *ngIf="s.weight"><i class="fa-solid fa-weight-hanging"></i> {{ s.weight }} Tấn</div>
+                <div class="weight-badge" *ngIf="s.weight"><i class="fa-solid fa-weight-hanging"></i> {{ s.weight }} kg</div>
+
                 <span class="text-muted text-xs" *ngIf="!s.weight">-</span>
               </td>
 
@@ -301,9 +303,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredShipments.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
 
   </div>
+
 
   <!-- TAB 2: STATUS ENUMS CATEGORY -->
   <div *ngIf="activeTab === 'statuses'" class="tab-content">

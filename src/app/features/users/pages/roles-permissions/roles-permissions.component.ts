@@ -5,6 +5,7 @@ import { RoleService } from '@core/services/role.service';
 import { UserManagementService } from '@core/services/user-management.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { RoleFormComponent } from '../role-form/role-form.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { RoleModel, PermissionModel } from '@core/models/role.model';
 import { UserModel } from '@core/models/user.model';
 
@@ -19,7 +20,7 @@ export interface MatrixRow {
 @Component({
   selector: 'app-roles-permissions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RoleFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RoleFormComponent, PaginationComponent],
   templateUrl: './roles-permissions.component.html',
   styleUrls: ['./roles-permissions.component.css']
 })
@@ -37,6 +38,14 @@ export class RolesPermissionsComponent implements OnInit {
 
   // Users State
   users: UserModel[] = [];
+  filteredUsers: UserModel[] = [];
+  paginatedUsers: UserModel[] = [];
+
+  // Pagination State for Users Table
+  userSearchQuery: string = '';
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Modals visibility
   showRoleModal: boolean = false;
@@ -379,10 +388,53 @@ export class RolesPermissionsComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.users = res.data;
+          this.applyUserFilter();
         }
       }
     });
   }
+
+
+  applyUserFilter(): void {
+    let result = [...this.users];
+    if (this.userSearchQuery && this.userSearchQuery.trim() !== '') {
+      const q = this.userSearchQuery.toLowerCase().trim();
+      result = result.filter(u =>
+        (u.username && u.username.toLowerCase().includes(q)) ||
+        (u.firstname && u.firstname.toLowerCase().includes(q)) ||
+        (u.lastname && u.lastname.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.phone && u.phone.toLowerCase().includes(q)) ||
+        (u.roleName && u.roleName.toLowerCase().includes(q))
+      );
+
+    }
+    this.filteredUsers = result;
+    this.currentPage = 1;
+    this.updatePaginatedUsers();
+  }
+
+  updatePaginatedUsers(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedUsers = this.filteredUsers.slice(startIndex, endIndex);
+  }
+
+  onUserSearchChange(): void {
+    this.applyUserFilter();
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedUsers();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedUsers();
+  }
+
 
   openCreateUserModal(): void {
     this.isEditUserMode = false;

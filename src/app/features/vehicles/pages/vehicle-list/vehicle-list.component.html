@@ -140,7 +140,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let v of filteredVehicles">
+            <tr *ngFor="let v of paginatedVehicles">
+
               
               <!-- License Plate Badge -->
               <td>
@@ -163,7 +164,7 @@
               <!-- Capacity -->
               <td>
                 <span class="capacity-tag" *ngIf="v.payloadCapacity">
-                  <i class="fa-solid fa-weight-hanging"></i> {{ v.payloadCapacity }} Tấn
+                  <i class="fa-solid fa-weight-hanging"></i> {{ v.payloadCapacity }} kg
                 </span>
                 <span class="text-muted" *ngIf="!v.payloadCapacity">-</span>
               </td>
@@ -232,9 +233,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredVehicles.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
 
   </div>
+
 
   <!-- TAB 2: VEHICLE TYPES CATEGORY -->
   <div *ngIf="activeTab === 'types'" class="tab-content">

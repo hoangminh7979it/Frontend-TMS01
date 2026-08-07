@@ -88,6 +88,15 @@
     <div class="panel-card">
       <div class="panel-header">
         <h3 class="panel-title"><i class="fa-solid fa-users"></i> Danh Sách Tài Khoản Người Dùng</h3>
+        <div class="search-input-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input 
+            type="text" 
+            [(ngModel)]="userSearchQuery" 
+            (input)="onUserSearchChange()" 
+            placeholder="Tìm kiếm tài khoản, tên, email, vai trò..." 
+          />
+        </div>
       </div>
       <div class="panel-body">
         <table class="tech-table">
@@ -104,7 +113,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let u of users">
+            <tr *ngFor="let u of paginatedUsers">
+
               <td>#{{ u.userId }}</td>
               <td class="font-bold color-cyan">{{ u.username }}</td>
               <td>{{ u.firstname }} {{ u.lastname }}</td>
@@ -137,8 +147,18 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredUsers.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
   </div>
+
 
   <!-- SEPARATE ROLE CREATION & EDITING FORM COMPONENT -->
   <app-role-form
