@@ -112,7 +112,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of filteredSalaries" (click)="openEditSalaryModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
+          <tr *ngFor="let s of paginatedSalaries" (click)="openEditSalaryModal(s)" class="clickable-row" title="Bấm vào để xem chi tiết">
+
             <td><span class="emp-code-badge">{{ s.salaryCode }}</span></td>
             <td>
               <div class="font-bold color-title"><i class="fa-solid fa-user-check color-cyan"></i> {{ s.employeeName || 'N/A' }}</div>
@@ -157,9 +158,19 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Controls -->
+    <app-pagination
+      [totalItems]="filteredSalaries.length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
   </div>
 
   <!-- SEPARATE PAYROLL CREATION & EDITING FORM COMPONENT -->
+
   <app-payroll-form
     [showModal]="showSalaryModal"
     [isEditMode]="isEditSalaryMode"
@@ -193,3 +204,5 @@
   ></app-payroll-form>
 
 </div>
+
+

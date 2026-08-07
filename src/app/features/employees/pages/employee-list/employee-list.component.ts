@@ -5,16 +5,18 @@ import { EmployeeService } from '@core/services/employee.service';
 import { UserManagementService } from '@core/services/user-management.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { EmployeeFormComponent } from '../employee-form/employee-form.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { UserModel } from '@core/models/user.model';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, EmployeeFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, EmployeeFormComponent, PaginationComponent],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })
+
 export class EmployeeListComponent implements OnInit {
 
   activeTab: 'employees' | 'types' = 'employees';
@@ -31,6 +33,12 @@ export class EmployeeListComponent implements OnInit {
   // Filter State
   searchQuery: string = '';
   selectedTypeCode: string = 'ALL';
+
+  // Pagination State
+  paginatedEmployees: EmployeeModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Employee Modal State
   showEmployeeModal: boolean = false;
@@ -169,7 +177,27 @@ export class EmployeeListComponent implements OnInit {
     }
 
     this.filteredEmployees = result;
+    this.currentPage = 1;
+    this.updatePaginatedEmployees();
   }
+
+  updatePaginatedEmployees(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedEmployees = this.filteredEmployees.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedEmployees();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedEmployees();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();

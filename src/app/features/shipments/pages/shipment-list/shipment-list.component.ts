@@ -14,15 +14,17 @@ import { EmployeeModel } from '@core/models/employee.model';
 import { ReportExportService } from '@core/services/report-export.service';
 
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-shipment-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ShipmentFormComponent, ReportExportModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ShipmentFormComponent, ReportExportModalComponent, PaginationComponent],
   templateUrl: './shipment-list.component.html',
   styleUrls: ['./shipment-list.component.css']
 })
+
 
 export class ShipmentListComponent implements OnInit {
 
@@ -45,6 +47,12 @@ export class ShipmentListComponent implements OnInit {
   selectedStatus: string = 'ALL';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+
+  // Pagination State
+  paginatedShipments: ShipmentModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Modal State - Shipment
   showShipmentModal: boolean = false;
@@ -293,7 +301,27 @@ export class ShipmentListComponent implements OnInit {
     }
 
     this.filteredShipments = result;
+    this.currentPage = 1;
+    this.updatePaginatedShipments();
   }
+
+  updatePaginatedShipments(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedShipments = this.filteredShipments.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedShipments();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedShipments();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();
