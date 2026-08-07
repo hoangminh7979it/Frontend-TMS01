@@ -58,9 +58,10 @@
           </div>
 
           <div class="form-group">
-            <label>Trọng Lượng (Tấn)</label>
-            <input type="number" step="0.1" formControlName="weight" placeholder="15.5" />
+            <label>Trọng Lượng (kg)</label>
+            <input type="number" step="0.1" formControlName="weight" placeholder="15000" />
           </div>
+
         </div>
 
         <!-- SECTION 3: LỘ TRÌNH ĐIỂM ĐI - ĐIỂM ĐẾN & THỜI GIAN -->
@@ -229,7 +230,8 @@
               <select formControlName="vehicleId" (change)="onVehicleChanged($event)">
                 <option [ngValue]="null">-- Chưa gán xe --</option>
                 <option *ngFor="let v of vehicles" [value]="v.id">
-                  {{ v.licensePlate }} - {{ v.name }} (Tải trọng: {{ v.payloadCapacity }} Tấn)
+                  {{ v.licensePlate }} - {{ v.name }} (Tải trọng: {{ v.payloadCapacity }} kg)
+
                 </option>
               </select>
 

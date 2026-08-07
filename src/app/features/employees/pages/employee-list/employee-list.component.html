@@ -130,7 +130,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let emp of filteredEmployees">
+            <tr *ngFor="let emp of paginatedEmployees">
+
               <td><span class="emp-code-badge">{{ emp.employeeCode }}</span></td>
               <td class="font-bold color-title">{{ emp.fullName }}</td>
               <td>
@@ -175,9 +176,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredEmployees.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
 
   </div>
+
 
   <!-- TAB 2: EMPLOYEE TYPES CATEGORY -->
   <div *ngIf="activeTab === 'types'" class="tab-content">

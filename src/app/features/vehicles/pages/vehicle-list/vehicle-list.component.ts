@@ -5,16 +5,18 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { EmployeeService } from '@core/services/employee.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { VehicleFormComponent } from '../vehicle-form/vehicle-form.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { VehicleModel, VehicleTypeModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 
 @Component({
   selector: 'app-vehicle-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, VehicleFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, VehicleFormComponent, PaginationComponent],
   templateUrl: './vehicle-list.component.html',
   styleUrls: ['./vehicle-list.component.css']
 })
+
 export class VehicleListComponent implements OnInit {
 
   activeTab: 'vehicles' | 'types' = 'vehicles';
@@ -32,6 +34,12 @@ export class VehicleListComponent implements OnInit {
   searchQuery: string = '';
   selectedStatus: string = 'ALL';
   selectedTypeCode: string = 'ALL';
+
+  // Pagination State
+  paginatedVehicles: VehicleModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Vehicle Modal State
   showVehicleModal: boolean = false;
@@ -204,7 +212,27 @@ export class VehicleListComponent implements OnInit {
     }
 
     this.filteredVehicles = result;
+    this.currentPage = 1;
+    this.updatePaginatedVehicles();
   }
+
+  updatePaginatedVehicles(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedVehicles = this.filteredVehicles.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedVehicles();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedVehicles();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();

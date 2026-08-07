@@ -157,7 +157,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let e of filteredExpenses" (click)="openEditExpenseModal(e)" class="clickable-row" title="Bấm vào để xem chi tiết">
+            <tr *ngFor="let e of paginatedExpenses" (click)="openEditExpenseModal(e)" class="clickable-row" title="Bấm vào để xem chi tiết">
+
               
               <!-- Expense Code Badge -->
               <td class="col-code">
@@ -225,9 +226,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredExpenses.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
 
   </div>
+
 
   <!-- TAB 2: EXPENSE TYPES CATEGORY -->
   <div *ngIf="activeTab === 'types'" class="tab-content">

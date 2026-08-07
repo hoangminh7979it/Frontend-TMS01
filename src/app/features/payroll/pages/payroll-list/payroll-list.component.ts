@@ -11,15 +11,17 @@ import { SalaryModel } from '@core/models/payroll.model';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { VehicleModel } from '@core/models/vehicle.model';
-import { ReportExportService } from '@core/services/report-export.service';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
+import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-payroll-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PayrollFormComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PayrollFormComponent, PaginationComponent],
   templateUrl: './payroll-list.component.html',
   styleUrls: ['./payroll-list.component.css']
 })
+
 
 export class PayrollListComponent implements OnInit {
 
@@ -45,6 +47,12 @@ export class PayrollListComponent implements OnInit {
   searchQuery: string = '';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+
+  // Pagination State
+  paginatedSalaries: SalaryModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
   vehicles: VehicleModel[] = [];
 
   // Modal State - Salary
@@ -365,7 +373,27 @@ export class PayrollListComponent implements OnInit {
       );
     }
     this.filteredSalaries = result;
+    this.currentPage = 1;
+    this.updatePaginatedSalaries();
   }
+
+  updatePaginatedSalaries(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedSalaries = this.filteredSalaries.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedSalaries();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedSalaries();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();

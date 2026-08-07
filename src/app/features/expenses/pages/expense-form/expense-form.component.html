@@ -44,8 +44,9 @@
 
           <div class="form-row-2">
             <div class="form-group">
-              <label>Chọn Phương Tiện (Tự động cộng chi phí từ Đơn hàng Shipment)</label>
+              <label>Chọn Phương Tiện (Xe)</label>
               <select formControlName="vehicleId" (change)="onVehicleOrDriverChanged($event)">
+
                 <option [ngValue]="null">-- Chọn phương tiện (xe) --</option>
                 <option *ngFor="let v of vehicles" [value]="v.id">
                   {{ v.licensePlate }} - {{ v.name }}

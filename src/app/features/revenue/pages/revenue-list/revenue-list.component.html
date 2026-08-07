@@ -123,7 +123,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of filteredRevenues" (click)="openEditRevenueModal(r)" class="clickable-row" title="Bấm vào để xem chi tiết">
+          <tr *ngFor="let r of paginatedRevenues" (click)="openEditRevenueModal(r)" class="clickable-row" title="Bấm vào để xem chi tiết">
+
             <td><span class="emp-code-badge">{{ r.revenueCode }}</span></td>
             
             <td>
@@ -180,9 +181,19 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination Controls -->
+    <app-pagination
+      [totalItems]="filteredRevenues.length"
+      [pageSize]="pageSize"
+      [currentPage]="currentPage"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-pagination>
   </div>
 
   <!-- SEPARATE REVENUE CREATION & EDITING FORM COMPONENT -->
+
   <app-revenue-form
     [showModal]="showRevenueModal"
     [isEditMode]="isEditRevenueMode"

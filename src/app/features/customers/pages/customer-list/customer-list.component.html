@@ -127,7 +127,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let c of filteredCustomers">
+            <tr *ngFor="let c of paginatedCustomers">
+
               
               <!-- Code Badge -->
               <td>
@@ -191,9 +192,19 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [totalItems]="filteredCustomers.length"
+        [pageSize]="pageSize"
+        [currentPage]="currentPage"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      ></app-pagination>
     </div>
 
   </div>
+
 
   <!-- TAB 2: PARTNER COMPANIES CATEGORY -->
   <div *ngIf="activeTab === 'companies'" class="tab-content">

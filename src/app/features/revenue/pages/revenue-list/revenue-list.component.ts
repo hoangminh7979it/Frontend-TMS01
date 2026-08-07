@@ -18,15 +18,17 @@ import { SalaryModel } from '@core/models/payroll.model';
 import { ReportExportService } from '@core/services/report-export.service';
 
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-revenue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, ReportExportModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, ReportExportModalComponent, PaginationComponent],
   templateUrl: './revenue-list.component.html',
   styleUrls: ['./revenue-list.component.css']
 })
+
 
 export class RevenueListComponent implements OnInit {
 
@@ -53,6 +55,12 @@ export class RevenueListComponent implements OnInit {
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
   drivers: EmployeeModel[] = [];
+
+  // Pagination State
+  paginatedRevenues: RevenueFinalModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Modal State - Revenue Final Report
   showRevenueModal: boolean = false;
@@ -235,7 +243,27 @@ export class RevenueListComponent implements OnInit {
       );
     }
     this.filteredRevenues = result;
+    this.currentPage = 1;
+    this.updatePaginatedRevenues();
   }
+
+  updatePaginatedRevenues(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedRevenues = this.filteredRevenues.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedRevenues();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedRevenues();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();
@@ -310,11 +338,32 @@ export class RevenueListComponent implements OnInit {
             } else {
               expenses = [];
             }
+
+            // Nếu có chi phí phát sinh từ các chuyến hàng (Shipment incurredCosts), tự động thêm dòng chi phí "Phí Đường Bộ & Cầu Đường" vào danh sách chi phí quét được
+            const shipmentIncurredSum = shipments.reduce((sum, s) => sum + (s.incurredCosts || 0), 0);
+            if (shipmentIncurredSum > 0 && selectedVehicleObj && selectedVehicleId) {
+              const tollExpenseItem: ExpenseModel = {
+                expenseId: 0,
+                expenseCode: 'SYNC-SHIPMENT',
+                title: `Phí Đường Bộ & Cầu Đường (${shipments.length} chuyến hàng)`,
+                vehicleId: selectedVehicleId,
+                vehicleLicensePlate: selectedVehicleObj.licensePlate,
+                totalExpense: shipmentIncurredSum,
+                expenseDate: endDate || new Date().toISOString().substring(0, 10),
+                notes: 'Tự động sync từ Chi Phí Phát Sinh / Cầu Đường của các chuyến hàng Shipment'
+              };
+              expenses = [tollExpenseItem, ...expenses];
+            }
+
             this.scannedExpenses = expenses;
 
+
             const totalExp = expenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+
             this.formattedTotalExpenses = totalExp.toLocaleString('en-US');
             this.revenueForm.patchValue({ totalExpense: totalExp });
+
+
 
             // Phiếu Lương Nhân Sự: Chỉ nạp khi ĐÃ CHỌN PHƯƠNG TIỆN
             this.payrollService.getAllSalaries().subscribe({

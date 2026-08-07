@@ -21,15 +21,17 @@ export interface DetailRow {
 }
 
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
+import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-expense-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ExpenseFormComponent, ReportExportModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, ExpenseFormComponent, ReportExportModalComponent, PaginationComponent],
   templateUrl: './expense-list.component.html',
   styleUrls: ['./expense-list.component.css']
 })
+
 
 export class ExpenseListComponent implements OnInit {
 
@@ -51,6 +53,12 @@ export class ExpenseListComponent implements OnInit {
   selectedTypeFilter: string = 'ALL';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+
+  // Pagination State
+  paginatedExpenses: ExpenseModel[] = [];
+  currentPage: number = 1;
+  pageSize: number = 10;
+
 
   // Modal State - Expense
   showExpenseModal: boolean = false;
@@ -313,7 +321,27 @@ export class ExpenseListComponent implements OnInit {
     }
 
     this.filteredExpenses = result;
+    this.currentPage = 1;
+    this.updatePaginatedExpenses();
   }
+
+  updatePaginatedExpenses(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    this.paginatedExpenses = this.filteredExpenses.slice(startIndex, endIndex);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.updatePaginatedExpenses();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePaginatedExpenses();
+  }
+
 
   onSearchChange(): void {
     this.applyFilter();
@@ -335,47 +363,8 @@ export class ExpenseListComponent implements OnInit {
     this.expenseForm.patchValue({
       vehicleLicensePlate: v.licensePlate
     });
-
-    // Find all shipments assigned to this vehicle
-    const vehicleShipments = this.shipments.filter(s => s.vehicleId === vId);
-    const sumIncurredCosts = vehicleShipments.reduce((sum, s) => sum + (s.incurredCosts || 0), 0);
-
-    if (sumIncurredCosts > 0) {
-      // Find default or toll/other expense type
-      let defaultType = this.expenseTypes.find(t => t.expenseTypeCode === 'TOLL' || t.expenseTypeCode === 'OTHER');
-      let typeId = defaultType ? defaultType.expenseTypeId : (this.expenseTypes.length > 0 ? this.expenseTypes[0].expenseTypeId : null);
-
-      const today = new Date().toISOString().substring(0, 10);
-      const costStr = sumIncurredCosts.toLocaleString('en-US');
-      const desc = `Chi phí phát sinh từ ${vehicleShipments.length} đơn hàng của xe ${v.licensePlate}`;
-
-      // Check if a row with this description already exists
-      const existingRowIndex = this.detailRows.findIndex(r => r.description.includes('Chi phí phát sinh từ'));
-      if (existingRowIndex >= 0) {
-        this.detailRows[existingRowIndex].formattedCost = costStr;
-        this.detailRows[existingRowIndex].description = desc;
-      } else {
-        // If single empty row exists with cost 0, replace it
-        if (this.detailRows.length === 1 && this.parseCommasToNumber(this.detailRows[0].formattedCost) === 0) {
-          this.detailRows[0] = {
-            expenseTypeId: typeId,
-            formattedCost: costStr,
-            date: today,
-            description: desc
-          };
-        } else {
-          this.detailRows.push({
-            expenseTypeId: typeId,
-            formattedCost: costStr,
-            date: today,
-            description: desc
-          });
-        }
-      }
-
-      this.recalculateTotalFromDetails();
-    }
   }
+
 
   // --- EXPENSE MODAL HANDLERS ---
   openCreateExpenseModal(): void {
