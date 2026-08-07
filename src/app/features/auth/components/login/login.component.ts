@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
+import { ThemeService, ThemeMode } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -18,19 +19,30 @@ export class LoginComponent implements OnInit {
   showPassword: boolean = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  currentTheme: ThemeMode = 'dark';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    public themeService: ThemeService,
     private router: Router
   ) {}
 
+
   ngOnInit(): void {
     this.initForm();
+    this.themeService.currentTheme$.subscribe(theme => {
+      this.currentTheme = theme;
+    });
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/dashboard']);
     }
   }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
 
   private initForm(): void {
     this.loginForm = this.fb.group({

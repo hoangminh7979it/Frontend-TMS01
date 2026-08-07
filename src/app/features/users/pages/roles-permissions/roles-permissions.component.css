@@ -366,6 +366,14 @@
   color: var(--text-muted);
 }
 
+.field-hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+
 .form-group input, .form-group select, .form-group textarea {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -379,6 +387,37 @@
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   border-color: var(--border-active);
 }
+
+.input-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-password-wrapper input {
+  width: 100%;
+  padding-right: 40px !important;
+}
+
+.btn-toggle-eye {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.btn-toggle-eye:hover {
+  color: var(--text-main);
+}
+
 
 .form-row {
   display: grid;
