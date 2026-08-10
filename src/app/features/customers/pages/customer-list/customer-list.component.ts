@@ -144,10 +144,21 @@ export class CustomerListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalCount = this.customers.length;
-    this.corporateCount = this.customers.filter(c => c.customerType === 'CORPORATE').length;
-    this.individualCount = this.customers.filter(c => c.customerType === 'INDIVIDUAL').length;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthCustomers = this.customers.filter(c => {
+      if (!c.createDate) return true;
+      const d = new Date(c.createDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalCount = currentMonthCustomers.length;
+    this.corporateCount = currentMonthCustomers.filter(c => c.customerType === 'CORPORATE').length;
+    this.individualCount = currentMonthCustomers.filter(c => c.customerType === 'INDIVIDUAL').length;
   }
+
 
   applyFilter(): void {
     let result = [...this.customers];
@@ -207,13 +218,21 @@ export class CustomerListComponent implements OnInit {
     this.selectedCustomer = null;
     this.customerForm.reset({ customerType: 'CORPORATE' });
     
-    const nextNum = (this.customers.length + 1).toString().padStart(3, '0');
+    let num = this.customers.length + 1;
+    let nextCode = `KH-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.customers.map(c => c.customerCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `KH-${num.toString().padStart(3, '0')}`;
+    }
+
     this.customerForm.patchValue({
-      customerCode: `KH-${nextNum}`
+      customerCode: nextCode
     });
     this.customerForm.controls['customerCode'].enable();
     this.showCustomerModal = true;
   }
+
 
   openEditCustomerModal(c: CustomerModel): void {
     this.clearAlerts();

@@ -269,13 +269,23 @@ export class ExpenseListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalExpenseAmount = this.expenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthExpenses = this.expenses.filter(e => {
+      if (!e.expenseDate) return false;
+      const d = new Date(e.expenseDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalExpenseAmount = currentMonthExpenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
     
     let fuelSum = 0;
     let tollSum = 0;
     let repairSum = 0;
 
-    for (const exp of this.expenses) {
+    for (const exp of currentMonthExpenses) {
       if (exp.details) {
         for (const dt of exp.details) {
           const cost = dt.expenseDetailCosts || 0;
@@ -290,6 +300,7 @@ export class ExpenseListComponent implements OnInit {
     this.tollExpenseAmount = tollSum;
     this.repairExpenseAmount = repairSum;
   }
+
 
   applyFilter(): void {
     let result = [...this.expenses];
@@ -384,14 +395,21 @@ export class ExpenseListComponent implements OnInit {
     this.expenseForm.reset();
 
     const year = new Date().getFullYear();
-    const nextNum = (this.expenses.length + 1).toString().padStart(3, '0');
+    let num = this.expenses.length + 1;
+    let nextCode = `CP-${year}-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.expenses.map(e => e.expenseCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `CP-${year}-${num.toString().padStart(3, '0')}`;
+    }
 
     this.expenseForm.patchValue({
-      expenseCode: `CP-${year}-${nextNum}`,
-      title: `Phiếu chi phí vận tải ${nextNum}`,
+      expenseCode: nextCode,
+      title: `Phiếu chi phí vận tải ${num.toString().padStart(3, '0')}`,
       expenseDate: today,
       totalExpense: 0
     });
+
     this.expenseForm.controls['expenseCode'].enable();
     this.showExpenseModal = true;
   }

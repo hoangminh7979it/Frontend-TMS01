@@ -39,6 +39,23 @@ export class RevenueFormComponent {
   @Output() grossRevenueInputChange = new EventEmitter<Event>();
   @Output() totalExpenseInputChange = new EventEmitter<Event>();
   @Output() totalSalaryInputChange = new EventEmitter<Event>();
+  @Output() export = new EventEmitter<File | null>();
+
+  selectedTemplateFile: File | null = null;
+
+  onFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.selectedTemplateFile = file;
+    }
+  }
+
+  clearTemplateFile(fileInput: any): void {
+    this.selectedTemplateFile = null;
+    if (fileInput) fileInput.value = '';
+  }
+
+
 
   onClose(): void {
     this.close.emit();
@@ -67,4 +84,10 @@ export class RevenueFormComponent {
   onSalaryInput(event: Event): void {
     this.totalSalaryInputChange.emit(event);
   }
+
+  onExport(): void {
+    this.export.emit(this.selectedTemplateFile);
+  }
+
 }
+

@@ -35,7 +35,22 @@ export class PayrollFormComponent {
 
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
-  @Output() export = new EventEmitter<void>();
+  @Output() export = new EventEmitter<File | null>();
+
+  selectedTemplateFile: File | null = null;
+
+  onFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+    if (file) {
+      this.selectedTemplateFile = file;
+    }
+  }
+
+  clearTemplateFile(fileInput: any): void {
+    this.selectedTemplateFile = null;
+    if (fileInput) fileInput.value = '';
+  }
+
 
   @Output() startDateChange = new EventEmitter<void>();
   @Output() endDateChange = new EventEmitter<void>();
@@ -52,7 +67,8 @@ export class PayrollFormComponent {
 
   onClose(): void { this.close.emit(); }
   onSave(): void { this.save.emit(); }
-  onExport(): void { this.export.emit(); }
+  onExport(): void { this.export.emit(this.selectedTemplateFile); }
+
 
   onStartDateChanged(): void { this.startDateChange.emit(); }
   onEndDateChanged(): void { this.endDateChange.emit(); }

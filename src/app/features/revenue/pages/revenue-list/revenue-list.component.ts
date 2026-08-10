@@ -17,17 +17,16 @@ import { ExpenseModel } from '@core/models/expense.model';
 import { SalaryModel } from '@core/models/payroll.model';
 import { ReportExportService } from '@core/services/report-export.service';
 
-import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
-import { ReportFilterOptions } from '@core/services/report-export.service';
 
 @Component({
   selector: 'app-revenue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, ReportExportModalComponent, PaginationComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, PaginationComponent],
   templateUrl: './revenue-list.component.html',
   styleUrls: ['./revenue-list.component.css']
 })
+
 
 
 export class RevenueListComponent implements OnInit {
@@ -197,10 +196,41 @@ export class RevenueListComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.summaryData = res.data;
+          this.calculateMetrics();
         }
       }
     });
   }
+
+  private calculateMetrics(): void {
+    if (!this.revenues || this.revenues.length === 0) return;
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthRevenues = this.revenues.filter(r => {
+      if (!r.startDate) return false;
+      const d = new Date(r.startDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    const totalGrossRevenue = currentMonthRevenues.reduce((sum, r) => sum + (r.grossRevenue || 0), 0);
+    const totalExpenses = currentMonthRevenues.reduce((sum, r) => sum + (r.totalExpense || 0), 0);
+    const totalSalariesPaid = currentMonthRevenues.reduce((sum, r) => sum + (r.totalSalary || 0), 0);
+    const totalNetProfit = currentMonthRevenues.reduce((sum, r) => sum + (r.revenueFinalCosts || 0), 0);
+
+    this.summaryData = {
+      totalGrossRevenue,
+      totalExpenses,
+      totalSalariesPaid,
+      netProfit: totalNetProfit,
+      totalShipmentsCompleted: currentMonthRevenues.reduce((sum, r) => sum + (r.totalShipment || 0), 0),
+      activeDriversCount: 0
+    };
+
+  }
+
 
   loadRevenues(): void {
     this.loading = true;
@@ -209,8 +239,10 @@ export class RevenueListComponent implements OnInit {
         this.loading = false;
         if (res.success && res.data) {
           this.revenues = res.data;
+          this.calculateMetrics();
           this.applyFilter();
         }
+
       },
       error: (err) => {
         this.loading = false;
@@ -432,14 +464,21 @@ export class RevenueListComponent implements OnInit {
 
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const nextNum = String(this.revenues.length + 1).padStart(3, '0');
+    let num = this.revenues.length + 1;
+    let nextCode = `DT-${year}${month}-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.revenues.map(r => r.revenueCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `DT-${year}${month}-${num.toString().padStart(3, '0')}`;
+    }
 
     this.revenueForm.patchValue({
-      revenueCode: `DT-${year}${month}-${nextNum}`,
+      revenueCode: nextCode,
       title: `Báo cáo chốt doanh thu & lợi nhuận kỳ ${month}/${year}`,
       vehicleId: null,
       totalShipment: 0
     });
+
 
     this.autoScanPeriodFinancials();
 
@@ -473,7 +512,11 @@ export class RevenueListComponent implements OnInit {
 
     this.revenueForm.controls['revenueCode'].disable();
     this.showRevenueModal = true;
+
+    // Scan & display linked shipments, expenses & salaries for selected revenue report
+    this.autoScanPeriodFinancials();
   }
+
 
   closeRevenueModal(): void {
     this.showRevenueModal = false;
@@ -549,28 +592,44 @@ export class RevenueListComponent implements OnInit {
     });
   }
 
-  onExportExcel(): void {
-    this.showExportModal = true;
-  }
-
-  closeExportModal(): void {
-    this.showExportModal = false;
-  }
-
-  onConfirmExport(options: ReportFilterOptions): void {
-    this.showExportModal = false;
-    this.reportExportService.exportRevenues(options).subscribe({
+  onExportCurrentRevenue(templateFile?: File | null): void {
+    const revenueId = this.selectedRevenue?.revenueId;
+    const revenueCode = this.revenueForm.get('revenueCode')?.value || 'Revenue';
+    if (!revenueId) {
+      this.showError('Không xác định được ID báo cáo doanh thu để xuất file.');
+      return;
+    }
+    this.reportExportService.exportRevenueById(revenueId, templateFile).subscribe({
       next: (blob) => {
-        const ext = options.format || 'xlsx';
-        this.reportExportService.downloadBlob(blob, `Bao_Cao_Doanh_Thu_Revenues.${ext}`);
-        this.showSuccess(`Xuất file báo cáo doanh thu (${ext.toUpperCase()}) thành công!`);
+        const filename = templateFile ? templateFile.name : `Bao_Cao_Chot_Doanh_Thu_${revenueCode}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất báo cáo doanh thu "${revenueCode}" thành công!`);
       },
       error: () => {
-        this.showError('Có lỗi xảy ra khi xuất file báo cáo doanh thu.');
+        this.showError('Có lỗi xảy ra khi xuất báo cáo doanh thu.');
+      }
+    });
+  }
+
+
+  onExportRevenueRecord(r: RevenueFinalModel): void {
+    if (!r.revenueId) {
+      this.showError('Không xác định được ID báo cáo doanh thu này.');
+      return;
+    }
+    this.reportExportService.exportRevenueById(r.revenueId).subscribe({
+      next: (blob) => {
+        const filename = `Bao_Cao_Chot_Doanh_Thu_${r.revenueCode || r.revenueId}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất báo cáo doanh thu "${r.revenueCode}" thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất báo cáo doanh thu.');
       }
     });
   }
 }
+
 
 
 

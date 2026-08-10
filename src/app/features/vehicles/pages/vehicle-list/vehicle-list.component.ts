@@ -164,22 +164,32 @@ export class VehicleListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalCount = this.vehicles.length;
-    this.availableCount = this.vehicles.filter(v => v.status === 'AVAILABLE').length;
-    this.inTransitCount = this.vehicles.filter(v => v.status === 'IN_TRANSIT').length;
-    this.maintenanceCount = this.vehicles.filter(v => v.status === 'MAINTENANCE').length;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthVehicles = this.vehicles.filter(v => {
+      if (!v.createDate) return true;
+      const d = new Date(v.createDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalCount = currentMonthVehicles.length;
+    this.availableCount = currentMonthVehicles.filter(v => v.status === 'AVAILABLE').length;
+    this.inTransitCount = currentMonthVehicles.filter(v => v.status === 'IN_TRANSIT').length;
+    this.maintenanceCount = currentMonthVehicles.filter(v => v.status === 'MAINTENANCE').length;
 
     // Check inspection expiration within 30 days
-    const now = new Date();
     const future30 = new Date();
     future30.setDate(now.getDate() + 30);
 
-    this.expiringInspectionCount = this.vehicles.filter(v => {
+    this.expiringInspectionCount = currentMonthVehicles.filter(v => {
       if (!v.inspectionExpirationDate) return false;
       const expDate = new Date(v.inspectionExpirationDate);
       return expDate <= future30;
     }).length;
   }
+
 
   isInspectionExpiringSoon(dateStr?: string): boolean {
     if (!dateStr) return false;
@@ -254,12 +264,20 @@ export class VehicleListComponent implements OnInit {
     this.selectedVehicle = null;
     this.vehicleForm.reset({ status: 'AVAILABLE' });
     
-    const nextNum = (this.vehicles.length + 1).toString().padStart(3, '0');
+    let num = this.vehicles.length + 1;
+    let nextCode = `XE-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.vehicles.map(v => v.vehicleCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `XE-${num.toString().padStart(3, '0')}`;
+    }
+
     this.vehicleForm.patchValue({
-      vehicleCode: `XE-${nextNum}`
+      vehicleCode: nextCode
     });
     this.showVehicleModal = true;
   }
+
 
   openEditVehicleModal(v: VehicleModel): void {
     this.isEditVehicleMode = true;

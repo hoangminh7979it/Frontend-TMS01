@@ -64,6 +64,25 @@
   color: var(--text-title);
 }
 
+.btn-excel-modal {
+  background: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(34, 197, 94, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-excel-modal:hover {
+  background: #16a34a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(34, 197, 94, 0.45);
+}
+
+.btn-excel-modal:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.3);
+}
+
+
 /* Toast Alerts */
 .toast-alert {
   padding: 12px 16px;
@@ -267,6 +286,17 @@
   background: var(--table-hover);
 }
 
+/* Column Width & Alignment Controls */
+.col-code { min-width: 155px; white-space: nowrap; }
+.col-title { min-width: 220px; max-width: 280px; }
+.col-vehicle { min-width: 130px; white-space: nowrap; }
+.col-period { min-width: 175px; white-space: nowrap; }
+.col-count { min-width: 100px; white-space: nowrap; }
+.col-money { min-width: 140px; white-space: nowrap; text-align: right; }
+.col-profit { min-width: 150px; white-space: nowrap; text-align: right; }
+.col-actions { min-width: 220px; white-space: nowrap; text-align: right; }
+
+
 .emp-code-badge {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
@@ -316,6 +346,24 @@
 .btn-edit:hover {
   border-color: var(--primary-accent);
   color: var(--primary-accent);
+}
+
+.btn-excel-row {
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #22c55e;
+  transition: all 0.2s ease;
+}
+
+.btn-excel-row:hover {
+  background: #22c55e;
+  color: #ffffff;
+  border-color: #22c55e;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.35);
+}
+
+.btn-excel-row:hover i {
+  color: #ffffff !important;
 }
 
 .btn-delete:hover {
@@ -723,3 +771,40 @@
 .font-bold { font-weight: 700; }
 .margin-top-2 { margin-top: 2px; }
 .margin-top-4 { margin-top: 4px; }
+
+/* Template File Picker Component */
+.template-file-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-subtle);
+  border-radius: 4px;
+}
+
+.file-name-tag {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #22c55e;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.remove-file-btn {
+  cursor: pointer;
+  color: #ef4444;
+  font-size: 0.9rem;
+  transition: transform 0.15s ease;
+}
+
+.remove-file-btn:hover {
+  transform: scale(1.2);
+}
+

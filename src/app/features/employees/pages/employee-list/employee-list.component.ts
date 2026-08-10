@@ -152,11 +152,22 @@ export class EmployeeListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalCount = this.employees.length;
-    this.driverCount = this.employees.filter(e => e.employeeTypeCode === 'DRIVER').length;
-    this.coDriverCount = this.employees.filter(e => e.employeeTypeCode === 'CO_DRIVER').length;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthEmployees = this.employees.filter(e => {
+      if (!e.createDate) return true;
+      const d = new Date(e.createDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalCount = currentMonthEmployees.length;
+    this.driverCount = currentMonthEmployees.filter(e => e.employeeTypeCode === 'DRIVER').length;
+    this.coDriverCount = currentMonthEmployees.filter(e => e.employeeTypeCode === 'CO_DRIVER').length;
     this.staffCount = this.totalCount - (this.driverCount + this.coDriverCount);
   }
+
 
   applyFilter(): void {
     let result = [...this.employees];
@@ -214,13 +225,21 @@ export class EmployeeListComponent implements OnInit {
     this.selectedEmployee = null;
     this.employeeForm.reset();
     
-    const nextNum = (this.employees.length + 1).toString().padStart(3, '0');
+    let num = this.employees.length + 1;
+    let nextCode = `NV-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.employees.map(e => e.employeeCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `NV-${num.toString().padStart(3, '0')}`;
+    }
+
     this.employeeForm.patchValue({
-      employeeCode: `NV-${nextNum}`
+      employeeCode: nextCode
     });
     this.employeeForm.controls['employeeCode'].enable();
     this.showEmployeeModal = true;
   }
+
 
   openEditEmployeeModal(emp: EmployeeModel): void {
     this.isEditEmployeeMode = true;
