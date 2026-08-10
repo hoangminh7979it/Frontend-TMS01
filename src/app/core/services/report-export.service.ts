@@ -44,7 +44,14 @@ export class ReportExportService {
     });
   }
 
-  exportSalaryById(salaryId: number): Observable<Blob> {
+  exportSalaryById(salaryId: number, templateFile?: File | null): Observable<Blob> {
+    if (templateFile) {
+      const formData = new FormData();
+      formData.append('file', templateFile);
+      return this.http.post(`${this.baseUrl}/salaries/${salaryId}/export`, formData, {
+        responseType: 'blob'
+      });
+    }
     return this.http.get(`${this.baseUrl}/salaries/${salaryId}/export`, {
       responseType: 'blob'
     });
@@ -57,6 +64,21 @@ export class ReportExportService {
       responseType: 'blob'
     });
   }
+
+  exportRevenueById(revenueId: number, templateFile?: File | null): Observable<Blob> {
+    if (templateFile) {
+      const formData = new FormData();
+      formData.append('file', templateFile);
+      return this.http.post(`${this.baseUrl}/revenues/${revenueId}/export`, formData, {
+        responseType: 'blob'
+      });
+    }
+    return this.http.get(`${this.baseUrl}/revenues/${revenueId}/export`, {
+      responseType: 'blob'
+    });
+  }
+
+
 
   private buildParams(options: ReportFilterOptions): HttpParams {
     let params = new HttpParams().set('format', options.format || 'xlsx');

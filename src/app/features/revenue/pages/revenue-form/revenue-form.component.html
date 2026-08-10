@@ -264,14 +264,35 @@
           <textarea formControlName="notes" rows="2" placeholder="Ghi chú đánh giá chỉ số lợi nhuận ròng, lý do chi phí biến động..."></textarea>
         </div>
 
+        <!-- SECTION 5: OPTIONAL EXCEL TEMPLATE FILE SELECTION -->
+        <div class="form-group margin-top-4" *ngIf="isEditMode">
+          <label class="color-green font-bold"><i class="fa-solid fa-file-excel"></i> Chọn File Excel Có Sẵn Để Chèn Sheet Mới (Tùy Chọn)</label>
+          <div class="template-file-picker">
+            <input type="file" #excelFileInput (change)="onFileSelected($event)" accept=".xlsx, .xls" style="display: none;" />
+            <button type="button" class="btn btn-secondary btn-sm" (click)="excelFileInput.click()">
+              <i class="fa-solid fa-folder-open"></i> {{ selectedTemplateFile ? 'Đổi File Khác' : 'Chọn File Excel Có Sẵn...' }}
+            </button>
+            <span class="file-name-tag" *ngIf="selectedTemplateFile">
+              <i class="fa-solid fa-paperclip"></i> {{ selectedTemplateFile.name }}
+              <i class="fa-solid fa-xmark remove-file-btn" (click)="clearTemplateFile(excelFileInput)" title="Bỏ chọn file"></i>
+            </span>
+            <span class="text-muted text-xs" *ngIf="!selectedTemplateFile">(Nếu không chọn, hệ thống sẽ tạo mới 1 file Excel độc lập)</span>
+          </div>
+        </div>
+
       </div>
+
       
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
+        <button type="button" class="btn btn-excel-modal" *ngIf="isEditMode" (click)="onExport()" title="Xuất Báo Cáo Doanh Thu Excel">
+          <i class="fa-solid fa-file-excel"></i> Xuất Báo Cáo Excel
+        </button>
         <button type="submit" class="btn btn-primary" [disabled]="loading">
           <i class="fa-solid fa-floppy-disk"></i> Lưu Báo Cáo Doanh Thu
         </button>
       </div>
+
     </form>
   </div>
 </div>

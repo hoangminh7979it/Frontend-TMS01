@@ -340,10 +340,21 @@ export class PayrollListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalSalariesPaidAmount = this.salaries.reduce((sum, s) => sum + (s.salaryCosts || 0), 0);
-    this.totalShipmentsRewardedCount = this.salaries.reduce((sum, s) => sum + (s.totalShipmentCount || 0), 0);
-    this.averageSalaryPerDriver = this.salaries.length > 0 ? (this.totalSalariesPaidAmount / this.salaries.length) : 0;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    const currentMonthSalaries = this.salaries.filter(s => {
+      if (!s.startDate) return false;
+      const d = new Date(s.startDate);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalSalariesPaidAmount = currentMonthSalaries.reduce((sum, s) => sum + (s.salaryCosts || 0), 0);
+    this.totalShipmentsRewardedCount = currentMonthSalaries.reduce((sum, s) => sum + (s.totalShipmentCount || 0), 0);
+    this.averageSalaryPerDriver = currentMonthSalaries.length > 0 ? (this.totalSalariesPaidAmount / currentMonthSalaries.length) : 0;
   }
+
 
   applyFilter(): void {
     let result = [...this.salaries];
@@ -419,7 +430,13 @@ export class PayrollListComponent implements OnInit {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    const nextNum = String(this.salaries.length + 1).padStart(3, '0');
+    let num = this.salaries.length + 1;
+    let nextCode = `LUONG-${year}${month}-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.salaries.map(s => s.salaryCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `LUONG-${year}${month}-${num.toString().padStart(3, '0')}`;
+    }
 
     // Default date range: first to last of current month
     const firstDay = `${year}-${month}-01`;
@@ -427,7 +444,8 @@ export class PayrollListComponent implements OnInit {
     const lastDayStr = `${year}-${month}-${String(lastDay.getDate()).padStart(2, '0')}`;
 
     this.salaryForm.patchValue({
-      salaryCode: `LUONG-${year}${month}-${nextNum}`,
+      salaryCode: nextCode,
+
       startDate: firstDay,
       endDate: lastDayStr,
       workDaysCount: 26,
@@ -584,16 +602,16 @@ export class PayrollListComponent implements OnInit {
     });
   }
 
-  onExportCurrentSalary(): void {
+  onExportCurrentSalary(templateFile?: File | null): void {
     const salaryId = this.selectedSalary?.salaryId;
     const salaryCode = this.salaryForm.get('salaryCode')?.value || 'Salary';
     if (!salaryId) {
       this.showError('Không xác định được ID phiếu lương này để xuất file.');
       return;
     }
-    this.reportExportService.exportSalaryById(salaryId).subscribe({
+    this.reportExportService.exportSalaryById(salaryId, templateFile).subscribe({
       next: (blob) => {
-        const filename = `Phieu_Luong_${salaryCode}.xlsx`;
+        const filename = templateFile ? templateFile.name : `Phieu_Luong_${salaryCode}.xlsx`;
         this.reportExportService.downloadBlob(blob, filename);
         this.showSuccess(`Xuất phiếu lương "${salaryCode}" thành công!`);
       },
@@ -602,6 +620,7 @@ export class PayrollListComponent implements OnInit {
       }
     });
   }
+
 
   onExportSalaryRecord(salary: SalaryModel): void {
     if (!salary.salaryId) {
