@@ -238,14 +238,18 @@
                 <span class="text-muted text-xs" *ngIf="!s.licensePlate">Chưa gán xe</span>
               </td>
 
-              <!-- Tài Xế Vận Hành -->
+              <!-- Tài Xế Vận Hành & Phụ Xe -->
               <td class="col-driver">
                 <div *ngIf="s.driverName" class="color-cyan font-bold text-xs">
                   <i class="fa-solid fa-user-gear"></i> {{ s.driverName }}
                   <div class="text-muted text-xs font-normal" *ngIf="s.driverPhone"><i class="fa-solid fa-phone"></i> {{ s.driverPhone }}</div>
                 </div>
-                <span class="text-muted text-xs" *ngIf="!s.driverName">Chưa gán TX</span>
+                <div *ngIf="s.coDriverName" class="color-purple text-xs margin-top-2">
+                  <i class="fa-solid fa-user-plus"></i> Phụ xe: {{ s.coDriverName }}
+                </div>
+                <span class="text-muted text-xs" *ngIf="!s.driverName && !s.coDriverName">Chưa gán TX / PX</span>
               </td>
+
 
               <!-- Revenue -->
               <td class="col-revenue">
@@ -363,7 +367,9 @@
     [customers]="customers"
     [vehicles]="vehicles"
     [drivers]="drivers"
+    [coDrivers]="coDrivers"
     [statuses]="statuses"
+
     [companies]="companies"
     [receiptPlacesList]="receiptPlacesList"
     [deliveryPlacesList]="deliveryPlacesList"

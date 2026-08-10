@@ -41,6 +41,8 @@ export class ShipmentListComponent implements OnInit {
   companies: CompanyModel[] = [];
   vehicles: VehicleModel[] = [];
   drivers: EmployeeModel[] = [];
+  coDrivers: EmployeeModel[] = [];
+
 
   // Filter State
   searchQuery: string = '';
@@ -136,10 +138,12 @@ export class ShipmentListComponent implements OnInit {
       revenue: [0],
       incurredCosts: [0],
       vehicleId: [null],
-      employeeId: [null],
+      employeeId: [{ value: null, disabled: true }],
+      coDriverId: [null],
       statusEnumId: [null],
       notes: ['']
     });
+
 
     this.statusForm = this.fb.group({
       statusEnumCode: ['', [Validators.required]],
@@ -242,10 +246,12 @@ export class ShipmentListComponent implements OnInit {
       next: (res) => {
         if (res.success && res.data) {
           this.drivers = res.data.filter(e => e.employeeTypeCode === 'DRIVER' || e.employeeTypeName?.toLowerCase().includes('lái'));
+          this.coDrivers = res.data.filter(e => e.employeeTypeCode === 'CO_DRIVER' || e.employeeTypeName?.toLowerCase().includes('phụ'));
         }
       }
     });
   }
+
 
   loadShipments(): void {
     this.loading = true;
@@ -266,11 +272,23 @@ export class ShipmentListComponent implements OnInit {
   }
 
   private calculateMetrics(): void {
-    this.totalShipmentsCount = this.shipments.length;
-    this.inTransitCount = this.shipments.filter(s => s.statusEnumCode === 'PICKED_UP').length;
-    this.totalRevenue = this.shipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
-    this.totalNetProfit = this.shipments.reduce((sum, s) => sum + (s.netProfit || 0), 0);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    // Filter items in current real-time month (from 1st to last day)
+    const currentMonthShipments = this.shipments.filter(s => {
+      if (!s.dateOfReceipt) return false;
+      const d = new Date(s.dateOfReceipt);
+      return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    });
+
+    this.totalShipmentsCount = currentMonthShipments.length;
+    this.inTransitCount = currentMonthShipments.filter(s => s.statusEnumCode === 'PICKED_UP').length;
+    this.totalRevenue = currentMonthShipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
+    this.totalNetProfit = currentMonthShipments.reduce((sum, s) => sum + (s.netProfit || 0), 0);
   }
+
 
   applyFilter(): void {
     let result = [...this.shipments];
@@ -391,16 +409,15 @@ export class ShipmentListComponent implements OnInit {
   }
 
   selectReceiptCompany(index: number, comp: CompanyModel): void {
-    const text = comp.address ? `${comp.name} - ${comp.address}` : comp.name;
-    this.receiptPlacesList[index] = text;
+    this.receiptPlacesList[index] = comp.name;
     this.activeReceiptIndex = null;
   }
 
   selectDeliveryCompany(index: number, comp: CompanyModel): void {
-    const text = comp.address ? `${comp.name} - ${comp.address}` : comp.name;
-    this.deliveryPlacesList[index] = text;
+    this.deliveryPlacesList[index] = comp.name;
     this.activeDeliveryIndex = null;
   }
+
 
   // --- AUTO CREATE MISSING COMPANIES FROM PLACES ---
   private async checkAndAutoCreateCompanies(places: string[]): Promise<void> {
@@ -439,26 +456,45 @@ export class ShipmentListComponent implements OnInit {
     const rawVal = event.target.value;
     const vehicleId = rawVal ? Number(rawVal) : null;
     
-    if (!this.useCustomDriver && vehicleId) {
+    if (vehicleId) {
       const v = this.vehicles.find(item => item.id === vehicleId);
       if (v && v.employeeId) {
         this.shipmentForm.patchValue({ employeeId: v.employeeId });
+      } else {
+        this.shipmentForm.patchValue({ employeeId: null });
       }
+    } else {
+      this.shipmentForm.patchValue({ employeeId: null });
+    }
+
+    if (!this.useCustomDriver) {
+      this.shipmentForm.controls['employeeId'].disable();
+    } else {
+      this.shipmentForm.controls['employeeId'].enable();
     }
   }
 
   onToggleCustomDriver(): void {
-    if (!this.useCustomDriver) {
+    this.useCustomDriver = !this.useCustomDriver;
+    if (this.useCustomDriver) {
+      this.shipmentForm.controls['employeeId'].enable();
+    } else {
+      this.shipmentForm.controls['employeeId'].disable();
       // Re-apply vehicle default driver if unchecked
       const vehicleId = this.shipmentForm.get('vehicleId')?.value;
       if (vehicleId) {
         const v = this.vehicles.find(item => item.id === Number(vehicleId));
         if (v && v.employeeId) {
           this.shipmentForm.patchValue({ employeeId: v.employeeId });
+        } else {
+          this.shipmentForm.patchValue({ employeeId: null });
         }
+      } else {
+        this.shipmentForm.patchValue({ employeeId: null });
       }
     }
   }
+
 
   // --- QUICK STATUS SWITCHER ---
   onQuickStatusChange(shipment: ShipmentModel, newStatusCode: string): void {
@@ -492,21 +528,33 @@ export class ShipmentListComponent implements OnInit {
     this.shipmentForm.reset();
     
     const year = new Date().getFullYear();
-    const nextNum = (this.shipments.length + 1).toString().padStart(3, '0');
+    let num = this.shipments.length + 1;
+    let nextCode = `DH-${year}-${num.toString().padStart(3, '0')}`;
+    const existingCodes = new Set(this.shipments.map(s => s.shipmentCode?.toUpperCase()));
+    while (existingCodes.has(nextCode.toUpperCase())) {
+      num++;
+      nextCode = `DH-${year}-${num.toString().padStart(3, '0')}`;
+    }
     
     let defaultStatusId = null;
     const createdStatus = this.statuses.find(st => st.statusEnumCode === 'CREATED');
     if (createdStatus) defaultStatusId = createdStatus.statusEnumId;
 
     this.shipmentForm.patchValue({
-      shipmentCode: `DH-${year}-${nextNum}`,
+      shipmentCode: nextCode,
       revenue: 0,
       incurredCosts: 0,
-      statusEnumId: defaultStatusId
+      statusEnumId: defaultStatusId,
+      vehicleId: null,
+      employeeId: null,
+      coDriverId: null
     });
+
     this.shipmentForm.controls['shipmentCode'].enable();
+    this.shipmentForm.controls['employeeId'].disable();
     this.showShipmentModal = true;
   }
+
 
   openEditShipmentModal(s: ShipmentModel): void {
     this.clearAlerts();
@@ -550,10 +598,16 @@ export class ShipmentListComponent implements OnInit {
       incurredCosts: s.incurredCosts || 0,
       vehicleId: s.vehicleId,
       employeeId: s.employeeId,
+      coDriverId: s.coDriverId,
       statusEnumId: s.statusEnumId,
       notes: s.notes
     });
     this.shipmentForm.controls['shipmentCode'].disable();
+    if (this.useCustomDriver) {
+      this.shipmentForm.controls['employeeId'].enable();
+    } else {
+      this.shipmentForm.controls['employeeId'].disable();
+    }
     this.showShipmentModal = true;
   }
 
@@ -603,7 +657,9 @@ export class ShipmentListComponent implements OnInit {
     if (val.customerId) val.customerId = Number(val.customerId);
     if (val.vehicleId) val.vehicleId = Number(val.vehicleId);
     if (val.employeeId) val.employeeId = Number(val.employeeId);
+    if (val.coDriverId) val.coDriverId = Number(val.coDriverId);
     if (val.statusEnumId) val.statusEnumId = Number(val.statusEnumId);
+
 
     if (this.isEditShipmentMode && this.selectedShipment) {
       this.shipmentService.updateShipment(this.selectedShipment.shipmentId, val).subscribe({

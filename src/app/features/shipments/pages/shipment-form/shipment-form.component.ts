@@ -20,8 +20,10 @@ export class ShipmentFormComponent {
   @Input() customers: CustomerModel[] = [];
   @Input() vehicles: VehicleModel[] = [];
   @Input() drivers: EmployeeModel[] = [];
+  @Input() coDrivers: EmployeeModel[] = [];
   @Input() statuses: StatusEnumModel[] = [];
   @Input() companies: CompanyModel[] = [];
+
   
   @Input() receiptPlacesList: string[] = [''];
   @Input() deliveryPlacesList: string[] = [''];
@@ -50,8 +52,10 @@ export class ShipmentFormComponent {
 
   @Output() vehicleChange = new EventEmitter<Event>();
   @Output() toggleCustomDriver = new EventEmitter<void>();
+  @Output() coDriverChange = new EventEmitter<Event>();
 
   @Output() revenueInputChange = new EventEmitter<Event>();
+
   @Output() incurredCostsInputChange = new EventEmitter<Event>();
 
   trackByIndex(index: number, obj: any): any {
@@ -85,6 +89,8 @@ export class ShipmentFormComponent {
 
   onVehicleChanged(event: Event): void { this.vehicleChange.emit(event); }
   onToggleCustomDriverChanged(): void { this.toggleCustomDriver.emit(); }
+  onCoDriverChanged(event: Event): void { this.coDriverChange.emit(event); }
   onRevenueInput(event: Event): void { this.revenueInputChange.emit(event); }
   onIncurredCostsInput(event: Event): void { this.incurredCostsInputChange.emit(event); }
 }
+

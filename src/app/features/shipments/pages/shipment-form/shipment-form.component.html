@@ -250,17 +250,28 @@
 
             <div class="form-group">
               <label>Phân Công Tài Xế Vận Hành</label>
-              <select formControlName="employeeId" [attr.disabled]="!useCustomDriver ? true : null">
+              <select formControlName="employeeId">
                 <option [ngValue]="null">-- Chưa chọn tài xế --</option>
                 <option *ngFor="let d of drivers" [value]="d.employeeId">
                   {{ d.firstname }} {{ d.lastname }} (GPLX: {{ d.drivingLicenseId || 'Chưa rõ' }})
                 </option>
               </select>
               <span class="text-xs color-cyan margin-top-2" *ngIf="!useCustomDriver">
-                <i class="fa-solid fa-circle-info"></i> Tự động gán tài xế cố định của xe. Tích checkbox để tùy chỉnh tài xế khác.
+                <i class="fa-solid fa-circle-info"></i> Ô chọn tài xế khóa theo mặc định của xe. Tích checkbox phía trên để chọn tài xế khác.
               </span>
             </div>
+
+            <div class="form-group margin-top-4">
+              <label>Phân Công Phụ Xe Đi Cùng (Nếu có)</label>
+              <select formControlName="coDriverId">
+                <option [ngValue]="null">-- Không có phụ xe --</option>
+                <option *ngFor="let cd of coDrivers" [value]="cd.employeeId">
+                  {{ cd.firstname }} {{ cd.lastname }} (Mã: {{ cd.employeeCode }})
+                </option>
+              </select>
+            </div>
           </div>
+
 
         </div>
 

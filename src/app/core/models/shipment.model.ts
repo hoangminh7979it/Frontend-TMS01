@@ -37,7 +37,12 @@ export interface ShipmentModel {
   driverName?: string;
   driverPhone?: string;
 
+  coDriverId?: number;
+  coDriverName?: string;
+  coDriverPhone?: string;
+
   statusEnumId?: number;
+
   statusEnumCode?: string;
   statusEnumName?: string;
 
@@ -58,5 +63,7 @@ export interface ShipmentRequest {
   customerId?: number;
   vehicleId?: number;
   employeeId?: number;
+  coDriverId?: number;
   statusEnumId?: number;
 }
+

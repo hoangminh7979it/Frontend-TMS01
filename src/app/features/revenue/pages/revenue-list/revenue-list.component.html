@@ -8,14 +8,12 @@
     </div>
     
     <div class="page-actions">
-      <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
-        <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
-      </button>
       <button class="btn btn-primary" (click)="openCreateRevenueModal()">
         <i class="fa-solid fa-calculator"></i> Lập Báo Cáo Chốt Doanh Thu Mới
       </button>
     </div>
   </div>
+
 
   <!-- Alerts -->
   <div *ngIf="errorMessage && !showRevenueModal" class="toast-alert toast-error">
@@ -110,57 +108,60 @@
       <table class="tech-table">
         <thead>
           <tr>
-            <th>MÃ BÁO CÁO</th>
-            <th>TIÊU ĐỀ CHỐT KỲ</th>
-            <th>PHƯƠNG TIỆN (XE)</th>
-            <th>KỲ TỔNG HỢP</th>
-            <th>SỐ CHUYẾN</th>
-            <th>DOANH THU GROSS</th>
-            <th>CHI PHÍ PHÁT SINH</th>
-            <th>QUỸ LƯƠNG CHI TRẢ</th>
-            <th>LỢI NHUẬN RÒNG (VNĐ)</th>
-            <th class="text-right">THAO TÁC</th>
+            <th class="col-code">MÃ BÁO CÁO</th>
+            <th class="col-title">TIÊU ĐỀ CHỐT KỲ</th>
+            <th class="col-vehicle">PHƯƠNG TIỆN (XE)</th>
+            <th class="col-period">KỲ TỔNG HỢP</th>
+            <th class="col-count text-center">SỐ CHUYẾN</th>
+            <th class="col-money text-right">DOANH THU GROSS</th>
+            <th class="col-money text-right">CHI PHÍ VẬN HÀNH</th>
+            <th class="col-money text-right">QUỸ LƯƠNG</th>
+            <th class="col-profit text-right">LỢI NHUẬN RÒNG</th>
+            <th class="col-actions text-right">THAO TÁC</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let r of paginatedRevenues" (click)="openEditRevenueModal(r)" class="clickable-row" title="Bấm vào để xem chi tiết">
 
-            <td><span class="emp-code-badge">{{ r.revenueCode }}</span></td>
+            <td class="col-code"><span class="emp-code-badge">{{ r.revenueCode }}</span></td>
             
-            <td>
+            <td class="col-title">
               <div class="font-bold color-title"><i class="fa-solid fa-file-invoice color-cyan"></i> {{ r.title || 'Báo cáo chốt doanh thu' }}</div>
-              <div class="text-muted text-xs" *ngIf="r.createDate"><i class="fa-regular fa-clock"></i> {{ r.createDate | date:'dd/MM/yyyy' }}</div>
+              <div class="text-muted text-xs margin-top-2" *ngIf="r.createDate"><i class="fa-regular fa-clock"></i> {{ r.createDate | date:'dd/MM/yyyy' }}</div>
             </td>
 
-            <td>
+            <td class="col-vehicle">
               <span class="vehicle-tag-sm" *ngIf="r.licensePlate">
                 <i class="fa-solid fa-truck"></i> {{ r.licensePlate }}
               </span>
               <span class="text-muted text-xs" *ngIf="!r.licensePlate">Tất cả xe</span>
             </td>
 
-            <td>
+            <td class="col-period">
               <div class="date-badge" *ngIf="r.startDate && r.endDate">
                 <i class="fa-regular fa-calendar-days color-cyan"></i> {{ r.startDate | date:'dd/MM/yyyy' }} - {{ r.endDate | date:'dd/MM/yyyy' }}
               </div>
               <span class="text-muted text-xs" *ngIf="!r.startDate">-</span>
             </td>
 
-            <td>
+            <td class="col-count text-center">
               <span class="shipment-badge"><i class="fa-solid fa-boxes-stacked"></i> {{ r.totalShipment || 0 }} đơn</span>
             </td>
 
-            <td><span class="font-bold color-title">{{ r.grossRevenue | number }} VNĐ</span></td>
-            <td><span class="color-red font-bold">-{{ r.totalExpense | number }}</span></td>
-            <td><span class="color-purple font-bold">-{{ r.totalSalary | number }}</span></td>
+            <td class="col-money text-right"><span class="font-bold color-title">{{ r.grossRevenue | number }} VNĐ</span></td>
+            <td class="col-money text-right"><span class="color-red font-bold">-{{ r.totalExpense | number }} VNĐ</span></td>
+            <td class="col-money text-right"><span class="color-purple font-bold">-{{ r.totalSalary | number }} VNĐ</span></td>
             
-            <td>
+            <td class="col-profit text-right">
               <div class="font-bold color-green text-base"><i class="fa-solid fa-coins"></i> {{ r.revenueFinalCosts | number }} VNĐ</div>
             </td>
 
-            <td class="text-right actions-cell" (click)="$event.stopPropagation()">
+            <td class="col-actions text-right" (click)="$event.stopPropagation()">
               <button class="action-btn btn-view" (click)="openEditRevenueModal(r)" title="Xem Chi Tiết / Sửa">
                 <i class="fa-solid fa-eye"></i> Xem
+              </button>
+              <button class="action-btn btn-excel-row" (click)="onExportRevenueRecord(r)" title="Xuất File Excel Báo Cáo">
+                <i class="fa-solid fa-file-excel color-green"></i> Excel
               </button>
               <button class="action-btn btn-edit" (click)="openEditRevenueModal(r)" title="Sửa Báo Cáo">
                 <i class="fa-solid fa-pen-to-square"></i> Sửa
@@ -170,6 +171,7 @@
               </button>
             </td>
           </tr>
+
 
           <!-- Empty State -->
           <tr *ngIf="filteredRevenues.length === 0">
@@ -216,18 +218,10 @@
     (grossRevenueInputChange)="onGrossRevenueInput($event)"
     (totalExpenseInputChange)="onTotalExpenseInput($event)"
     (totalSalaryInputChange)="onTotalSalaryInput($event)"
+    (export)="onExportCurrentRevenue($event)"
   ></app-revenue-form>
 
-  <!-- REUSABLE REPORT EXPORT MODAL -->
-  <app-report-export-modal
-    [showModal]="showExportModal"
-    reportType="REVENUE"
-    title="Tùy Chọn Lọc & Xuất Báo Cáo Doanh Thu"
-    [vehicles]="vehicles"
-    [previewItems]="revenues"
-    (close)="closeExportModal()"
-    (confirmExport)="onConfirmExport($event)"
-  ></app-report-export-modal>
 
 </div>
+
 
