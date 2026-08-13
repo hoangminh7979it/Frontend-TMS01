@@ -1,20 +1,17 @@
 <div class="dashboard-page">
   
   <!-- Page Title & Actions -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Bảng Điều Khiển Tổng Quan</h1>
-      <p class="page-subtitle">Giám sát hoạt động vận tải, chuyến xe và chỉ số tài chính thời gian thực từ hệ thống.</p>
-    </div>
-    <div class="page-actions">
-      <button class="btn btn-secondary" (click)="loadDashboardData()">
-        <i class="fa-solid fa-rotate" [ngClass]="{'fa-spin': loading}"></i> Làm Mới Dữ Liệu
-      </button>
-      <a routerLink="/shipments" class="btn btn-primary">
-        <i class="fa-solid fa-plus"></i> Lập Chuyến Hàng Mới
-      </a>
-    </div>
-  </div>
+  <tms-page-header
+    title="Bảng Điều Khiển Tổng Quan"
+    subtitle="Giám sát hoạt động vận tải, chuyến xe và chỉ số tài chính thời gian thực từ hệ thống."
+  >
+    <button class="btn btn-secondary" (click)="loadDashboardData()">
+      <i class="fa-solid fa-rotate" [ngClass]="{'fa-spin': loading}"></i> Làm Mới Dữ Liệu
+    </button>
+    <a routerLink="/shipments" class="btn btn-primary">
+      <i class="fa-solid fa-plus"></i> Lập Chuyến Hàng Mới
+    </a>
+  </tms-page-header>
 
   <!-- KPI Metrics Cards Grid (Real-time system data) -->
   <div class="metrics-grid">
@@ -95,6 +92,70 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- SECTION: 3-MONTH FINANCIAL COMPARISON CHART -->
+  <div class="panel-card chart-panel">
+    <div class="panel-header">
+      <h3 class="panel-title">
+        <i class="fa-solid fa-chart-column color-cyan"></i> Đối Chiếu Doanh Thu & Chi Phí 3 Tháng Gần Nhất
+      </h3>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot bg-blue"></span> Doanh Thu (Gross)</span>
+        <span class="legend-item"><span class="legend-dot bg-red"></span> Chi Phí Vận Hành</span>
+        <span class="legend-item"><span class="legend-dot bg-green"></span> Lợi Nhuận Ròng (Net)</span>
+      </div>
+    </div>
+    <div class="panel-body">
+      
+      <div class="chart-container">
+        
+        <div class="chart-month-group" *ngFor="let item of monthlyFinancials">
+          
+          <div class="bars-wrapper">
+            <!-- Revenue Bar -->
+            <div class="bar-col">
+              <span class="bar-value">{{ item.grossRevenue | number }}</span>
+              <div 
+                class="bar-fill bar-revenue" 
+                [style.height.%]="maxChartValue > 0 ? (item.grossRevenue / maxChartValue * 100) : 0"
+                [title]="'Doanh thu ' + item.monthLabel + ': ' + (item.grossRevenue | number) + ' VNĐ'"
+              ></div>
+              <span class="bar-label">Doanh thu</span>
+            </div>
+
+            <!-- Expense Bar -->
+            <div class="bar-col">
+              <span class="bar-value color-red">{{ item.totalExpenses | number }}</span>
+              <div 
+                class="bar-fill bar-expense" 
+                [style.height.%]="maxChartValue > 0 ? (item.totalExpenses / maxChartValue * 100) : 0"
+                [title]="'Chi phí ' + item.monthLabel + ': ' + (item.totalExpenses | number) + ' VNĐ'"
+              ></div>
+              <span class="bar-label">Chi phí</span>
+            </div>
+
+            <!-- Profit Bar -->
+            <div class="bar-col">
+              <span class="bar-value color-green">{{ item.netProfit | number }}</span>
+              <div 
+                class="bar-fill bar-profit" 
+                [style.height.%]="maxChartValue > 0 ? (Math.abs(item.netProfit) / maxChartValue * 100) : 0"
+                [title]="'Lợi nhuận ' + item.monthLabel + ': ' + (item.netProfit | number) + ' VNĐ'"
+              ></div>
+              <span class="bar-label">Lợi nhuận</span>
+            </div>
+          </div>
+
+          <div class="month-title-badge">
+            <i class="fa-regular fa-calendar"></i> {{ item.monthLabel }}
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
   <!-- Main Data Section: Tables & Quick Status -->

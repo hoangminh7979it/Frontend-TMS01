@@ -17,10 +17,27 @@ export interface MatrixRow {
   deletePerm?: PermissionModel;
 }
 
+import {
+  TmsPageHeaderComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-roles-permissions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RoleFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    RoleFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent
+  ],
   templateUrl: './roles-permissions.component.html',
   styleUrls: ['./roles-permissions.component.css']
 })

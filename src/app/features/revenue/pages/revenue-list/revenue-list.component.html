@@ -1,78 +1,62 @@
 <div class="revenue-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Doanh Thu & Báo Cáo Lợi Nhuận Ròng</h1>
-      <p class="page-subtitle">Tổng hợp doanh thu cước vận chuyển gross, đối trừ chi phí vận hành đội xe, chi quỹ lương và chốt lợi nhuận ròng theo phương tiện.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button class="btn btn-primary" (click)="openCreateRevenueModal()">
-        <i class="fa-solid fa-calculator"></i> Lập Báo Cáo Chốt Doanh Thu Mới
-      </button>
-    </div>
-  </div>
-
+  <tms-page-header
+    title="Quản Lý Doanh Thu & Báo Cáo Lợi Nhuận Ròng"
+    subtitle="Tổng hợp doanh thu cước vận chuyển gross, đối trừ chi phí vận hành đội xe, chi quỹ lương và chốt lợi nhuận ròng theo phương tiện."
+  >
+    <button class="btn btn-primary" (click)="openCreateRevenueModal()">
+      <i class="fa-solid fa-calculator"></i> Lập Báo Cáo Chốt Doanh Thu Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showRevenueModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showRevenueModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showRevenueModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showRevenueModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- KPI Financial Summary Dashboard Cards -->
   <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">TỔNG DOANH THU GROSS (CƯỚC)</span>
-        <div class="metric-icon-box bg-blue"><i class="fa-solid fa-money-bill-trend-up"></i></div>
-      </div>
-      <div class="metric-value">{{ (summaryData?.totalGrossRevenue || 0) | number }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Doanh thu cước các đơn hàng</span>
-    </div>
-
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">TỔNG CHI PHÍ VẬN HÀNH</span>
-        <div class="metric-icon-box bg-red"><i class="fa-solid fa-receipt"></i></div>
-      </div>
-      <div class="metric-value color-red">{{ (summaryData?.totalExpenses || 0) | number }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Nhiên liệu, BOT, bến bãi, sửa chữa</span>
-    </div>
-
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">TỔNG QUỸ LƯƠNG ĐÃ CHI TRẢ</span>
-        <div class="metric-icon-box bg-purple"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-      </div>
-      <div class="metric-value color-purple">{{ (summaryData?.totalSalariesPaid || 0) | number }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Lương tài xế & nhân sự vận tải</span>
-    </div>
-
-    <div class="metric-card profit-card">
-      <div class="metric-header">
-        <span class="metric-title">LỢI NHUẬN THUẦN RÒNG (NET PROFIT)</span>
-        <div class="metric-icon-box bg-green"><i class="fa-solid fa-vault"></i></div>
-      </div>
-      <div class="metric-value color-green">{{ (summaryData?.netProfit || 0) | number }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Doanh thu trừ Chi phí trừ Quỹ lương</span>
-    </div>
+    <tms-metric-card
+      title="TỔNG DOANH THU GROSS (CƯỚC)"
+      [value]="summaryData?.totalGrossRevenue || 0"
+      unit="VNĐ"
+      note="Doanh thu cước các đơn hàng"
+      icon="fa-money-bill-trend-up"
+      colorVariant="blue"
+    />
+    <tms-metric-card
+      title="TỔNG CHI PHÍ VẬN HÀNH"
+      [value]="summaryData?.totalExpenses || 0"
+      unit="VNĐ"
+      note="Nhiên liệu, BOT, bến bãi, sửa chữa"
+      icon="fa-receipt"
+      colorVariant="red"
+    />
+    <tms-metric-card
+      title="TỔNG QUỸ LƯƠNG ĐÃ CHI TRẢ"
+      [value]="summaryData?.totalSalariesPaid || 0"
+      unit="VNĐ"
+      note="Lương tài xế & nhân sự vận tải"
+      icon="fa-hand-holding-dollar"
+      colorVariant="purple"
+    />
+    <tms-metric-card
+      title="LỢI NHUẬN THUẦN RÒNG (NET PROFIT)"
+      [value]="summaryData?.netProfit || 0"
+      unit="VNĐ"
+      note="Doanh thu trừ Chi phí trừ Quỹ lương"
+      icon="fa-vault"
+      colorVariant="green"
+    />
   </div>
 
   <!-- Filter & Search Controls Bar -->
   <div class="filter-controls-card">
-    <div class="search-input-box">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input 
-        type="text" 
-        [(ngModel)]="searchQuery" 
-        (ngModelChange)="onSearchChange()" 
-        placeholder="Tìm theo Mã báo cáo, Tiêu đề, Biển số xe, Ghi chú..." 
-      />
-    </div>
+    <tms-search-box
+      [(value)]="searchQuery"
+      (valueChange)="onSearchChange()"
+      placeholder="Tìm theo Mã báo cáo, Tiêu đề, Biển số xe, Ghi chú..."
+    />
 
     <!-- Select Dropdown Lọc Theo Nhân Sự -->
     <div class="filter-select-box">

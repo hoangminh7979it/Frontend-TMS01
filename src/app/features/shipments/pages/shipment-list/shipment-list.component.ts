@@ -11,16 +11,36 @@ import { ShipmentModel, StatusEnumModel } from '@core/models/shipment.model';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
-import { ReportExportService } from '@core/services/report-export.service';
-
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
-import { ReportFilterOptions } from '@core/services/report-export.service';
+import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
+
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
 
 @Component({
   selector: 'app-shipment-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ShipmentFormComponent, ReportExportModalComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    ShipmentFormComponent,
+    ReportExportModalComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './shipment-list.component.html',
   styleUrls: ['./shipment-list.component.css']
 })

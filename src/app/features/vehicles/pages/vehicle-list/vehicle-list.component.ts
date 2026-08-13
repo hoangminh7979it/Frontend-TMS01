@@ -9,10 +9,31 @@ import { PaginationComponent } from '@shared/components/pagination/pagination.co
 import { VehicleModel, VehicleTypeModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-vehicle-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, VehicleFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    VehicleFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './vehicle-list.component.html',
   styleUrls: ['./vehicle-list.component.css']
 })

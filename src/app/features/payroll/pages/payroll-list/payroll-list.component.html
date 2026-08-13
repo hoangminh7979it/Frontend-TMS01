@@ -1,69 +1,62 @@
 <div class="payroll-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Lương Nhân Sự & Đội Ngũ Lái Xe</h1>
-      <p class="page-subtitle">Quản lý lương cứng (theo tháng/ngày công), thưởng % doanh thu chuyến, phụ cấp lưu đêm và tổng quỹ lương chi trả.</p>
-    </div>
-    <div class="page-actions">
-      <button class="btn btn-primary" (click)="openCreateSalaryModal()">
-        <i class="fa-solid fa-file-invoice-dollar"></i> Lập Bảng Lương Mới
-      </button>
-    </div>
-  </div>
-
+  <tms-page-header
+    title="Quản Lý Lương Nhân Sự & Đội Ngũ Lái Xe"
+    subtitle="Quản lý lương cứng (theo tháng/ngày công), thưởng % doanh thu chuyến, phụ cấp lưu đêm và tổng quỹ lương chi trả."
+  >
+    <button class="btn btn-primary" (click)="openCreateSalaryModal()">
+      <i class="fa-solid fa-file-invoice-dollar"></i> Lập Bảng Lương Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showSalaryModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showSalaryModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showSalaryModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showSalaryModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- KPI Summary Cards -->
   <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">TỔNG QUỸ LƯƠNG ĐÃ CHI TRẢ</span>
-        <div class="metric-icon-box bg-purple"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-      </div>
-      <div class="metric-value">{{ totalSalariesPaidAmount | number }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Chi phí nhân sự lũy kế</span>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">SỐ BẢNG LƯƠNG ĐÃ LẬP</span>
-        <div class="metric-icon-box bg-blue"><i class="fa-solid fa-file-signature"></i></div>
-      </div>
-      <div class="metric-value">{{ salaries.length }} <span class="metric-unit">Hồ sơ</span></div>
-      <span class="metric-note">Số lượng chứng từ lương</span>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">TỔNG SỐ CHUYẾN ĐƯỢC THƯỞNG</span>
-        <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-route"></i></div>
-      </div>
-      <div class="metric-value">{{ totalShipmentsRewardedCount }} <span class="metric-unit">Chuyến</span></div>
-      <span class="metric-note">Lượt vận chuyển quy đổi lương</span>
-    </div>
-    <div class="metric-card">
-      <div class="metric-header">
-        <span class="metric-title">LƯƠNG TRUNG BÌNH / TÀI XẾ</span>
-        <div class="metric-icon-box bg-green"><i class="fa-solid fa-user-gear"></i></div>
-      </div>
-      <div class="metric-value">{{ averageSalaryPerDriver | number:'1.0-0' }} <span class="metric-unit">VNĐ</span></div>
-      <span class="metric-note">Thu nhập bình quân mỗi tài xế</span>
-    </div>
+    <tms-metric-card
+      title="TỔNG QUỸ LƯƠNG ĐÃ CHI TRẢ"
+      [value]="totalSalariesPaidAmount"
+      unit="VNĐ"
+      note="Chi phí nhân sự lũy kế"
+      icon="fa-hand-holding-dollar"
+      colorVariant="purple"
+    />
+    <tms-metric-card
+      title="SỐ BẢNG LƯƠNG ĐÃ LẬP"
+      [value]="salaries.length"
+      unit="Hồ sơ"
+      note="Số lượng chứng từ lương"
+      icon="fa-file-signature"
+      colorVariant="blue"
+    />
+    <tms-metric-card
+      title="TỔNG SỐ CHUYẾN ĐƯỢC THƯỞNG"
+      [value]="totalShipmentsRewardedCount"
+      unit="Chuyến"
+      note="Lượt vận chuyển quy đổi lương"
+      icon="fa-route"
+      colorVariant="yellow"
+    />
+    <tms-metric-card
+      title="LƯƠNG TRUNG BÌNH / TÀI XẾ"
+      [value]="averageSalaryPerDriver"
+      unit="VNĐ"
+      note="Thu nhập bình quân mỗi tài xế"
+      icon="fa-user-gear"
+      colorVariant="green"
+    />
   </div>
 
   <!-- Filter & Search -->
   <div class="filter-controls-card">
-    <div class="search-input-box">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Tìm theo Mã bảng lương, Tên tài xế, Bằng lái, Ghi chú..." />
-    </div>
+    <tms-search-box
+      [(value)]="searchQuery"
+      (valueChange)="onSearchChange()"
+      placeholder="Tìm theo Mã bảng lương, Tên tài xế, Bằng lái, Ghi chú..."
+    />
 
     <!-- Select Dropdown Lọc Theo Nhân Sự -->
     <div class="filter-select-box">

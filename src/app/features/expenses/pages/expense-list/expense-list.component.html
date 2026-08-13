@@ -1,32 +1,24 @@
 <div class="expense-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Chi Phí Vận Tải & Chứng Từ</h1>
-      <p class="page-subtitle">Quản lý các khoản chi phí xăng dầu nhiên liệu, phí đường bộ BOT, bảo dưỡng xe, bến bãi và chi phí phát sinh.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
-        <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
-      </button>
-      <button *ngIf="activeTab === 'expenses'" class="btn btn-primary" (click)="openCreateExpenseModal()">
-        <i class="fa-solid fa-file-circle-plus"></i> Lập Phiếu Chi Phí Mới
-      </button>
-      <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
-        <i class="fa-solid fa-folder-plus"></i> Tạo Loại Chi Phí Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Chi Phí Vận Tải & Chứng Từ"
+    subtitle="Quản lý các khoản chi phí xăng dầu nhiên liệu, phí đường bộ BOT, bảo dưỡng xe, bến bãi và chi phí phát sinh."
+  >
+    <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
+      <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
+    </button>
+    <button *ngIf="activeTab === 'expenses'" class="btn btn-primary" (click)="openCreateExpenseModal()">
+      <i class="fa-solid fa-file-circle-plus"></i> Lập Phiếu Chi Phí Mới
+    </button>
+    <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
+      <i class="fa-solid fa-folder-plus"></i> Tạo Loại Chi Phí Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showExpenseModal && !showTypeModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showExpenseModal && !showTypeModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showExpenseModal && !showTypeModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showExpenseModal && !showTypeModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
@@ -43,56 +35,49 @@
     
     <!-- KPI Summary Cards -->
     <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG TOÀN BỘ CHI PHÍ</span>
-          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-sack-dollar"></i></div>
-        </div>
-        <div class="metric-value">{{ totalExpenseAmount | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Chi phí vận tải lũy kế</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">CHI NHIÊN LIỆU (DẦU)</span>
-          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-gas-pump"></i></div>
-        </div>
-        <div class="metric-value">{{ fuelExpenseAmount | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Xăng dầu vận hành đội xe</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">PHÍ CẦU ĐƯỜNG (BOT)</span>
-          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-road"></i></div>
-        </div>
-        <div class="metric-value">{{ tollExpenseAmount | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Vé trạm BOT & phí cao tốc</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">SỬA CHỮA & BẢO DƯỠNG</span>
-          <div class="metric-icon-box bg-green"><i class="fa-solid fa-wrench"></i></div>
-        </div>
-        <div class="metric-value">{{ repairExpenseAmount | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Bảo dưỡng định kỳ xe tải</span>
-      </div>
+      <tms-metric-card
+        title="TỔNG TOÀN BỘ CHI PHÍ"
+        [value]="totalExpenseAmount"
+        unit="VNĐ"
+        note="Chi phí vận tải lũy kế"
+        icon="fa-sack-dollar"
+        colorVariant="purple"
+      />
+      <tms-metric-card
+        title="CHI NHIÊN LIỆU (DẦU)"
+        [value]="fuelExpenseAmount"
+        unit="VNĐ"
+        note="Xăng dầu vận hành đội xe"
+        icon="fa-gas-pump"
+        colorVariant="yellow"
+      />
+      <tms-metric-card
+        title="PHÍ CẦU ĐƯỜNG (BOT)"
+        [value]="tollExpenseAmount"
+        unit="VNĐ"
+        note="Vé trạm BOT & phí cao tốc"
+        icon="fa-road"
+        colorVariant="blue"
+      />
+      <tms-metric-card
+        title="SỬA CHỮA & BẢO DƯỠNG"
+        [value]="repairExpenseAmount"
+        unit="VNĐ"
+        note="Bảo dưỡng định kỳ xe tải"
+        icon="fa-wrench"
+        colorVariant="green"
+      />
     </div>
 
     <!-- Filter & Search Controls Bar -->
     <div class="filter-controls-card">
       
       <!-- Search Box -->
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (ngModelChange)="onSearchChange()" 
-          placeholder="Tìm theo Mã phiếu, Tiêu đề, Biển số xe, Ghi chú..." 
-        />
-      </div>
+      <tms-search-box
+        [(value)]="searchQuery"
+        (valueChange)="onSearchChange()"
+        placeholder="Tìm theo Mã phiếu, Tiêu đề, Biển số xe, Ghi chú..."
+      />
 
       <!-- Select Dropdown Lọc Theo Nhân Sự -->
       <div class="filter-select-box">

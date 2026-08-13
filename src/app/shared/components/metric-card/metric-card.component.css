@@ -1,0 +1,68 @@
+.tms-metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.tms-metric-card:hover {
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.tms-mc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tms-mc-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.tms-mc-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+/* Color variants */
+.tms-mc-blue   { background: rgba(59, 130, 246, 0.15);  color: #3b82f6; }
+.tms-mc-yellow { background: rgba(245, 158, 11, 0.15);  color: #f59e0b; }
+.tms-mc-purple { background: rgba(139, 92, 246, 0.15);  color: #8b5cf6; }
+.tms-mc-green  { background: rgba(16, 185, 129, 0.15);  color: #10b981; }
+.tms-mc-red    { background: rgba(239, 68, 68, 0.15);   color: #ef4444; }
+.tms-mc-cyan   { background: rgba(6, 182, 212, 0.15);   color: #06b6d4; }
+.tms-mc-orange { background: rgba(249, 115, 22, 0.15);  color: #f97316; }
+
+.tms-mc-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-title);
+  line-height: 1.2;
+}
+
+.tms-mc-unit {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tms-mc-note {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}

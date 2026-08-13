@@ -7,10 +7,29 @@ import { CustomerFormComponent } from '../customer-form/customer-form.component'
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, CustomerFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    CustomerFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent
+  ],
   templateUrl: './customer-list.component.html',
   styleUrls: ['./customer-list.component.css']
 })

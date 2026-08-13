@@ -1,0 +1,20 @@
+<div class="tms-table-panel">
+  <!-- Panel Header -->
+  <div class="tms-tp-header">
+    <h3 class="tms-tp-title">
+      <i class="fa-solid" [ngClass]="icon" *ngIf="icon"></i>
+      {{ title }}
+    </h3>
+    <div class="tms-tp-header-right">
+      <span class="tms-tp-count" *ngIf="count !== null && count !== undefined">
+        Hiển thị {{ count }} bản ghi
+      </span>
+      <ng-content select="[tmsHeaderActions]" />
+    </div>
+  </div>
+
+  <!-- Panel Body -->
+  <div class="tms-tp-body">
+    <ng-content />
+  </div>
+</div>

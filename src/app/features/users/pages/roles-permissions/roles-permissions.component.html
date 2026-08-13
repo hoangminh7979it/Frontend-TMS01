@@ -1,30 +1,21 @@
 <div class="permissions-page">
   
   <!-- Page Header & Tab Navigation -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Phân Quyền Hạn & Tài Khoản</h1>
-      <p class="page-subtitle">Thiết lập vai trò, phân quyền tác vụ chi tiết và quản trị người dùng hệ thống.</p>
-    </div>
-    
-    <!-- Action buttons according to active tab -->
-    <div class="page-actions">
-      <button *ngIf="activeTab === 'roles'" class="btn btn-primary" (click)="openCreateRoleModal()">
-        <i class="fa-solid fa-plus"></i> Tạo Vai Trò Mới
-      </button>
-      <button *ngIf="activeTab === 'users'" class="btn btn-primary" (click)="openCreateUserModal()">
-        <i class="fa-solid fa-user-plus"></i> Thêm Tài Khoản Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Phân Quyền Hạn & Tài Khoản"
+    subtitle="Thiết lập vai trò, phân quyền tác vụ chi tiết và quản trị người dùng hệ thống."
+  >
+    <button *ngIf="activeTab === 'roles'" class="btn btn-primary" (click)="openCreateRoleModal()">
+      <i class="fa-solid fa-plus"></i> Tạo Vai Trò Mới
+    </button>
+    <button *ngIf="activeTab === 'users'" class="btn btn-primary" (click)="openCreateUserModal()">
+      <i class="fa-solid fa-user-plus"></i> Thêm Tài Khoản Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showRoleModal && !showUserModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showRoleModal && !showUserModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">

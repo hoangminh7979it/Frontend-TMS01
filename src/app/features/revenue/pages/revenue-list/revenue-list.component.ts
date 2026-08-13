@@ -19,10 +19,31 @@ import { ReportExportService } from '@core/services/report-export.service';
 
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-revenue-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RevenueFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    RevenueFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './revenue-list.component.html',
   styleUrls: ['./revenue-list.component.css']
 })

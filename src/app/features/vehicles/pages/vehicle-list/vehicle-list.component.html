@@ -1,29 +1,21 @@
 <div class="vehicle-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Phương Tiện & Đội Xe Vận Tải</h1>
-      <p class="page-subtitle">Theo dõi trạng thái vận hành, biển số, tải trọng, hạn đăng kiểm và phân công tài xế.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button *ngIf="activeTab === 'vehicles'" class="btn btn-primary" (click)="openCreateVehicleModal()">
-        <i class="fa-solid fa-truck-front"></i> Khai Báo Xe Mới
-      </button>
-      <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
-        <i class="fa-solid fa-folder-plus"></i> Tạo Loại Xe Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Phương Tiện & Đội Xe Vận Tải"
+    subtitle="Theo dõi trạng thái vận hành, biển số, tải trọng, hạn đăng kiểm và phân công tài xế."
+  >
+    <button *ngIf="activeTab === 'vehicles'" class="btn btn-primary" (click)="openCreateVehicleModal()">
+      <i class="fa-solid fa-truck-front"></i> Khai Báo Xe Mới
+    </button>
+    <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
+      <i class="fa-solid fa-folder-plus"></i> Tạo Loại Xe Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showVehicleModal && !showTypeModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showVehicleModal && !showTypeModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
@@ -40,65 +32,57 @@
     
     <!-- KPI Summary Cards -->
     <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG SỐ XE</span>
-          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-truck"></i></div>
-        </div>
-        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Chiếc</span></div>
-        <span class="metric-note">Phương tiện toàn hệ thống</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">SẴN SÀNG CHẠY CHUYẾN</span>
-          <div class="metric-icon-box bg-green"><i class="fa-solid fa-circle-check"></i></div>
-        </div>
-        <div class="metric-value">{{ availableCount }} <span class="metric-unit">Chiếc</span></div>
-        <span class="metric-note">Sẵn sàng nhận lệnh điều động</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">ĐANG VẬN CHUYỂN</span>
-          <div class="metric-icon-box bg-cyan"><i class="fa-solid fa-route"></i></div>
-        </div>
-        <div class="metric-value">{{ inTransitCount }} <span class="metric-unit">Chiếc</span></div>
-        <span class="metric-note">Đang trên tuyến đường</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">BẢO DƯỠNG / SỬA CHỮA</span>
-          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-wrench"></i></div>
-        </div>
-        <div class="metric-value">{{ maintenanceCount }} <span class="metric-unit">Chiếc</span></div>
-        <span class="metric-note">Đang tại gara bảo dưỡng</span>
-      </div>
-
-      <div class="metric-card" [ngClass]="{'border-alert-red': expiringInspectionCount > 0}">
-        <div class="metric-header">
-          <span class="metric-title color-red">CẢNH BÁO ĐĂNG KIỂM</span>
-          <div class="metric-icon-box bg-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        </div>
-        <div class="metric-value color-red">{{ expiringInspectionCount }} <span class="metric-unit">Xe</span></div>
-        <span class="metric-note">Hết hạn trong 30 ngày tới</span>
-      </div>
+      <tms-metric-card
+        title="TỔNG SỐ XE"
+        [value]="totalCount"
+        unit="Chiếc"
+        note="Phương tiện toàn hệ thống"
+        icon="fa-truck"
+        colorVariant="blue"
+      />
+      <tms-metric-card
+        title="SẴN SÀNG CHẠY CHUYẾN"
+        [value]="availableCount"
+        unit="Chiếc"
+        note="Sẵn sàng nhận lệnh điều động"
+        icon="fa-circle-check"
+        colorVariant="green"
+      />
+      <tms-metric-card
+        title="ĐANG VẬN CHUYỂN"
+        [value]="inTransitCount"
+        unit="Chiếc"
+        note="Đang trên tuyến đường"
+        icon="fa-route"
+        colorVariant="cyan"
+      />
+      <tms-metric-card
+        title="BẢO DƯỠNG / SỬA CHỮA"
+        [value]="maintenanceCount"
+        unit="Chiếc"
+        note="Đang tại gara bảo dưỡng"
+        icon="fa-wrench"
+        colorVariant="yellow"
+      />
+      <tms-metric-card
+        title="CẢNH BÁO ĐĂNG KIỂM"
+        [value]="expiringInspectionCount"
+        unit="Xe"
+        note="Hết hạn trong 30 ngày tới"
+        icon="fa-triangle-exclamation"
+        colorVariant="red"
+      />
     </div>
 
     <!-- Filter & Search Controls Bar -->
     <div class="filter-controls-card">
       
       <!-- Search Box -->
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (ngModelChange)="onSearchChange()" 
-          placeholder="Tìm kiếm theo Biển số xe, Mã xe, Tên xe, Tài xế..." 
-        />
-      </div>
+      <tms-search-box
+        [(value)]="searchQuery"
+        (valueChange)="onSearchChange()"
+        placeholder="Tìm kiếm theo Biển số xe, Mã xe, Tên xe, Tài xế..."
+      />
 
       <!-- Status Tabs Filter -->
       <div class="type-filter-tabs">
