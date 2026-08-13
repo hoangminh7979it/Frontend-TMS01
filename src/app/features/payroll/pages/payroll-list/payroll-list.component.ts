@@ -13,6 +13,8 @@ import { ShipmentModel } from '@core/models/shipment.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 
 import {
   TmsPageHeaderComponent,
@@ -20,7 +22,8 @@ import {
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
   TmsToastComponent,
-  TmsStatusBadgeComponent
+  TmsStatusBadgeComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -32,6 +35,7 @@ import {
     FormsModule,
     PayrollFormComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -94,6 +98,8 @@ export class PayrollListComponent implements OnInit {
   totalShipmentsRewardedCount: number = 0;
   averageSalaryPerDriver: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private payrollService: PayrollService,
@@ -101,8 +107,58 @@ export class PayrollListComponent implements OnInit {
     private shipmentService: ShipmentService,
     private vehicleService: VehicleService,
     private confirmDialog: ConfirmDialogService,
-    private reportExportService: ReportExportService
+    private reportExportService: ReportExportService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    this.excelService.downloadTemplate('payroll');
+    this.toastService.info('Đã tải về file Excel mẫu rỗng thành công!');
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    const promises = rows.map(r => {
+      const payload: any = {
+        salaryCode: r.salaryCode,
+        employeeCode: r.employeeCode,
+        workDaysCount: r.workDaysCount ? Number(r.workDaysCount) : 26,
+        salaryBasicPerDay: r.salaryBasicPerDay ? Number(r.salaryBasicPerDay) : 0,
+        totalSalaryPerShipment: r.totalSalaryPerShipment ? Number(r.totalSalaryPerShipment) : 0,
+        allowanceCosts: r.allowanceCosts ? Number(r.allowanceCosts) : 0,
+        deductionCosts: r.deductionCosts ? Number(r.deductionCosts) : 0,
+        notes: r.notes || ''
+      };
+
+      if (r.startDate) payload.startDate = r.startDate;
+      if (r.endDate) payload.endDate = r.endDate;
+
+      return this.payrollService.createSalary(payload).toPromise()
+        .then(() => { successCount++; })
+        .catch(() => { failCount++; });
+    });
+
+    Promise.all(promises).then(() => {
+      this.loading = false;
+      this.loadSalaries();
+      if (successCount > 0) {
+        this.toastService.success(`Đã nhập thành công ${successCount} hồ sơ lương từ file Excel!`);
+      }
+      if (failCount > 0) {
+        this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã bảng lương hoặc lỗi dữ liệu.`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -148,13 +204,11 @@ export class PayrollListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- COMMA FORMATTING HELPERS ---

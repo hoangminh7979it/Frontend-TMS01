@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { SystemFeatureService } from '@core/services/system-feature.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ToastService } from '@core/services/toast.service';
 import { SystemFeatureModel } from '@core/models/system-feature.model';
 import { SystemFeaturesFormComponent } from '../system-features-form/system-features-form.component';
 
@@ -50,7 +51,8 @@ export class SystemFeaturesListComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private systemFeatureService: SystemFeatureService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -72,13 +74,11 @@ export class SystemFeaturesListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   loadFeatures(): void {

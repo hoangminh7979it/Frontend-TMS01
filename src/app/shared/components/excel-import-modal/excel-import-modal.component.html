@@ -1,0 +1,113 @@
+<div class="excel-modal-backdrop" *ngIf="show">
+  <div class="excel-modal-card">
+    
+    <!-- Modal Header -->
+    <div class="excel-modal-header">
+      <h3 class="excel-modal-title">
+        <i class="fa-solid fa-file-excel color-green"></i> {{ title }}
+      </h3>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="excel-modal-body">
+      
+      <!-- Drag & Drop Zone -->
+      <div 
+        class="drag-drop-zone"
+        [ngClass]="{'drag-over': isDragOver, 'has-file': selectedFile}"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="fileInput.click()"
+      >
+        <input 
+          #fileInput 
+          type="file" 
+          accept=".xlsx, .xls" 
+          class="hidden-file-input"
+          (change)="onFileSelected($event)" 
+        />
+
+        <div class="upload-icon-box">
+          <i class="fa-solid" [ngClass]="selectedFile ? 'fa-file-circle-check color-green' : 'fa-cloud-arrow-up'"></i>
+        </div>
+
+        <div class="upload-info">
+          <span class="upload-title" *ngIf="!selectedFile">Kéo thả file Excel (.xlsx) vào đây hoặc click để chọn file</span>
+          <span class="upload-title color-green font-bold" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+          <span class="upload-subtitle" *ngIf="selectedFile">Kích thước: {{ (selectedFile.size / 1024).toFixed(1) }} KB</span>
+          <span class="upload-subtitle" *ngIf="!selectedFile">Hỗ trợ các định dạng Microsoft Excel chuẩn .xlsx, .xls</span>
+        </div>
+
+        <button *ngIf="selectedFile" class="btn-change-file" (click)="$event.stopPropagation(); selectedFile = null; parsedData = []; errors = [];">
+          <i class="fa-solid fa-rotate"></i> Chọn File Khác
+        </button>
+      </div>
+
+      <!-- Errors Box -->
+      <div class="errors-box" *ngIf="errors.length > 0">
+        <div class="errors-title">
+          <i class="fa-solid fa-triangle-exclamation"></i> Tìm thấy {{ errors.length }} cảnh báo/lỗi trong file:
+        </div>
+        <ul>
+          <li *ngFor="let err of errors.slice(0, 5)">{{ err }}</li>
+          <li *ngIf="errors.length > 5">...và thêm {{ errors.length - 5 }} lỗi khác</li>
+        </ul>
+      </div>
+
+      <!-- Preview Data Table -->
+      <div class="preview-section" *ngIf="parsedData.length > 0">
+        <div class="preview-header">
+          <span class="preview-title">
+            <i class="fa-solid fa-table-list"></i> Xem Trước Dữ Liệu Tải Lên ({{ parsedData.length }} dòng)
+          </span>
+          <span class="badge-status bg-green">Đã đọc thành công</span>
+        </div>
+
+        <div class="preview-table-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th *ngFor="let col of columnDefs">
+                  {{ col.header }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of parsedData.slice(0, 10); let i = index">
+                <td class="font-mono text-muted">{{ i + 1 }}</td>
+                <td *ngFor="let col of columnDefs">
+                  {{ row[col.field] || '-' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="parsedData.length > 10" class="preview-more-note">
+            Hiển thị 10 / {{ parsedData.length }} dòng đầu tiên...
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="excel-modal-footer">
+      <button type="button" class="btn btn-cancel-excel" (click)="close()">
+        <i class="fa-solid fa-xmark"></i> Hủy Bỏ
+      </button>
+      <button 
+        type="button"
+        class="btn btn-confirm-excel" 
+        [disabled]="!selectedFile || parsedData.length === 0 || loading"
+        (click)="confirmImport()"
+      >
+        <i class="fa-solid fa-spin fa-spinner" *ngIf="loading"></i>
+        <i class="fa-solid fa-file-import" *ngIf="!loading"></i>
+        Xác Nhận Nhập {{ parsedData.length }} Dòng Dữ Liệu
+      </button>
+    </div>
+
+  </div>
+</div>

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CustomerService } from '@core/services/customer.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 import { CustomerFormComponent } from '../customer-form/customer-form.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { CustomerModel, CompanyModel } from '@core/models/customer.model';
@@ -12,7 +14,8 @@ import {
   TmsMetricCardComponent,
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
-  TmsToastComponent
+  TmsToastComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -24,6 +27,7 @@ import {
     FormsModule,
     CustomerFormComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -74,11 +78,106 @@ export class CustomerListComponent implements OnInit {
   individualCount: number = 0;
   companyCount: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private customerService: CustomerService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    if (this.activeTab === 'companies') {
+      this.excelService.downloadTemplate('companies');
+      this.toastService.info('Đã tải về file Excel mẫu rỗng Công ty Đối Tác thành công!');
+    } else {
+      this.excelService.downloadTemplate('customers');
+      this.toastService.info('Đã tải về file Excel mẫu rỗng Khách Hàng thành công!');
+    }
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    if (this.activeTab === 'companies') {
+      const promises = rows.map(r => {
+        let foundCustomerId: number | null = null;
+        if (r.customerCode) {
+          const cleanCode = r.customerCode.trim().toLowerCase();
+          const c = this.customers.find(item => 
+            (item.customerCode && item.customerCode.trim().toLowerCase() === cleanCode) ||
+            (item.firstname && item.firstname.trim().toLowerCase() === cleanCode)
+          );
+          if (c) foundCustomerId = c.customerId;
+        }
+
+        const payload: any = {
+          companyCode: r.companyCode,
+          name: r.name,
+          taxCode: r.taxCode || '',
+          contactPerson: r.contactPerson || '',
+          phone: r.phone || '',
+          email: r.email || '',
+          address: r.address || '',
+          customerId: foundCustomerId
+        };
+
+        return this.customerService.createCompany(payload).toPromise()
+          .then(() => { successCount++; })
+          .catch(() => { failCount++; });
+      });
+
+      Promise.all(promises).then(() => {
+        this.loading = false;
+        this.loadCompanies();
+        if (successCount > 0) {
+          this.toastService.success(`Đã nhập thành công ${successCount} công ty đối tác từ file Excel!`);
+        }
+        if (failCount > 0) {
+          this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã công ty hoặc lỗi dữ liệu.`);
+        }
+      });
+    } else {
+      const promises = rows.map(r => {
+        const payload: any = {
+          customerCode: r.customerCode,
+          firstname: r.firstname,
+          lastname: r.lastname || '',
+          taxCode: r.taxCode || '',
+          phone: r.phone || '',
+          email: r.email || '',
+          address: r.address || '',
+          customerType: r.customerType || 'CORPORATE',
+          notes: r.notes || ''
+        };
+
+        return this.customerService.createCustomer(payload).toPromise()
+          .then(() => { successCount++; })
+          .catch(() => { failCount++; });
+      });
+
+      Promise.all(promises).then(() => {
+        this.loading = false;
+        this.loadCustomers();
+        if (successCount > 0) {
+          this.toastService.success(`Đã nhập thành công ${successCount} khách hàng từ file Excel!`);
+        }
+        if (failCount > 0) {
+          this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã hoặc lỗi dữ liệu.`);
+        }
+      });
+    }
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -123,13 +222,11 @@ export class CustomerListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- DATA LOADING ---

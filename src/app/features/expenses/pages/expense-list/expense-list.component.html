@@ -5,8 +5,14 @@
     title="Quản Lý Chi Phí Vận Tải & Chứng Từ"
     subtitle="Quản lý các khoản chi phí xăng dầu nhiên liệu, phí đường bộ BOT, bảo dưỡng xe, bến bãi và chi phí phát sinh."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
-      <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
+      <i class="fa-solid fa-download"></i> Xuất Báo Cáo
     </button>
     <button *ngIf="activeTab === 'expenses'" class="btn btn-primary" (click)="openCreateExpenseModal()">
       <i class="fa-solid fa-file-circle-plus"></i> Lập Phiếu Chi Phí Mới
@@ -347,6 +353,15 @@
     (close)="closeExportModal()"
     (confirmExport)="onConfirmExport($event)"
   ></app-report-export-modal>
+
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    type="expenses"
+    title="Nhập Danh Sách Phiếu Chi Phí Từ File Excel"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>
 

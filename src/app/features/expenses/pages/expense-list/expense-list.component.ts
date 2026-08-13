@@ -11,7 +11,6 @@ import { ExpenseModel, ExpenseTypeModel } from '@core/models/expense.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
-import { ReportExportService } from '@core/services/report-export.service';
 
 export interface DetailRow {
   expenseTypeId: number | null;
@@ -22,14 +21,17 @@ export interface DetailRow {
 
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
-import { ReportFilterOptions } from '@core/services/report-export.service';
+import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 
 import {
   TmsPageHeaderComponent,
   TmsMetricCardComponent,
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
-  TmsToastComponent
+  TmsToastComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -42,6 +44,7 @@ import {
     ExpenseFormComponent,
     ReportExportModalComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -106,6 +109,8 @@ export class ExpenseListComponent implements OnInit {
   tollExpenseAmount: number = 0;
   repairExpenseAmount: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private expenseService: ExpenseService,
@@ -113,8 +118,54 @@ export class ExpenseListComponent implements OnInit {
     private employeeService: EmployeeService,
     private shipmentService: ShipmentService,
     private confirmDialog: ConfirmDialogService,
-    private reportExportService: ReportExportService
+    private reportExportService: ReportExportService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    this.excelService.downloadTemplate('expenses');
+    this.toastService.info('Đã tải về file Excel mẫu rỗng thành công!');
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    const promises = rows.map(r => {
+      const payload: any = {
+        expenseCode: r.expenseCode,
+        title: r.title,
+        totalExpense: r.totalExpense ? Number(r.totalExpense) : 0,
+        vehicleLicensePlate: r.vehicleLicensePlate || '',
+        notes: r.notes || ''
+      };
+
+      if (r.expenseDate) payload.expenseDate = r.expenseDate;
+
+      return this.expenseService.createExpense(payload).toPromise()
+        .then(() => { successCount++; })
+        .catch(() => { failCount++; });
+    });
+
+    Promise.all(promises).then(() => {
+      this.loading = false;
+      this.loadExpenses();
+      if (successCount > 0) {
+        this.toastService.success(`Đã nhập thành công ${successCount} phiếu chi từ file Excel!`);
+      }
+      if (failCount > 0) {
+        this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã phiếu hoặc lỗi dữ liệu.`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -154,13 +205,11 @@ export class ExpenseListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- COMMA FORMATTING HELPERS ---
