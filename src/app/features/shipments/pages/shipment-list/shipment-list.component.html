@@ -1,32 +1,24 @@
 <div class="shipment-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Vận Chuyển & Đơn Hàng Vận Tải</h1>
-      <p class="page-subtitle">Quản lý chuyến xe, điểm đi - điểm đến, điều phối xe/lái xe và doanh thu cước vận chuyển.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
-        <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
-      </button>
-      <button *ngIf="activeTab === 'shipments'" class="btn btn-primary" (click)="openCreateShipmentModal()">
-        <i class="fa-solid fa-truck-ramp-box"></i> Tạo Đơn Hàng Vận Chuyển Mới
-      </button>
-      <button *ngIf="activeTab === 'statuses'" class="btn btn-primary" (click)="openCreateStatusModal()">
-        <i class="fa-solid fa-list-check"></i> Tạo Trạng Thái Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Vận Chuyển & Đơn Hàng Vận Tải"
+    subtitle="Quản lý chuyến xe, điểm đi - điểm đến, điều phối xe/lái xe và doanh thu cước vận chuyển."
+  >
+    <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
+      <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
+    </button>
+    <button *ngIf="activeTab === 'shipments'" class="btn btn-primary" (click)="openCreateShipmentModal()">
+      <i class="fa-solid fa-truck-ramp-box"></i> Tạo Đơn Hàng Vận Chuyển Mới
+    </button>
+    <button *ngIf="activeTab === 'statuses'" class="btn btn-primary" (click)="openCreateStatusModal()">
+      <i class="fa-solid fa-list-check"></i> Tạo Trạng Thái Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showShipmentModal && !showStatusModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showShipmentModal && !showStatusModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showShipmentModal && !showStatusModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showShipmentModal && !showStatusModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
@@ -43,56 +35,49 @@
     
     <!-- KPI Summary Cards -->
     <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG ĐƠN HÀNG</span>
-          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-boxes-packing"></i></div>
-        </div>
-        <div class="metric-value">{{ totalShipmentsCount }} <span class="metric-unit">Đơn</span></div>
-        <span class="metric-note">Toàn bộ đơn hàng hệ thống</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">ĐANG CHẠY TRÊN ĐƯỜNG</span>
-          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-truck-fast"></i></div>
-        </div>
-        <div class="metric-value">{{ inTransitCount }} <span class="metric-unit">Chuyến</span></div>
-        <span class="metric-note">Đang bốc hàng / vận chuyển</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG DOANH THU</span>
-          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-coins"></i></div>
-        </div>
-        <div class="metric-value">{{ totalRevenue | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Doanh thu cước vận chuyển</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">CƯỚC ƯỚC TÍNH NĂNG LỰC</span>
-          <div class="metric-icon-box bg-green"><i class="fa-solid fa-sack-dollar"></i></div>
-        </div>
-        <div class="metric-value">{{ totalNetProfit | number }} <span class="metric-unit">VNĐ</span></div>
-        <span class="metric-note">Giá trị hợp đồng lũy kế</span>
-      </div>
+      <tms-metric-card
+        title="TỔNG ĐƠN HÀNG"
+        [value]="totalShipmentsCount"
+        unit="Đơn"
+        note="Toàn bộ đơn hàng hệ thống"
+        icon="fa-boxes-packing"
+        colorVariant="blue"
+      />
+      <tms-metric-card
+        title="ĐANG CHẠY TRÊN ĐƯỜNG"
+        [value]="inTransitCount"
+        unit="Chuyến"
+        note="Đang bốc hàng / vận chuyển"
+        icon="fa-truck-fast"
+        colorVariant="yellow"
+      />
+      <tms-metric-card
+        title="TỔNG DOANH THU"
+        [value]="totalRevenue"
+        unit="VNĐ"
+        note="Doanh thu cước vận chuyển"
+        icon="fa-coins"
+        colorVariant="purple"
+      />
+      <tms-metric-card
+        title="CƯỚC ƯỚC TÍNH NĂNG LỰC"
+        [value]="totalNetProfit"
+        unit="VNĐ"
+        note="Giá trị hợp đồng lũy kế"
+        icon="fa-sack-dollar"
+        colorVariant="green"
+      />
     </div>
 
     <!-- Filter & Search Controls Bar -->
     <div class="filter-controls-card">
       
       <!-- Search Box -->
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (ngModelChange)="onSearchChange()" 
-          placeholder="Tìm theo Mã đơn, Khách hàng, Nơi nhận/giao, Biển số xe, Lái xe..." 
-        />
-      </div>
+      <tms-search-box
+        [(value)]="searchQuery"
+        (valueChange)="onSearchChange()"
+        placeholder="Tìm theo Mã đơn, Khách hàng, Nơi nhận/giao, Biển số xe, Lái xe..."
+      />
 
       <!-- Select Dropdown Lọc Theo Nhân Sự -->
       <div class="filter-select-box">
@@ -138,13 +123,8 @@
     </div>
 
     <!-- Shipments Data Table -->
-    <div class="panel-card">
-      <div class="panel-header">
-        <h3 class="panel-title"><i class="fa-solid fa-route"></i> Danh Sách Đơn Hàng Vận Chuyển</h3>
-        <span class="results-count">Hiển thị {{ filteredShipments.length }} đơn hàng</span>
-      </div>
-      <div class="panel-body">
-        <table class="tech-table">
+    <tms-table-panel title="Danh Sách Đơn Hàng Vận Chuyển" icon="fa-route" [count]="filteredShipments.length">
+      <table class="tech-table">
           <thead>
             <tr>
               <th class="col-code">MÃ ĐƠN HÀNG</th>
@@ -306,28 +286,22 @@
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <!-- Pagination Controls -->
-      <app-pagination
-        [totalItems]="filteredShipments.length"
-        [pageSize]="pageSize"
-        [currentPage]="currentPage"
-        (pageChange)="onPageChange($event)"
-        (pageSizeChange)="onPageSizeChange($event)"
-      ></app-pagination>
-    </div>
+        <!-- Pagination Controls -->
+        <app-pagination
+          [totalItems]="filteredShipments.length"
+          [pageSize]="pageSize"
+          [currentPage]="currentPage"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        ></app-pagination>
+    </tms-table-panel>
 
   </div>
 
 
   <!-- TAB 2: STATUS ENUMS CATEGORY -->
   <div *ngIf="activeTab === 'statuses'" class="tab-content">
-    <div class="panel-card">
-      <div class="panel-header">
-        <h3 class="panel-title"><i class="fa-solid fa-tags"></i> Danh Mục Trạng Thái Lộ Trình Vận Chuyển</h3>
-      </div>
-      <div class="panel-body">
+    <tms-table-panel title="Danh Mục Trạng Thái Lộ Trình Vận Chuyển" icon="fa-tags">
         <table class="tech-table">
           <thead>
             <tr>
@@ -355,8 +329,7 @@
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
+    </tms-table-panel>
   </div>
 
   <!-- SEPARATE SHIPMENT CREATION & EDITING FORM COMPONENT -->

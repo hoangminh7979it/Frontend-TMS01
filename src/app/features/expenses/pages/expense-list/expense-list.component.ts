@@ -24,10 +24,30 @@ import { ReportExportModalComponent } from '@shared/components/report-export-mod
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportFilterOptions } from '@core/services/report-export.service';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-expense-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, ExpenseFormComponent, ReportExportModalComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    ExpenseFormComponent,
+    ReportExportModalComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent
+  ],
   templateUrl: './expense-list.component.html',
   styleUrls: ['./expense-list.component.css']
 })

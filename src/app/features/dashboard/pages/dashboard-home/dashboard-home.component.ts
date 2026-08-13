@@ -9,10 +9,22 @@ import { ShipmentModel } from '@core/models/shipment.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { ExpenseModel } from '@core/models/expense.model';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-dashboard-home',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent
+  ],
   templateUrl: './dashboard-home.component.html',
   styleUrls: ['./dashboard-home.component.css']
 })
@@ -30,6 +42,11 @@ export class DashboardHomeComponent implements OnInit {
   // Real Data Lists
   recentShipments: ShipmentModel[] = [];
   recentActivities: { icon: string; bgClass: string; title: string; subtitle: string }[] = [];
+
+  // Comparison Chart Data (3 Months)
+  monthlyFinancials: { monthLabel: string; grossRevenue: number; totalExpenses: number; netProfit: number }[] = [];
+  maxChartValue: number = 1000000;
+  Math = Math;
 
   constructor(
     private shipmentService: ShipmentService,
@@ -101,6 +118,71 @@ export class DashboardHomeComponent implements OnInit {
             title: `Chi phí ${e.expenseCode}: ${e.title || 'Phát sinh vận hành'}`,
             subtitle: `${(e.totalExpense || 0).toLocaleString('en-US')} VNĐ • Xe: ${e.vehicleLicensePlate || 'Chưa gán'}`
           });
+        });
+
+        // Generate 3 months chart comparison
+        this.generate3MonthsComparison();
+      }
+    });
+  }
+
+  generate3MonthsComparison(): void {
+    // Lấy mốc tháng hiện tại theo thời gian thực hệ thống
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0 - 11
+
+    // Tạo mốc 3 tháng liên tiếp tính từ tháng hiện tại lùi về 2 tháng trước (VD: Tháng 6, 7, 8 năm 2026)
+    const months: { year: number; month: number; monthLabel: string }[] = [];
+    for (let i = 2; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonth - i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1; // 1 - 12
+      months.push({
+        year,
+        month,
+        monthLabel: `Tháng ${month}/${year}`
+      });
+    }
+
+    // Nhóm dữ liệu Đơn hàng (Shipments) & Chi phí (Expenses) theo 3 tháng này
+    this.shipmentService.getAllShipments().subscribe({
+      next: (shipRes) => {
+        const shipments = shipRes.data || [];
+        this.expenseService.getAllExpenses().subscribe({
+          next: (expRes) => {
+            const expenses = expRes.data || [];
+
+            this.monthlyFinancials = months.map(m => {
+              const mShipments = shipments.filter(s => {
+                if (!s.dateOfReceipt) return false;
+                const sDate = new Date(s.dateOfReceipt);
+                return sDate.getFullYear() === m.year && (sDate.getMonth() + 1) === m.month;
+              });
+
+              const mExpenses = expenses.filter(e => {
+                if (!e.createDate) return false;
+                const eDate = new Date(e.createDate);
+                return eDate.getFullYear() === m.year && (eDate.getMonth() + 1) === m.month;
+              });
+
+              const grossRevenue = mShipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
+              const totalExpenses = mExpenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+              const netProfit = grossRevenue - totalExpenses;
+
+              return {
+                monthLabel: m.monthLabel,
+                grossRevenue,
+                totalExpenses,
+                netProfit
+              };
+            });
+
+            // Calculate max value for SVG bar scaling
+            const allVals = this.monthlyFinancials.flatMap(f => [f.grossRevenue, f.totalExpenses, Math.abs(f.netProfit)]);
+            const maxVal = Math.max(...allVals, 100000);
+            this.maxChartValue = Math.ceil(maxVal * 1.2);
+          }
         });
       }
     });

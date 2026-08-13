@@ -1,47 +1,31 @@
 <div class="system-feature-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Tính Năng & Chức Năng Hệ Thống</h1>
-      <p class="page-subtitle">Khai báo phân hệ mới, cấu hình đường dẫn URL Angular, icon menu và tự động đồng bộ ma trận phân quyền.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button class="btn btn-primary" (click)="openCreateFeatureModal()">
-        <i class="fa-solid fa-folder-plus"></i> Khai Báo Tính Năng Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Tính Năng & Chức Năng Hệ Thống"
+    subtitle="Khai báo phân hệ mới, cấu hình đường dẫn URL Angular, icon menu và tự động đồng bộ ma trận phân quyền."
+  >
+    <button class="btn btn-primary" (click)="openCreateFeatureModal()">
+      <i class="fa-solid fa-folder-plus"></i> Khai Báo Tính Năng Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showFeatureModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showFeatureModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showFeatureModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showFeatureModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Filter & Search Controls Bar -->
   <div class="filter-controls-card">
-    <div class="search-input-box">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input 
-        type="text" 
-        [(ngModel)]="searchQuery" 
-        (ngModelChange)="onSearchChange()" 
-        placeholder="Tìm kiếm theo Mã tính năng, Tên tính năng, URL Route, Phân hệ..." 
-      />
-    </div>
+    <tms-search-box
+      [(value)]="searchQuery"
+      (valueChange)="onSearchChange()"
+      placeholder="Tìm kiếm theo Mã tính năng, Tên tính năng, URL Route, Phân hệ..."
+    />
     <span class="results-count">Hiển thị {{ filteredFeatures.length }} tính năng</span>
   </div>
 
   <!-- Features List Table -->
-  <div class="panel-card">
-    <div class="panel-header">
-      <h3 class="panel-title"><i class="fa-solid fa-cubes"></i> Danh Mục Các Tính Năng Hệ Thống (Dynamic Features)</h3>
-    </div>
-    <div class="panel-body">
+  <tms-table-panel title="Danh Mục Các Tính Năng Hệ Thống (Dynamic Features)" icon="fa-cubes">
       <table class="tech-table">
         <thead>
           <tr>
@@ -95,8 +79,7 @@
           </tr>
         </tbody>
       </table>
-    </div>
-  </div>
+  </tms-table-panel>
 
   <!-- SEPARATE FEATURE CREATION & EDITING FORM COMPONENT -->
   <app-system-features-form

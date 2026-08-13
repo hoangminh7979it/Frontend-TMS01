@@ -9,10 +9,31 @@ import { PaginationComponent } from '@shared/components/pagination/pagination.co
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
 import { UserModel } from '@core/models/user.model';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, EmployeeFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    EmployeeFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './employee-list.component.html',
   styleUrls: ['./employee-list.component.css']
 })

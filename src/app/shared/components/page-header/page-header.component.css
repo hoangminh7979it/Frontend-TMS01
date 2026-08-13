@@ -1,0 +1,35 @@
+.tms-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.tms-ph-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tms-ph-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-title);
+  letter-spacing: -0.3px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.tms-ph-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.tms-ph-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+}

@@ -4,10 +4,21 @@ import { FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { VehicleTypeModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 
+import {
+  LicensePlateDirective,
+  NumbersOnlyDirective
+} from '@shared-ui';
+
 @Component({
   selector: 'app-vehicle-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    LicensePlateDirective,
+    NumbersOnlyDirective
+  ],
   templateUrl: './vehicle-form.component.html',
   styleUrls: ['../vehicle-list/vehicle-list.component.css']
 })

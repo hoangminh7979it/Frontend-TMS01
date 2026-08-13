@@ -1,0 +1,72 @@
+/* Loading Spinner */
+.tms-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 14px;
+}
+
+.tms-spinner {
+  width: 44px;
+  height: 44px;
+}
+
+.tms-spinner-ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--cyan-accent);
+  animation: tms-spin 0.8s linear infinite;
+}
+
+@keyframes tms-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tms-loading-text {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Empty State */
+.tms-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  gap: 10px;
+  text-align: center;
+}
+
+.tms-empty-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-panel-header);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.tms-empty-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.tms-empty-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin: 0;
+}

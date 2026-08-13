@@ -1,0 +1,21 @@
+<!-- Loading Spinner -->
+<div class="tms-loading-wrapper" *ngIf="loading">
+  <div class="tms-spinner">
+    <div class="tms-spinner-ring"></div>
+  </div>
+  <p class="tms-loading-text" *ngIf="loadingText">{{ loadingText }}</p>
+</div>
+
+<!-- Empty State -->
+<div class="tms-empty-state" *ngIf="!loading && empty">
+  <div class="tms-empty-icon-box">
+    <i class="fa-solid" [ngClass]="emptyIcon"></i>
+  </div>
+  <p class="tms-empty-text">{{ emptyText }}</p>
+  <p class="tms-empty-hint" *ngIf="emptyHint">{{ emptyHint }}</p>
+</div>
+
+<!-- Content (khi không loading và không trống) -->
+<ng-container *ngIf="!loading && !empty">
+  <ng-content />
+</ng-container>

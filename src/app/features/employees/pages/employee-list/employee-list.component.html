@@ -1,29 +1,21 @@
 <div class="employee-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Hồ Sơ Nhân Sự & Loại Nhân Viên</h1>
-      <p class="page-subtitle">Quản lý danh sách tài xế vận tải, phụ xe, nhân viên điều hành và danh mục loại nhân sự.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button *ngIf="activeTab === 'employees'" class="btn btn-primary" (click)="openCreateEmployeeModal()">
-        <i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Mới
-      </button>
-      <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
-        <i class="fa-solid fa-folder-plus"></i> Tạo Loại Nhân Sự Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Hồ Sơ Nhân Sự & Loại Nhân Viên"
+    subtitle="Quản lý danh sách tài xế vận tải, phụ xe, nhân viên điều hành và danh mục loại nhân sự."
+  >
+    <button *ngIf="activeTab === 'employees'" class="btn btn-primary" (click)="openCreateEmployeeModal()">
+      <i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Mới
+    </button>
+    <button *ngIf="activeTab === 'types'" class="btn btn-primary" (click)="openCreateTypeModal()">
+      <i class="fa-solid fa-folder-plus"></i> Tạo Loại Nhân Sự Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showEmployeeModal && !showTypeModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showEmployeeModal && !showTypeModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
@@ -40,56 +32,49 @@
     
     <!-- KPI Summary Cards -->
     <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG NHÂN SỰ</span>
-          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
-        </div>
-        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Người</span></div>
-        <span class="metric-note">Nhân sự toàn hệ thống</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TÀI XẾ VẬN TẢI</span>
-          <div class="metric-icon-box bg-green"><i class="fa-solid fa-id-card"></i></div>
-        </div>
-        <div class="metric-value">{{ driverCount }} <span class="metric-unit">Lái Xe</span></div>
-        <span class="metric-note">Có bằng lái vận tải</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">PHỤ XE</span>
-          <div class="metric-icon-box bg-yellow"><i class="fa-solid fa-user-gear"></i></div>
-        </div>
-        <div class="metric-value">{{ coDriverCount }} <span class="metric-unit">Phụ Xe</span></div>
-        <span class="metric-note">Giao nhận & bốc xếp</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">VĂN PHÒNG & ĐIỀU HÀNH</span>
-          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-building-user"></i></div>
-        </div>
-        <div class="metric-value">{{ staffCount }} <span class="metric-unit">Nhân Viên</span></div>
-        <span class="metric-note">Điều hành, kế toán, kỹ thuật</span>
-      </div>
+      <tms-metric-card
+        title="TỔNG NHÂN SỰ"
+        [value]="totalCount"
+        unit="Người"
+        note="Nhân sự toàn hệ thống"
+        icon="fa-users"
+        colorVariant="blue"
+      />
+      <tms-metric-card
+        title="TÀI XẾ VẬN TẢI"
+        [value]="driverCount"
+        unit="Lái Xe"
+        note="Có bằng lái vận tải"
+        icon="fa-id-card"
+        colorVariant="green"
+      />
+      <tms-metric-card
+        title="PHỤ XE"
+        [value]="coDriverCount"
+        unit="Phụ Xe"
+        note="Giao nhận & bốc xếp"
+        icon="fa-user-gear"
+        colorVariant="yellow"
+      />
+      <tms-metric-card
+        title="VĂN PHÒNG & ĐIỀU HÀNH"
+        [value]="staffCount"
+        unit="Nhân Viên"
+        note="Điều hành, kế toán, kỹ thuật"
+        icon="fa-building-user"
+        colorVariant="purple"
+      />
     </div>
 
     <!-- Filter & Search Controls Bar -->
     <div class="filter-controls-card">
       
       <!-- Search Box -->
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (ngModelChange)="onSearchChange()" 
-          placeholder="Tìm kiếm theo Mã NV, Họ tên, Số điện thoại, CCCD, GPLX..." 
-        />
-      </div>
+      <tms-search-box
+        [(value)]="searchQuery"
+        (valueChange)="onSearchChange()"
+        placeholder="Tìm kiếm theo Mã NV, Họ tên, Số điện thoại, CCCD, GPLX..."
+      />
 
       <!-- Employee Type Tabs Filter -->
       <div class="type-filter-tabs">

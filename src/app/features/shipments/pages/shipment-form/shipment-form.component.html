@@ -23,6 +23,8 @@
             <input 
               type="text" 
               formControlName="shipmentCode" 
+              appNoVietnamese
+              appUppercase
               placeholder="Ví dụ: DH-2026-001..." 
               [ngClass]="{'input-error': shipmentForm.controls['shipmentCode'].invalid && shipmentForm.controls['shipmentCode'].touched}"
             />
@@ -54,7 +56,7 @@
         <div class="form-row-2-1">
           <div class="form-group">
             <label>Tên Hàng Hóa & Quy Cách Đóng Gói</label>
-            <input type="text" formControlName="cargoType" placeholder="Ví dụ: Linh kiện điện tử Samsung (12 Pallet, Thùng carton)..." />
+            <input type="text" formControlName="cargoType" appNoConsecutiveSpaces placeholder="Ví dụ: Linh kiện điện tử Samsung (12 Pallet, Thùng carton)..." />
           </div>
 
           <div class="form-group">

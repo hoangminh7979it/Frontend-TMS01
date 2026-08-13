@@ -6,10 +6,28 @@ import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { SystemFeatureModel } from '@core/models/system-feature.model';
 import { SystemFeaturesFormComponent } from '../system-features-form/system-features-form.component';
 
+import {
+  TmsPageHeaderComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-system-features-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SystemFeaturesFormComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    SystemFeaturesFormComponent,
+    TmsPageHeaderComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './system-features-list.component.html',
   styleUrls: ['./system-features-list.component.css']
 })

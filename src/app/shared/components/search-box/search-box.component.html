@@ -1,0 +1,22 @@
+<div class="tms-search-box" [class.tms-search-focused]="isFocused">
+  <i class="fa-solid fa-magnifying-glass tms-search-icon"></i>
+  <input
+    type="text"
+    class="tms-search-input"
+    [value]="value"
+    [placeholder]="placeholder"
+    [disabled]="disabled"
+    (input)="onInput($event)"
+    (focus)="isFocused = true"
+    (blur)="isFocused = false; onTouched()"
+  />
+  <button
+    *ngIf="value && clearable"
+    class="tms-search-clear"
+    type="button"
+    (click)="clearValue()"
+    title="Xóa tìm kiếm"
+  >
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</div>

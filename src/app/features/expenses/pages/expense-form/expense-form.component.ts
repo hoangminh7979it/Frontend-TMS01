@@ -12,10 +12,21 @@ export interface DetailRow {
   description: string;
 }
 
+import {
+  CurrencyFormatDirective,
+  NoVietnameseDirective
+} from '@shared-ui';
+
 @Component({
   selector: 'app-expense-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    CurrencyFormatDirective,
+    NoVietnameseDirective
+  ],
   templateUrl: './expense-form.component.html',
   styleUrls: ['../expense-list/expense-list.component.css']
 })

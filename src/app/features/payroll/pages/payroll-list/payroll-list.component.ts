@@ -14,10 +14,31 @@ import { VehicleModel } from '@core/models/vehicle.model';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
 
+import {
+  TmsPageHeaderComponent,
+  TmsMetricCardComponent,
+  TmsTablePanelComponent,
+  TmsSearchBoxComponent,
+  TmsToastComponent,
+  TmsStatusBadgeComponent
+} from '@shared-ui';
+
 @Component({
   selector: 'app-payroll-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PayrollFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    PayrollFormComponent,
+    PaginationComponent,
+    TmsPageHeaderComponent,
+    TmsMetricCardComponent,
+    TmsTablePanelComponent,
+    TmsSearchBoxComponent,
+    TmsToastComponent,
+    TmsStatusBadgeComponent
+  ],
   templateUrl: './payroll-list.component.html',
   styleUrls: ['./payroll-list.component.css']
 })

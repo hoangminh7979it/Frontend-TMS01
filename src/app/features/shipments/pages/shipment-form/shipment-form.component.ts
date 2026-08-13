@@ -6,10 +6,29 @@ import { CustomerModel, CompanyModel } from '@core/models/customer.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
 
+import {
+  NoVietnameseDirective,
+  UppercaseDirective,
+  CurrencyFormatDirective,
+  NumbersOnlyDirective,
+  NoConsecutiveSpacesDirective,
+  NoSpecialCharactersDirective
+} from '@shared-ui';
+
 @Component({
   selector: 'app-shipment-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    NoVietnameseDirective,
+    UppercaseDirective,
+    CurrencyFormatDirective,
+    NumbersOnlyDirective,
+    NoConsecutiveSpacesDirective,
+    NoSpecialCharactersDirective
+  ],
   templateUrl: './shipment-form.component.html',
   styleUrls: ['../shipment-list/shipment-list.component.css']
 })
