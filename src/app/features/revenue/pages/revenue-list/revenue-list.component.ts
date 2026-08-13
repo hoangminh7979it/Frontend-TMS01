@@ -15,7 +15,8 @@ import { EmployeeModel } from '@core/models/employee.model';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { ExpenseModel } from '@core/models/expense.model';
 import { SalaryModel } from '@core/models/payroll.model';
-import { ReportExportService } from '@core/services/report-export.service';
+import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
+import { ToastService } from '@core/services/toast.service';
 
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 
@@ -103,7 +104,8 @@ export class RevenueListComponent implements OnInit {
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
     private confirmDialog: ConfirmDialogService,
-    private reportExportService: ReportExportService
+    private reportExportService: ReportExportService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -146,13 +148,11 @@ export class RevenueListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- COMMA FORMATTING HELPERS ---

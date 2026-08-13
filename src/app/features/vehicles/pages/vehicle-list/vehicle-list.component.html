@@ -5,6 +5,12 @@
     title="Quản Lý Phương Tiện & Đội Xe Vận Tải"
     subtitle="Theo dõi trạng thái vận hành, biển số, tải trọng, hạn đăng kiểm và phân công tài xế."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button *ngIf="activeTab === 'vehicles'" class="btn btn-primary" (click)="openCreateVehicleModal()">
       <i class="fa-solid fa-truck-front"></i> Khai Báo Xe Mới
     </button>
@@ -316,5 +322,14 @@
       </form>
     </div>
   </div>
+
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    type="vehicles"
+    title="Nhập Danh Sách Phương Tiện Từ File Excel"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>

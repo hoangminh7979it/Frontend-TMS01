@@ -5,6 +5,12 @@
     title="Quản Lý Khách Hàng & Đối Tác Doanh Nghiệp"
     subtitle="Quản lý hồ sơ khách hàng doanh nghiệp, cá nhân, mã số thuế MST và công ty đối tác."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button *ngIf="activeTab === 'customers'" class="btn btn-primary" (click)="openCreateCustomerModal()">
       <i class="fa-solid fa-building-circle-check"></i> Khai Báo Khách Hàng Mới
     </button>
@@ -330,5 +336,14 @@
       </form>
     </div>
   </div>
+
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    [type]="activeTab === 'companies' ? 'companies' : 'customers'"
+    [title]="activeTab === 'companies' ? 'Nhập Danh Sách Công Ty Đối Tác Từ File Excel' : 'Nhập Danh Sách Khách Hàng Từ File Excel'"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>

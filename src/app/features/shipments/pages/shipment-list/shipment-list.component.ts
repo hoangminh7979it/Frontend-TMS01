@@ -14,6 +14,8 @@ import { EmployeeModel } from '@core/models/employee.model';
 import { ReportExportModalComponent } from '@shared/components/report-export-modal/report-export-modal.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 
 import {
   TmsPageHeaderComponent,
@@ -21,7 +23,8 @@ import {
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
   TmsToastComponent,
-  TmsStatusBadgeComponent
+  TmsStatusBadgeComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -34,6 +37,7 @@ import {
     ShipmentFormComponent,
     ReportExportModalComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -111,6 +115,8 @@ export class ShipmentListComponent implements OnInit {
   totalRevenue: number = 0;
   totalNetProfit: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private shipmentService: ShipmentService,
@@ -119,8 +125,92 @@ export class ShipmentListComponent implements OnInit {
     private employeeService: EmployeeService,
     private confirmDialog: ConfirmDialogService,
     private reportExportService: ReportExportService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService,
     private eRef: ElementRef
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    this.excelService.downloadTemplate('shipments');
+    this.toastService.info('Đã tải về file Excel mẫu rỗng thành công!');
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    // Duyệt và gọi API tạo mới cho từng dòng dữ liệu
+    const promises = rows.map(r => {
+      // 1. Tìm phương tiện theo biển số xe
+      let foundVehicleId: number | null = null;
+      let vehicleAssignedDriverId: number | null = null;
+
+      if (r.licensePlate) {
+        const cleanPlate = r.licensePlate.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+        const v = this.vehicles.find(item => item.licensePlate && item.licensePlate.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === cleanPlate);
+        if (v) {
+          foundVehicleId = v.id;
+          if (v.employeeId) {
+            vehicleAssignedDriverId = v.employeeId;
+          }
+        }
+      }
+
+      // 2. Tìm tài xế theo mã tài xế/tên trong Excel, nếu không có thì lấy tài xế phụ trách xe
+      let foundDriverId: number | null = null;
+      if (r.driverCode) {
+        const cleanCode = r.driverCode.trim().toLowerCase();
+        const d = this.drivers.find(item => 
+          (item.employeeCode && item.employeeCode.trim().toLowerCase() === cleanCode) ||
+          (item.fullName && item.fullName.trim().toLowerCase() === cleanCode)
+        );
+        if (d) foundDriverId = d.employeeId;
+      }
+
+      // Nếu không nhập mã tài xế riêng hoặc không tìm thấy theo mã, dùng tài xế đã gán cho biển số xe đó
+      if (!foundDriverId && vehicleAssignedDriverId) {
+        foundDriverId = vehicleAssignedDriverId;
+      }
+
+      const payload: any = {
+        shipmentCode: r.shipmentCode,
+        cargoType: r.cargoType,
+        receiptPlace: r.receiptPlace,
+        deliveryPlace: r.deliveryPlace,
+        weight: r.weight ? Number(r.weight) : null,
+        revenue: r.revenue ? Number(r.revenue) : 0,
+        incurredCosts: r.incurredCosts ? Number(r.incurredCosts) : 0,
+        vehicleId: foundVehicleId,
+        employeeId: foundDriverId,
+        notes: r.notes || ''
+      };
+
+      if (r.dateOfReceipt) payload.dateOfReceipt = `${r.dateOfReceipt}T00:00:00`;
+      if (r.deliveryDate) payload.deliveryDate = `${r.deliveryDate}T00:00:00`;
+
+      return this.shipmentService.createShipment(payload).toPromise()
+        .then(() => { successCount++; })
+        .catch(() => { failCount++; });
+    });
+
+    Promise.all(promises).then(() => {
+      this.loading = false;
+      this.loadShipments();
+      if (successCount > 0) {
+        this.toastService.success(`Đã nhập thành công ${successCount} chuyến hàng từ file Excel!`);
+      }
+      if (failCount > 0) {
+        this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã hoặc dữ liệu không hợp lệ.`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -183,13 +273,11 @@ export class ShipmentListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- CURRENCY & NUMBER COMMA FORMATTING HELPERS ---

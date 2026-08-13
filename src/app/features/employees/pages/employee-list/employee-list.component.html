@@ -5,6 +5,12 @@
     title="Quản Lý Hồ Sơ Nhân Sự & Loại Nhân Viên"
     subtitle="Quản lý danh sách tài xế vận tải, phụ xe, nhân viên điều hành và danh mục loại nhân sự."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button *ngIf="activeTab === 'employees'" class="btn btn-primary" (click)="openCreateEmployeeModal()">
       <i class="fa-solid fa-user-plus"></i> Thêm Nhân Sự Mới
     </button>
@@ -260,5 +266,14 @@
       </form>
     </div>
   </div>
+
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    type="employees"
+    title="Nhập Danh Sách Nhân Sự Từ File Excel"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>

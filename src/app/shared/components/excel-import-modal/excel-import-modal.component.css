@@ -1,0 +1,282 @@
+.excel-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.excel-modal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 900px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-card);
+}
+
+.excel-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-panel-header);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.excel-modal-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-title);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--text-title);
+}
+
+.excel-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+}
+
+/* Drag & Drop Zone */
+.drag-drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 4px;
+  padding: 30px;
+  text-align: center;
+  background: var(--bg-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.drag-drop-zone:hover,
+.drag-drop-zone.drag-over {
+  border-color: var(--cyan-accent);
+  background: var(--bg-hover);
+}
+
+.drag-drop-zone.has-file {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.upload-icon-box {
+  font-size: 2.2rem;
+  color: var(--cyan-accent);
+}
+
+.upload-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upload-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.upload-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.btn-change-file {
+  margin-top: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 4px 12px;
+  border-radius: 2px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+/* Errors Box */
+.errors-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 2px;
+  padding: 12px 16px;
+  color: #ef4444;
+  font-size: 0.82rem;
+}
+
+.errors-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.errors-box ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+/* Preview Section */
+.preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.preview-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-title);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  max-height: 240px;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.preview-table th {
+  background: var(--table-header-bg);
+  color: var(--text-dim);
+  padding: 10px 12px;
+  font-weight: 700;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
+  white-space: nowrap;
+}
+
+.preview-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--table-border);
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.preview-more-note {
+  padding: 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  background: var(--bg-panel-header);
+}
+
+.excel-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-panel-header);
+}
+
+/* Custom Styled Buttons for Excel Modal */
+.btn-cancel-excel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  padding: 9px 20px;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-excel:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.btn-confirm-excel {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: 1px solid #10b981;
+  color: #ffffff;
+  padding: 9px 22px;
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-excel:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-confirm-excel:disabled {
+  background: var(--bg-hover) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.color-green { color: #10b981 !important; }
+.bg-green { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.font-bold { font-weight: 700; }
