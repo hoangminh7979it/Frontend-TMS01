@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { EmployeeService } from '@core/services/employee.service';
 import { UserManagementService } from '@core/services/user-management.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 import { EmployeeFormComponent } from '../employee-form/employee-form.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { EmployeeModel, EmployeeTypeModel } from '@core/models/employee.model';
@@ -15,7 +17,8 @@ import {
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
   TmsToastComponent,
-  TmsStatusBadgeComponent
+  TmsStatusBadgeComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -27,6 +30,7 @@ import {
     FormsModule,
     EmployeeFormComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -79,11 +83,60 @@ export class EmployeeListComponent implements OnInit {
   coDriverCount: number = 0;
   staffCount: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private employeeService: EmployeeService,
-    private userService: UserManagementService
+    private userService: UserManagementService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    this.excelService.downloadTemplate('employees');
+    this.toastService.info('Đã tải về file Excel mẫu rỗng thành công!');
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    const promises = rows.map(r => {
+      const payload: any = {
+        employeeCode: r.employeeCode,
+        firstname: r.firstname,
+        lastname: r.lastname || '',
+        nationalId: r.nationalId || '',
+        phone: r.phone || '',
+        email: r.email || '',
+        address: r.address || '',
+        notes: r.notes || ''
+      };
+
+      return this.employeeService.createEmployee(payload).toPromise()
+        .then(() => { successCount++; })
+        .catch(() => { failCount++; });
+    });
+
+    Promise.all(promises).then(() => {
+      this.loading = false;
+      this.loadEmployees();
+      if (successCount > 0) {
+        this.toastService.success(`Đã nhập thành công ${successCount} nhân sự từ file Excel!`);
+      }
+      if (failCount > 0) {
+        this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng mã nhân viên hoặc lỗi dữ liệu.`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -98,17 +151,17 @@ export class EmployeeListComponent implements OnInit {
       firstname: ['', [Validators.required]],
       lastname: [''],
       nationalId: [''],
-      drivingLicenseId: [''],
       phone: [''],
       email: ['', [Validators.email]],
       address: [''],
-      employeeTypeId: [null],
-      userId: [null]
+      employeeTypeId: [null, [Validators.required]],
+      userId: [null],
+      notes: ['']
     });
 
     this.typeForm = this.fb.group({
-      employeeTypeCode: ['', [Validators.required]],
-      employeeTypeName: ['', [Validators.required]],
+      typeCode: ['', [Validators.required]],
+      typeName: ['', [Validators.required]],
       description: ['']
     });
   }
@@ -124,13 +177,11 @@ export class EmployeeListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- DATA LOADING ---

@@ -31,6 +31,16 @@
 
     <!-- Sidebar Footer -->
     <div class="sidebar-footer" *ngIf="!isSidebarCollapsed">
+      <!-- Live Date & Clock Card -->
+      <div class="live-clock-card">
+        <div class="clock-date">
+          <i class="fa-regular fa-calendar-days"></i> {{ currentDateStr }}
+        </div>
+        <div class="clock-time">
+          <i class="fa-regular fa-clock"></i> {{ currentTimeStr }}
+        </div>
+      </div>
+
       <div class="system-status">
         <span class="status-dot"></span>
         <span class="status-text">Hệ thống: Hoạt động (v1.0)</span>
@@ -66,11 +76,61 @@
           <span class="theme-label">{{ currentTheme === 'dark' ? 'Giao diện Tối' : 'Giao diện Sáng' }}</span>
         </button>
 
-        <!-- Notification Bell (Dynamic system count) -->
-        <button class="icon-btn" title="Đơn hàng đang chờ xử lý / vận chuyển">
-          <i class="fa-solid fa-bell"></i>
-          <span class="notification-count" *ngIf="pendingNotificationCount > 0">{{ pendingNotificationCount }}</span>
-        </button>
+        <!-- Notification Bell & Dropdown -->
+        <div class="notification-wrapper">
+          <button class="icon-btn" (click)="toggleNotificationDropdown($event)" title="Cảnh báo & Thông báo hệ thống">
+            <i class="fa-solid fa-bell"></i>
+            <span class="notification-count" *ngIf="pendingNotificationCount > 0">{{ pendingNotificationCount }}</span>
+          </button>
+
+          <!-- Notification Dropdown Menu -->
+          <div class="notification-dropdown" *ngIf="showNotificationDropdown" (click)="$event.stopPropagation()">
+            <div class="notif-header">
+              <span class="notif-title"><i class="fa-solid fa-bell color-cyan"></i> THÔNG BÁO HỆ THỐNG</span>
+              <button 
+                *ngIf="pendingNotificationCount > 0" 
+                class="btn-mark-all-read" 
+                (click)="markAllNotificationsAsRead()"
+                title="Đánh dấu tất cả thông báo là đã đọc"
+              >
+                <i class="fa-solid fa-check-double"></i> Đã đọc tất cả
+              </button>
+            </div>
+
+            <div class="notif-body">
+              <div *ngIf="notifications.length === 0" class="notif-empty">
+                <i class="fa-regular fa-circle-check empty-icon"></i>
+                <span>Không có cảnh báo mới! Tất cả xe & đơn hàng đang hoạt động tốt.</span>
+              </div>
+
+              <a 
+                *ngFor="let n of notifications" 
+                [routerLink]="n.link" 
+                class="notif-item" 
+                [ngClass]="[n.type, n.isRead ? 'is-read' : 'unread']"
+                (click)="markNotificationAsRead(n)"
+              >
+                <div class="notif-icon-box">
+                  <i [class]="n.icon"></i>
+                </div>
+                <div class="notif-content">
+                  <div class="notif-item-header">
+                    <span class="notif-item-title">{{ n.title }}</span>
+                    <span class="unread-dot" *ngIf="!n.isRead" title="Chưa đọc"></span>
+                  </div>
+                  <div class="notif-item-msg">{{ n.message }}</div>
+                  <div class="notif-item-time"><i class="fa-regular fa-clock"></i> {{ n.timeAgo }}</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="notif-footer">
+              <button class="btn-refresh-notif" (click)="loadRealSystemNotifications()">
+                <i class="fa-solid fa-rotate"></i> Làm Mới Dữ Liệu
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- System Clock Badge -->
         <div class="system-badge">
@@ -107,5 +167,6 @@
 
 </div>
 
-<!-- GLOBAL PREMIUM CONFIRMATION DIALOG -->
+<!-- GLOBAL CONFIRMATION DIALOG & FLOATING TOAST CONTAINER -->
 <app-confirm-dialog></app-confirm-dialog>
+<app-global-toast-container></app-global-toast-container>

@@ -5,14 +5,17 @@
     title="Quản Lý Vận Chuyển & Đơn Hàng Vận Tải"
     subtitle="Quản lý chuyến xe, điểm đi - điểm đến, điều phối xe/lái xe và doanh thu cước vận chuyển."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button class="btn btn-secondary" (click)="onExportExcel()" title="Xuất Báo Cáo Excel">
-      <i class="fa-solid fa-file-excel color-green"></i> Xuất Báo Cáo Excel
+      <i class="fa-solid fa-download"></i> Xuất Báo Cáo
     </button>
     <button *ngIf="activeTab === 'shipments'" class="btn btn-primary" (click)="openCreateShipmentModal()">
-      <i class="fa-solid fa-truck-ramp-box"></i> Tạo Đơn Hàng Vận Chuyển Mới
-    </button>
-    <button *ngIf="activeTab === 'statuses'" class="btn btn-primary" (click)="openCreateStatusModal()">
-      <i class="fa-solid fa-list-check"></i> Tạo Trạng Thái Mới
+      <i class="fa-solid fa-truck-ramp-box"></i> Tạo Đơn Hàng Mới
     </button>
   </tms-page-header>
 
@@ -432,6 +435,15 @@
     (close)="closeExportModal()"
     (confirmExport)="onConfirmExport($event)"
   ></app-report-export-modal>
+
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    type="shipments"
+    title="Nhập Danh Sách Chuyến Hàng Từ File Excel"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>
 

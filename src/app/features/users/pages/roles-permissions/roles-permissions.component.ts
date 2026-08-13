@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { RoleService } from '@core/services/role.service';
 import { UserManagementService } from '@core/services/user-management.service';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
+import { ToastService } from '@core/services/toast.service';
 import { RoleFormComponent } from '../role-form/role-form.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { RoleModel, PermissionModel } from '@core/models/role.model';
@@ -86,7 +87,8 @@ export class RolesPermissionsComponent implements OnInit {
     private fb: FormBuilder,
     private roleService: RoleService,
     private userService: UserManagementService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -131,13 +133,11 @@ export class RolesPermissionsComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- ROLES & PERMISSIONS DATA ---

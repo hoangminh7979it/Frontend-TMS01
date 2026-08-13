@@ -5,6 +5,12 @@
     title="Quản Lý Lương Nhân Sự & Đội Ngũ Lái Xe"
     subtitle="Quản lý lương cứng (theo tháng/ngày công), thưởng % doanh thu chuyến, phụ cấp lưu đêm và tổng quỹ lương chi trả."
   >
+    <button class="btn btn-secondary" (click)="onDownloadExcelTemplate()" title="Tải File Excel Mẫu Rỗng">
+      <i class="fa-solid fa-file-excel color-green"></i> Nhận Mẫu Excel
+    </button>
+    <button class="btn btn-secondary" (click)="onOpenImportExcelModal()" title="Nhập Dữ Liệu Từ File Excel">
+      <i class="fa-solid fa-file-import"></i> Nhập Từ Excel
+    </button>
     <button class="btn btn-primary" (click)="openCreateSalaryModal()">
       <i class="fa-solid fa-file-invoice-dollar"></i> Lập Bảng Lương Mới
     </button>
@@ -196,6 +202,14 @@
     (export)="onExportCurrentSalary($event)"
   ></app-payroll-form>
 
+  <!-- REUSABLE EXCEL IMPORT MODAL -->
+  <app-excel-import-modal
+    [show]="showImportExcelModal"
+    type="payroll"
+    title="Nhập Bảng Lương Từ File Excel"
+    (closed)="showImportExcelModal = false"
+    (imported)="onExcelDataImported($event)"
+  ></app-excel-import-modal>
 
 </div>
 

@@ -8,6 +8,8 @@ import { VehicleFormComponent } from '../vehicle-form/vehicle-form.component';
 import { PaginationComponent } from '@shared/components/pagination/pagination.component';
 import { VehicleModel, VehicleTypeModel } from '@core/models/vehicle.model';
 import { EmployeeModel } from '@core/models/employee.model';
+import { ToastService } from '@core/services/toast.service';
+import { ExcelImportExportService } from '@core/services/excel-import-export.service';
 
 import {
   TmsPageHeaderComponent,
@@ -15,7 +17,8 @@ import {
   TmsTablePanelComponent,
   TmsSearchBoxComponent,
   TmsToastComponent,
-  TmsStatusBadgeComponent
+  TmsStatusBadgeComponent,
+  ExcelImportModalComponent
 } from '@shared-ui';
 
 @Component({
@@ -27,6 +30,7 @@ import {
     FormsModule,
     VehicleFormComponent,
     PaginationComponent,
+    ExcelImportModalComponent,
     TmsPageHeaderComponent,
     TmsMetricCardComponent,
     TmsTablePanelComponent,
@@ -81,12 +85,61 @@ export class VehicleListComponent implements OnInit {
   maintenanceCount: number = 0;
   expiringInspectionCount: number = 0;
 
+  showImportExcelModal: boolean = false;
+
   constructor(
     private fb: FormBuilder,
     private vehicleService: VehicleService,
     private employeeService: EmployeeService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private toastService: ToastService,
+    private excelService: ExcelImportExportService
   ) {}
+
+  onDownloadExcelTemplate(): void {
+    this.excelService.downloadTemplate('vehicles');
+    this.toastService.info('Đã tải về file Excel mẫu rỗng thành công!');
+  }
+
+  onOpenImportExcelModal(): void {
+    this.showImportExcelModal = true;
+  }
+
+  onExcelDataImported(rows: any[]): void {
+    if (!rows || rows.length === 0) return;
+
+    this.loading = true;
+    let successCount = 0;
+    let failCount = 0;
+
+    const promises = rows.map(r => {
+      const payload: any = {
+        licensePlate: r.licensePlate,
+        vehicleCode: r.vehicleCode || '',
+        name: r.name || '',
+        payloadCapacity: r.payloadCapacity ? Number(r.payloadCapacity) : null,
+        status: r.status || 'AVAILABLE',
+        notes: r.notes || ''
+      };
+
+      if (r.inspectionExpiryDate) payload.inspectionExpiryDate = r.inspectionExpiryDate;
+
+      return this.vehicleService.createVehicle(payload).toPromise()
+        .then(() => { successCount++; })
+        .catch(() => { failCount++; });
+    });
+
+    Promise.all(promises).then(() => {
+      this.loading = false;
+      this.loadVehicles();
+      if (successCount > 0) {
+        this.toastService.success(`Đã nhập thành công ${successCount} phương tiện từ file Excel!`);
+      }
+      if (failCount > 0) {
+        this.toastService.warning(`Có ${failCount} dòng không nhập được do trùng biển số hoặc lỗi dữ liệu.`);
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.initForms();
@@ -97,15 +150,16 @@ export class VehicleListComponent implements OnInit {
 
   private initForms(): void {
     this.vehicleForm = this.fb.group({
+      licensePlate: ['', [Validators.required]],
       vehicleCode: [''],
       name: [''],
-      licensePlate: ['', [Validators.required]],
-      payloadCapacity: [null, [Validators.min(0)]],
-      status: ['AVAILABLE', [Validators.required]],
-      inspectionExpirationDate: [''],
-      insuranceExpirationDate: [''],
+      vehicleTypeId: [null],
+      payloadCapacity: [null],
+      status: ['AVAILABLE'],
+      inspectionExpirationDate: [null],
+      insuranceExpirationDate: [null],
       employeeId: [null],
-      vehicleTypeId: [null]
+      notes: ['']
     });
 
     this.typeForm = this.fb.group({
@@ -126,13 +180,11 @@ export class VehicleListComponent implements OnInit {
   }
 
   showSuccess(msg: string): void {
-    this.successMessage = msg;
-    setTimeout(() => { this.successMessage = null; }, 1790);
+    this.toastService.success(msg);
   }
 
   showError(msg: string): void {
-    this.errorMessage = msg;
-    setTimeout(() => { this.errorMessage = null; }, 1790);
+    this.toastService.error(msg);
   }
 
   // --- DATA LOADING ---
