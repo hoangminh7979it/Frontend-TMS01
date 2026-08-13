@@ -1,0 +1,23 @@
+<div class="tms-form-group" [class.tms-fg-has-error]="!!errorMessage">
+  <!-- Label -->
+  <label class="tms-fg-label" *ngIf="label">
+    {{ label }}
+    <span class="tms-fg-required" *ngIf="required" aria-label="bắt buộc">*</span>
+  </label>
+
+  <!-- Input slot -->
+  <div class="tms-fg-control-wrap">
+    <ng-content />
+  </div>
+
+  <!-- Error Message -->
+  <span class="tms-fg-error" *ngIf="errorMessage" role="alert">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    {{ errorMessage }}
+  </span>
+
+  <!-- Hint -->
+  <span class="tms-fg-hint" *ngIf="hint && !errorMessage">
+    {{ hint }}
+  </span>
+</div>

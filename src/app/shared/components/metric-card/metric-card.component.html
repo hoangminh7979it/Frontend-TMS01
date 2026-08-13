@@ -1,0 +1,13 @@
+<div class="tms-metric-card">
+  <div class="tms-mc-header">
+    <span class="tms-mc-title">{{ title }}</span>
+    <div class="tms-mc-icon-box" [ngClass]="iconBoxClass">
+      <i class="fa-solid" [ngClass]="icon"></i>
+    </div>
+  </div>
+  <div class="tms-mc-value">
+    {{ formattedValue }}
+    <span class="tms-mc-unit" *ngIf="unit">{{ unit }}</span>
+  </div>
+  <span class="tms-mc-note" *ngIf="note">{{ note }}</span>
+</div>

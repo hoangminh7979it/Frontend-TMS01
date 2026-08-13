@@ -1,0 +1,19 @@
+<div
+  class="tms-toast"
+  [ngClass]="config.cssClass"
+  *ngIf="message"
+  role="alert"
+  [class.tms-toast-visible]="visible"
+>
+  <i class="fa-solid" [ngClass]="config.icon"></i>
+  <span class="tms-toast-message">{{ message }}</span>
+  <button
+    *ngIf="dismissible"
+    class="tms-toast-close"
+    type="button"
+    (click)="dismiss()"
+    title="Đóng thông báo"
+  >
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</div>

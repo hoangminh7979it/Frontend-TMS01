@@ -1,29 +1,21 @@
 <div class="customer-page">
   
   <!-- Page Header & Action -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Quản Lý Khách Hàng & Đối Tác Doanh Nghiệp</h1>
-      <p class="page-subtitle">Quản lý hồ sơ khách hàng doanh nghiệp, cá nhân, mã số thuế MST và công ty đối tác.</p>
-    </div>
-    
-    <div class="page-actions">
-      <button *ngIf="activeTab === 'customers'" class="btn btn-primary" (click)="openCreateCustomerModal()">
-        <i class="fa-solid fa-building-circle-check"></i> Khai Báo Khách Hàng Mới
-      </button>
-      <button *ngIf="activeTab === 'companies'" class="btn btn-primary" (click)="openCreateCompanyModal()">
-        <i class="fa-solid fa-building-flag"></i> Tạo Công Ty Đối Tác Mới
-      </button>
-    </div>
-  </div>
+  <tms-page-header
+    title="Quản Lý Khách Hàng & Đối Tác Doanh Nghiệp"
+    subtitle="Quản lý hồ sơ khách hàng doanh nghiệp, cá nhân, mã số thuế MST và công ty đối tác."
+  >
+    <button *ngIf="activeTab === 'customers'" class="btn btn-primary" (click)="openCreateCustomerModal()">
+      <i class="fa-solid fa-building-circle-check"></i> Khai Báo Khách Hàng Mới
+    </button>
+    <button *ngIf="activeTab === 'companies'" class="btn btn-primary" (click)="openCreateCompanyModal()">
+      <i class="fa-solid fa-building-flag"></i> Tạo Công Ty Đối Tác Mới
+    </button>
+  </tms-page-header>
 
   <!-- Alerts -->
-  <div *ngIf="errorMessage && !showCustomerModal && !showCompanyModal" class="toast-alert toast-error">
-    <i class="fa-solid fa-triangle-exclamation"></i> {{ errorMessage }}
-  </div>
-  <div *ngIf="successMessage && !showCustomerModal && !showCompanyModal" class="toast-alert toast-success">
-    <i class="fa-solid fa-circle-check"></i> {{ successMessage }}
-  </div>
+  <tms-toast *ngIf="!showCustomerModal && !showCompanyModal" [message]="errorMessage" type="error" [dismissible]="true" (dismissed)="errorMessage = null" />
+  <tms-toast *ngIf="!showCustomerModal && !showCompanyModal" [message]="successMessage" type="success" [dismissible]="true" (dismissed)="successMessage = null" />
 
   <!-- Navigation Tabs -->
   <div class="nav-tabs">
@@ -40,56 +32,49 @@
     
     <!-- KPI Summary Cards -->
     <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">TỔNG KHÁCH HÀNG</span>
-          <div class="metric-icon-box bg-blue"><i class="fa-solid fa-users"></i></div>
-        </div>
-        <div class="metric-value">{{ totalCount }} <span class="metric-unit">Khách</span></div>
-        <span class="metric-note">Toàn bộ danh mục đối tác</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">KHÁCH DOANH NGHIỆP</span>
-          <div class="metric-icon-box bg-purple"><i class="fa-solid fa-building"></i></div>
-        </div>
-        <div class="metric-value">{{ corporateCount }} <span class="metric-unit">Công ty</span></div>
-        <span class="metric-note">Có Mã Số Thuế MST</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">KHÁCH CÁ NHÂN</span>
-          <div class="metric-icon-box bg-cyan"><i class="fa-solid fa-user"></i></div>
-        </div>
-        <div class="metric-value">{{ individualCount }} <span class="metric-unit">Khách</span></div>
-        <span class="metric-note">Khách lẻ ký chuyến</span>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-header">
-          <span class="metric-title">CÔNG TY ĐỐI TÁC</span>
-          <div class="metric-icon-box bg-green"><i class="fa-solid fa-handshake"></i></div>
-        </div>
-        <div class="metric-value">{{ companyCount }} <span class="metric-unit">Đối tác</span></div>
-        <span class="metric-note">Mạng lưới công ty liên kết</span>
-      </div>
+      <tms-metric-card
+        title="TỔNG KHÁCH HÀNG"
+        [value]="totalCount"
+        unit="Khách"
+        note="Toàn bộ danh mục đối tác"
+        icon="fa-users"
+        colorVariant="blue"
+      />
+      <tms-metric-card
+        title="KHÁCH DOANH NGHIỆP"
+        [value]="corporateCount"
+        unit="Công ty"
+        note="Có Mã Số Thuế MST"
+        icon="fa-building"
+        colorVariant="purple"
+      />
+      <tms-metric-card
+        title="KHÁCH CÁ NHÂN"
+        [value]="individualCount"
+        unit="Khách"
+        note="Khách lẻ ký chuyến"
+        icon="fa-user"
+        colorVariant="cyan"
+      />
+      <tms-metric-card
+        title="CÔNG TY ĐỐI TÁC"
+        [value]="companyCount"
+        unit="Đối tác"
+        note="Mạng lưới công ty liên kết"
+        icon="fa-handshake"
+        colorVariant="green"
+      />
     </div>
 
     <!-- Filter & Search Controls Bar -->
     <div class="filter-controls-card">
       
       <!-- Search Box -->
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-        <input 
-          type="text" 
-          [(ngModel)]="searchQuery" 
-          (ngModelChange)="onSearchChange()" 
-          placeholder="Tìm kiếm theo Mã KH, Tên công ty, Đại diện, MST, SĐT, Email..." 
-        />
-      </div>
+      <tms-search-box
+        [(value)]="searchQuery"
+        (valueChange)="onSearchChange()"
+        placeholder="Tìm kiếm theo Mã KH, Tên công ty, Đại diện, MST, SĐT, Email..."
+      />
 
       <!-- Type Tabs Filter -->
       <div class="type-filter-tabs">

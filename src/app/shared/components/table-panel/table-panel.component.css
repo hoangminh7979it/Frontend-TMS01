@@ -1,0 +1,49 @@
+.tms-table-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.tms-tp-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-panel-header);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.tms-tp-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-title);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.tms-tp-title i {
+  color: var(--cyan-accent);
+}
+
+.tms-tp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tms-tp-count {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.tms-tp-body {
+  padding: 0;
+  overflow-x: auto;
+}
