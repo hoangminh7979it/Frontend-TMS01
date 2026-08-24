@@ -73,6 +73,8 @@ export class ShipmentListComponent implements OnInit {
   selectedStatus: string = 'ALL';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+  startDateFilter: string | null = null;
+  endDateFilter: string | null = null;
 
   // Pagination State
   paginatedShipments: ShipmentModel[] = [];
@@ -139,14 +141,47 @@ export class ShipmentListComponent implements OnInit {
     this.showImportExcelModal = true;
   }
 
-  onExcelDataImported(rows: any[]): void {
+  async onExcelDataImported(rows: any[]): Promise<void> {
     if (!rows || rows.length === 0) return;
 
     this.loading = true;
+
+    // --- Bước 1: Thu thập tất cả địa điểm từ toàn bộ dòng Excel ---
+    // rồi tự động tạo các công ty đối tác chưa có vào hệ thống
+    const allPlaces: string[] = [];
+
+    /**
+     * Hàm helper: tách chuỗi địa điểm từ Excel theo dấu + (hoặc \n ; nếu người dùng dùng cách khác)
+     * rồi trả về mảng các địa điểm đã trim
+     */
+    const splitPlaces = (raw: string): string[] =>
+      raw.split(/\+|\n|;/).map((p: string) => p.trim()).filter((p: string) => p.length > 0);
+
+    rows.forEach(r => {
+      if (r.receiptPlace) {
+        splitPlaces(r.receiptPlace).forEach((p: string) => allPlaces.push(p));
+        // Normalize: thay thế + và ; thành \n cho backend
+        r.receiptPlace = splitPlaces(r.receiptPlace).join('\n');
+      }
+      if (r.deliveryPlace) {
+        splitPlaces(r.deliveryPlace).forEach((p: string) => allPlaces.push(p));
+        // Normalize: thay thế + và ; thành \n cho backend
+        r.deliveryPlace = splitPlaces(r.deliveryPlace).join('\n');
+      }
+    });
+
+    // Reload danh sách công ty mới nhất từ server trước khi kiểm tra
+    await this.loadCompaniesAsync();
+
+    // Tự động tạo các công ty chưa tồn tại
+    if (allPlaces.length > 0) {
+      await this.checkAndAutoCreateCompanies(allPlaces);
+    }
+
+    // --- Bước 2: Tạo từng chuyến hàng ---
     let successCount = 0;
     let failCount = 0;
 
-    // Duyệt và gọi API tạo mới cho từng dòng dữ liệu
     const promises = rows.map(r => {
       // 1. Tìm phương tiện theo biển số xe
       let foundVehicleId: number | null = null;
@@ -167,7 +202,7 @@ export class ShipmentListComponent implements OnInit {
       let foundDriverId: number | null = null;
       if (r.driverCode) {
         const cleanCode = r.driverCode.trim().toLowerCase();
-        const d = this.drivers.find(item => 
+        const d = this.drivers.find(item =>
           (item.employeeCode && item.employeeCode.trim().toLowerCase() === cleanCode) ||
           (item.fullName && item.fullName.trim().toLowerCase() === cleanCode)
         );
@@ -179,9 +214,22 @@ export class ShipmentListComponent implements OnInit {
         foundDriverId = vehicleAssignedDriverId;
       }
 
+      // 3. Tìm khách hàng nếu có nhập customerName / customerCode trong Excel
+      let foundCustomerId: number | null = null;
+      if (r.customerName) {
+        const cleanCust = r.customerName.trim().toLowerCase();
+        const cust = this.customers.find(item =>
+          (item.customerCode && item.customerCode.trim().toLowerCase() === cleanCust) ||
+          (item.companyName && item.companyName.trim().toLowerCase() === cleanCust) ||
+          (item.fullName && item.fullName.trim().toLowerCase() === cleanCust)
+        );
+        if (cust) foundCustomerId = cust.customerId;
+      }
+
       const payload: any = {
         shipmentCode: r.shipmentCode,
-        cargoType: r.cargoType,
+        cargoType: r.cargoType || '',
+        customerId: foundCustomerId,
         receiptPlace: r.receiptPlace,
         deliveryPlace: r.deliveryPlace,
         weight: r.weight ? Number(r.weight) : null,
@@ -211,6 +259,7 @@ export class ShipmentListComponent implements OnInit {
       }
     });
   }
+
 
   ngOnInit(): void {
     this.initForms();
@@ -339,6 +388,21 @@ export class ShipmentListComponent implements OnInit {
     });
   }
 
+  /** Phiên bản async của loadCompanies - dùng trong import Excel để await trước khi kiểm tra công ty */
+  private loadCompaniesAsync(): Promise<void> {
+    return new Promise((resolve) => {
+      this.customerService.getAllCompanies().subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            this.companies = res.data;
+          }
+          resolve();
+        },
+        error: () => resolve()
+      });
+    });
+  }
+
   loadVehicles(): void {
     this.vehicleService.getAllVehicles().subscribe({
       next: (res) => {
@@ -413,6 +477,20 @@ export class ShipmentListComponent implements OnInit {
       result = result.filter(s => s.vehicleId === Number(this.selectedVehicleFilter));
     }
 
+    if (this.startDateFilter) {
+      result = result.filter(s => {
+        const d = s.dateOfReceipt || s.deliveryDate;
+        return d && d.substring(0, 10) >= this.startDateFilter!;
+      });
+    }
+
+    if (this.endDateFilter) {
+      result = result.filter(s => {
+        const d = s.dateOfReceipt || s.deliveryDate;
+        return d && d.substring(0, 10) <= this.endDateFilter!;
+      });
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(s => 
@@ -429,6 +507,12 @@ export class ShipmentListComponent implements OnInit {
     this.filteredShipments = result;
     this.currentPage = 1;
     this.updatePaginatedShipments();
+  }
+
+  clearDateFilter(): void {
+    this.startDateFilter = null;
+    this.endDateFilter = null;
+    this.applyFilter();
   }
 
   updatePaginatedShipments(): void {
@@ -458,11 +542,12 @@ export class ShipmentListComponent implements OnInit {
     this.applyFilter();
   }
 
-  // Helper method to split string by newline or semicolon for HTML bullet lists
+  // Helper method to split string by newline, semicolon or + for HTML bullet lists
   splitPlaceString(placeStr?: string): string[] {
     if (!placeStr) return [];
-    return placeStr.split(/\n|;/).map(p => p.trim()).filter(p => p.length > 0);
+    return placeStr.split(/\+|\n|;/).map(p => p.trim()).filter(p => p.length > 0);
   }
+
 
   // --- DYNAMIC PLACES HANDLERS ---
   addReceiptPlace(): void {
@@ -529,27 +614,31 @@ export class ShipmentListComponent implements OnInit {
 
   // --- AUTO CREATE MISSING COMPANIES FROM PLACES ---
   private async checkAndAutoCreateCompanies(places: string[]): Promise<void> {
-    for (const place of places) {
-      const trimmed = place.trim();
-      if (!trimmed) continue;
+    // Loại bỏ trùng lặp trong danh sách địa điểm cần kiểm tra
+    const uniquePlaces = [...new Set(places.map(p => p.trim()).filter(p => p.length > 2))];
 
-      const possibleName = trimmed.split(',')[0].trim();
-      
-      const exists = this.companies.some(c => 
-        (c.name && c.name.toLowerCase().trim() === possibleName.toLowerCase()) ||
-        (c.name && possibleName.toLowerCase().includes(c.name.toLowerCase().trim()))
+    for (const place of uniquePlaces) {
+      // Lấy tên công ty (phần trước dấu phẩy đầu tiên)
+      const possibleName = place.split(',')[0].trim();
+      if (!possibleName || possibleName.length <= 2) continue;
+
+      // Kiểm tra theo tên chính xác (case-insensitive exact match)
+      const exists = this.companies.some(c =>
+        c.name && c.name.toLowerCase().trim() === possibleName.toLowerCase().trim()
       );
 
-      if (!exists && possibleName.length > 2) {
+      if (!exists) {
         try {
-          const codeNum = Math.floor(1000 + Math.random() * 9000);
+          // Tạo mã công ty duy nhất với timestamp để tránh trùng
+          const codeNum = Date.now().toString().slice(-6) + Math.floor(Math.random() * 100);
           const newCompReq = {
             companyCode: `CTY-${codeNum}`,
             name: possibleName,
-            address: trimmed
+            address: place
           };
           const res = await this.customerService.createCompany(newCompReq).toPromise();
           if (res && res.data) {
+            // Thêm vào danh sách local để các địa điểm tiếp theo trong batch không tạo trùng
             this.companies.push(res.data);
           }
         } catch (err) {

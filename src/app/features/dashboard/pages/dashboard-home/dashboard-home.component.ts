@@ -5,6 +5,7 @@ import { ShipmentService } from '@core/services/shipment.service';
 import { VehicleService } from '@core/services/vehicle.service';
 import { ExpenseService } from '@core/services/expense.service';
 import { RevenueService } from '@core/services/revenue.service';
+import { PayrollService } from '@core/services/payroll.service';
 import { ShipmentModel } from '@core/models/shipment.model';
 import { VehicleModel } from '@core/models/vehicle.model';
 import { ExpenseModel } from '@core/models/expense.model';
@@ -52,7 +53,8 @@ export class DashboardHomeComponent implements OnInit {
     private shipmentService: ShipmentService,
     private vehicleService: VehicleService,
     private expenseService: ExpenseService,
-    private revenueService: RevenueService
+    private revenueService: RevenueService,
+    private payrollService: PayrollService
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +92,39 @@ export class DashboardHomeComponent implements OnInit {
           });
         });
 
+        // Load Expenses & Salaries for full financial calculation
+        this.expenseService.getAllExpenses().subscribe({
+          next: (expRes) => {
+            const expenses = expRes.data || [];
+            
+            this.payrollService.getAllSalaries().subscribe({
+              next: (salRes) => {
+                const salaries = salRes.data || [];
+
+                // Tổng chi phí = Chi phí phiếu chi + Chi phí phát sinh trên chuyến + Tổng quỹ lương thực nhận
+                const directExpensesSum = expenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+                const shipmentIncurredSum = shipments.reduce((sum, s) => sum + (s.incurredCosts || 0), 0);
+                const totalSalariesSum = salaries.reduce((sum, sal) => sum + (sal.salaryCosts || 0), 0);
+
+                this.monthlyExpenses = directExpensesSum + shipmentIncurredSum + totalSalariesSum;
+
+                // Add expense activities
+                expenses.slice(0, 2).forEach(e => {
+                  this.recentActivities.push({
+                    icon: 'fa-solid fa-gas-pump',
+                    bgClass: 'bg-yellow',
+                    title: `Chi phí ${e.expenseCode}: ${e.title || 'Phát sinh vận hành'}`,
+                    subtitle: `${(e.totalExpense || 0).toLocaleString('en-US')} VNĐ • Xe: ${e.vehicleLicensePlate || 'Chưa gán'}`
+                  });
+                });
+
+                // Generate 3 months chart comparison
+                this.generate3MonthsComparison();
+              }
+            });
+          }
+        });
+
         this.loading = false;
       },
       error: () => { this.loading = false; }
@@ -101,27 +136,6 @@ export class DashboardHomeComponent implements OnInit {
         const vehicles = res.data || [];
         this.totalVehiclesCount = vehicles.length;
         this.activeVehiclesCount = vehicles.filter(v => v.status === 'AVAILABLE' || v.status === 'IN_TRANSIT').length;
-      }
-    });
-
-    // Load Expenses
-    this.expenseService.getAllExpenses().subscribe({
-      next: (res) => {
-        const expenses = res.data || [];
-        this.monthlyExpenses = expenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
-
-        // Add expense activities
-        expenses.slice(0, 2).forEach(e => {
-          this.recentActivities.push({
-            icon: 'fa-solid fa-gas-pump',
-            bgClass: 'bg-yellow',
-            title: `Chi phí ${e.expenseCode}: ${e.title || 'Phát sinh vận hành'}`,
-            subtitle: `${(e.totalExpense || 0).toLocaleString('en-US')} VNĐ • Xe: ${e.vehicleLicensePlate || 'Chưa gán'}`
-          });
-        });
-
-        // Generate 3 months chart comparison
-        this.generate3MonthsComparison();
       }
     });
   }
@@ -145,43 +159,61 @@ export class DashboardHomeComponent implements OnInit {
       });
     }
 
-    // Nhóm dữ liệu Đơn hàng (Shipments) & Chi phí (Expenses) theo 3 tháng này
+    // Nhóm dữ liệu Đơn hàng (Shipments), Chi phí (Expenses) & Lương (Salaries) theo 3 tháng này
     this.shipmentService.getAllShipments().subscribe({
       next: (shipRes) => {
         const shipments = shipRes.data || [];
         this.expenseService.getAllExpenses().subscribe({
           next: (expRes) => {
             const expenses = expRes.data || [];
+            this.payrollService.getAllSalaries().subscribe({
+              next: (salRes) => {
+                const salaries = salRes.data || [];
 
-            this.monthlyFinancials = months.map(m => {
-              const mShipments = shipments.filter(s => {
-                if (!s.dateOfReceipt) return false;
-                const sDate = new Date(s.dateOfReceipt);
-                return sDate.getFullYear() === m.year && (sDate.getMonth() + 1) === m.month;
-              });
+                this.monthlyFinancials = months.map(m => {
+                  const mShipments = shipments.filter(s => {
+                    if (!s.dateOfReceipt) return false;
+                    const sDate = new Date(s.dateOfReceipt);
+                    return sDate.getFullYear() === m.year && (sDate.getMonth() + 1) === m.month;
+                  });
 
-              const mExpenses = expenses.filter(e => {
-                if (!e.createDate) return false;
-                const eDate = new Date(e.createDate);
-                return eDate.getFullYear() === m.year && (eDate.getMonth() + 1) === m.month;
-              });
+                  const mExpenses = expenses.filter(e => {
+                    const dateStr = e.expenseDate || e.createDate;
+                    if (!dateStr) return false;
+                    const eDate = new Date(dateStr);
+                    return eDate.getFullYear() === m.year && (eDate.getMonth() + 1) === m.month;
+                  });
 
-              const grossRevenue = mShipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
-              const totalExpenses = mExpenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
-              const netProfit = grossRevenue - totalExpenses;
+                  const mSalaries = salaries.filter(sal => {
+                    const dateStr = sal.endDate || sal.startDate;
+                    if (!dateStr) return false;
+                    const salDate = new Date(dateStr);
+                    return salDate.getFullYear() === m.year && (salDate.getMonth() + 1) === m.month;
+                  });
 
-              return {
-                monthLabel: m.monthLabel,
-                grossRevenue,
-                totalExpenses,
-                netProfit
-              };
+                  const grossRevenue = mShipments.reduce((sum, s) => sum + (s.revenue || 0), 0);
+                  const directExpenses = mExpenses.reduce((sum, e) => sum + (e.totalExpense || 0), 0);
+                  const shipmentIncurredCosts = mShipments.reduce((sum, s) => sum + (s.incurredCosts || 0), 0);
+                  const salaryCosts = mSalaries.reduce((sum, sal) => sum + (sal.salaryCosts || 0), 0);
+
+                  // Tổng chi phí = Chi phí trực tiếp + Chi phí phát sinh chuyến + Tổng tiền lương tài xế
+                  const totalExpenses = directExpenses + shipmentIncurredCosts + salaryCosts;
+                  const netProfit = grossRevenue - totalExpenses;
+
+                  return {
+                    monthLabel: m.monthLabel,
+                    grossRevenue,
+                    totalExpenses,
+                    netProfit
+                  };
+                });
+
+                // Calculate max value for SVG bar scaling
+                const allVals = this.monthlyFinancials.flatMap(f => [f.grossRevenue, f.totalExpenses, Math.abs(f.netProfit)]);
+                const maxVal = Math.max(...allVals, 100000);
+                this.maxChartValue = Math.ceil(maxVal * 1.2);
+              }
             });
-
-            // Calculate max value for SVG bar scaling
-            const allVals = this.monthlyFinancials.flatMap(f => [f.grossRevenue, f.totalExpenses, Math.abs(f.netProfit)]);
-            const maxVal = Math.max(...allVals, 100000);
-            this.maxChartValue = Math.ceil(maxVal * 1.2);
           }
         });
       }

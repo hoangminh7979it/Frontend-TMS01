@@ -36,6 +36,7 @@ export class PayrollFormComponent {
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
   @Output() export = new EventEmitter<File | null>();
+  @Output() exportEmployee = new EventEmitter<void>();
 
   selectedTemplateFile: File | null = null;
 
@@ -68,6 +69,7 @@ export class PayrollFormComponent {
   onClose(): void { this.close.emit(); }
   onSave(): void { this.save.emit(); }
   onExport(): void { this.export.emit(this.selectedTemplateFile); }
+  onExportEmployee(): void { this.exportEmployee.emit(); }
 
 
   onStartDateChanged(): void { this.startDateChange.emit(); }
