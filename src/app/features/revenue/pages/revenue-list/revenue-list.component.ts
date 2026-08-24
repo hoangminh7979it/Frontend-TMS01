@@ -76,6 +76,8 @@ export class RevenueListComponent implements OnInit {
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
   drivers: EmployeeModel[] = [];
+  startDateFilter: string | null = null;
+  endDateFilter: string | null = null;
 
   // Pagination State
   paginatedRevenues: RevenueFinalModel[] = [];
@@ -286,6 +288,20 @@ export class RevenueListComponent implements OnInit {
       }
     }
 
+    if (this.startDateFilter) {
+      result = result.filter(r => {
+        const d = r.startDate || r.endDate;
+        return d && d.substring(0, 10) >= this.startDateFilter!;
+      });
+    }
+
+    if (this.endDateFilter) {
+      result = result.filter(r => {
+        const d = r.endDate || r.startDate;
+        return d && d.substring(0, 10) <= this.endDateFilter!;
+      });
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(r =>
@@ -298,6 +314,12 @@ export class RevenueListComponent implements OnInit {
     this.filteredRevenues = result;
     this.currentPage = 1;
     this.updatePaginatedRevenues();
+  }
+
+  clearDateFilter(): void {
+    this.startDateFilter = null;
+    this.endDateFilter = null;
+    this.applyFilter();
   }
 
   updatePaginatedRevenues(): void {
@@ -332,6 +354,24 @@ export class RevenueListComponent implements OnInit {
     const selectedVehicleId = this.revenueForm.get('vehicleId')?.value ? Number(this.revenueForm.get('vehicleId')?.value) : null;
     const startDate = this.revenueForm.get('startDate')?.value;
     const endDate = this.revenueForm.get('endDate')?.value;
+
+    // Yêu cầu BẮT BUỘC: Phải chọn cả Phương Tiện và Chọn Ngày (Từ ngày, Đến ngày) thì mới hiển thị dữ liệu
+    if (!selectedVehicleId || !startDate || !endDate) {
+      this.scannedShipments = [];
+      this.scannedExpenses = [];
+      this.scannedSalaries = [];
+      this.formattedGrossRevenue = '0';
+      this.formattedTotalExpenses = '0';
+      this.formattedTotalSalaries = '0';
+      this.formattedNetProfit = '0';
+      this.revenueForm.patchValue({
+        grossRevenue: 0,
+        totalExpense: 0,
+        totalSalary: 0,
+        totalShipment: 0
+      });
+      return;
+    }
 
     const selectedVehicleObj = this.vehicles.find(v => v.id === selectedVehicleId);
 
@@ -440,18 +480,8 @@ export class RevenueListComponent implements OnInit {
 
                       matchingSalaries.push(sal);
 
-                      const tripPercent = sal.tripSalaryPercentage || 0;
-                      if (tripPercent > 0) {
-                        const vehicleShipmentsForSalary = shipments.filter(s => 
-                          s.vehicleId === selectedVehicleId && 
-                          (!sal.shipmentCodes || sal.shipmentCodes.length === 0 || sal.shipmentCodes.includes(s.shipmentCode))
-                        );
-                        const vehicleRevForSalary = vehicleShipmentsForSalary.reduce((sum, s) => sum + (s.revenue || 0), 0);
-                        const allocatedTripSalary = (vehicleRevForSalary * tripPercent) / 100;
-                        calculatedVehicleSalaryTotal += Math.round(allocatedTripSalary);
-                      } else {
-                        calculatedVehicleSalaryTotal += (sal.salaryCosts || 0);
-                      }
+                      // Tính tổng thực nhận của tài xế (lương cứng + phụ cấp + thưởng chuyến - khấu trừ)
+                      calculatedVehicleSalaryTotal += (sal.salaryCosts || 0);
                     }
                   });
                 }
@@ -521,8 +551,8 @@ export class RevenueListComponent implements OnInit {
       revenueCode: r.revenueCode,
       title: r.title,
       vehicleId: r.vehicleId || null,
-      startDate: r.startDate,
-      endDate: r.endDate,
+      startDate: r.startDate ? r.startDate.substring(0, 10) : null,
+      endDate: r.endDate ? r.endDate.substring(0, 10) : null,
       totalShipment: r.totalShipment || 0,
       grossRevenue: r.grossRevenue || 0,
       totalExpense: r.totalExpense || 0,

@@ -72,6 +72,8 @@ export class PayrollListComponent implements OnInit {
   searchQuery: string = '';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+  startDateFilter: string | null = null;
+  endDateFilter: string | null = null;
 
   // Pagination State
   paginatedSalaries: SalaryModel[] = [];
@@ -140,8 +142,8 @@ export class PayrollListComponent implements OnInit {
         notes: r.notes || ''
       };
 
-      if (r.startDate) payload.startDate = r.startDate;
-      if (r.endDate) payload.endDate = r.endDate;
+      if (r.startDate) payload.startDate = `${r.startDate}T00:00:00`;
+      if (r.endDate) payload.endDate = `${r.endDate}T00:00:00`;
 
       return this.payrollService.createSalary(payload).toPromise()
         .then(() => { successCount++; })
@@ -449,6 +451,20 @@ export class PayrollListComponent implements OnInit {
       }
     }
 
+    if (this.startDateFilter) {
+      result = result.filter(s => {
+        const d = s.startDate || s.endDate;
+        return d && d.substring(0, 10) >= this.startDateFilter!;
+      });
+    }
+
+    if (this.endDateFilter) {
+      result = result.filter(s => {
+        const d = s.endDate || s.startDate;
+        return d && d.substring(0, 10) <= this.endDateFilter!;
+      });
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(s =>
@@ -461,6 +477,12 @@ export class PayrollListComponent implements OnInit {
     this.filteredSalaries = result;
     this.currentPage = 1;
     this.updatePaginatedSalaries();
+  }
+
+  clearDateFilter(): void {
+    this.startDateFilter = null;
+    this.endDateFilter = null;
+    this.applyFilter();
   }
 
   updatePaginatedSalaries(): void {
@@ -556,8 +578,8 @@ export class PayrollListComponent implements OnInit {
     this.salaryForm.patchValue({
       salaryCode: s.salaryCode,
       employeeId: s.employeeId,
-      startDate: s.startDate,
-      endDate: s.endDate,
+      startDate: s.startDate ? s.startDate.substring(0, 10) : null,
+      endDate: s.endDate ? s.endDate.substring(0, 10) : null,
       workDaysCount: s.workDaysCount || 26,
       salaryBasicPerDay: s.salaryBasicPerDay || 0,
       totalShipmentCount: s.totalShipmentCount || 0,
@@ -696,6 +718,41 @@ export class PayrollListComponent implements OnInit {
     });
   }
 
+  onExportCurrentEmployeeSalary(): void {
+    const salaryId = this.selectedSalary?.salaryId;
+    const salaryCode = this.salaryForm.get('salaryCode')?.value || 'Salary';
+    if (!salaryId) {
+      this.showError('Không xác định được ID phiếu lương này để xuất file.');
+      return;
+    }
+    this.reportExportService.exportEmployeeSalaryById(salaryId).subscribe({
+      next: (blob) => {
+        const filename = `Phieu_Luong_Nhan_Vien_${salaryCode}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất phiếu lương cá nhân nhân viên "${salaryCode}" thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất phiếu lương nhân viên.');
+      }
+    });
+  }
+
+  onExportEmployeeSalaryRecord(salary: SalaryModel): void {
+    if (!salary.salaryId) {
+      this.showError('Không xác định được ID phiếu lương này.');
+      return;
+    }
+    this.reportExportService.exportEmployeeSalaryById(salary.salaryId).subscribe({
+      next: (blob) => {
+        const filename = `Phieu_Luong_Nhan_Vien_${salary.salaryCode || salary.salaryId}.xlsx`;
+        this.reportExportService.downloadBlob(blob, filename);
+        this.showSuccess(`Xuất phiếu lương cá nhân nhân viên "${salary.salaryCode}" thành công!`);
+      },
+      error: () => {
+        this.showError('Có lỗi xảy ra khi xuất phiếu lương nhân viên.');
+      }
+    });
+  }
 
   onExportSalaryRecord(salary: SalaryModel): void {
     if (!salary.salaryId) {

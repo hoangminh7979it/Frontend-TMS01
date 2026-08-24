@@ -24,6 +24,7 @@ import { PaginationComponent } from '@shared/components/pagination/pagination.co
 import { ReportExportService, ReportFilterOptions } from '@core/services/report-export.service';
 import { ToastService } from '@core/services/toast.service';
 import { ExcelImportExportService } from '@core/services/excel-import-export.service';
+import { AuthService } from '@core/services/auth.service';
 
 import {
   TmsPageHeaderComponent,
@@ -76,6 +77,8 @@ export class ExpenseListComponent implements OnInit {
   selectedTypeFilter: string = 'ALL';
   selectedDriverFilter: number | null = null;
   selectedVehicleFilter: number | null = null;
+  startDateFilter: string | null = null;
+  endDateFilter: string | null = null;
 
   // Pagination State
   paginatedExpenses: ExpenseModel[] = [];
@@ -120,7 +123,8 @@ export class ExpenseListComponent implements OnInit {
     private confirmDialog: ConfirmDialogService,
     private reportExportService: ReportExportService,
     private toastService: ToastService,
-    private excelService: ExcelImportExportService
+    private excelService: ExcelImportExportService,
+    private authService: AuthService
   ) {}
 
   onDownloadExcelTemplate(): void {
@@ -139,16 +143,49 @@ export class ExpenseListComponent implements OnInit {
     let successCount = 0;
     let failCount = 0;
 
+    // Lấy thông tin tài khoản đang đăng nhập hiện tại
+    const currentUser = this.authService.getCurrentUser();
+    let currentEmployeeId: number | null = null;
+
+    if (currentUser) {
+      // Tìm nhân sự ứng với tên/username tài khoản đăng nhập
+      const matchEmp = this.drivers.find(d => 
+        (d.employeeCode && d.employeeCode.toLowerCase() === currentUser.username?.toLowerCase()) ||
+        (d.firstname && currentUser.firstname && d.firstname.toLowerCase().includes(currentUser.firstname.toLowerCase()))
+      );
+      if (matchEmp) {
+        currentEmployeeId = matchEmp.employeeId;
+      }
+    }
+
     const promises = rows.map(r => {
+      // 1. Tự động tìm vehicleId từ biển số xe trong hệ thống
+      let foundVehicleId: number | null = null;
+      let cleanPlate = '';
+      if (r.vehicleLicensePlate) {
+        cleanPlate = r.vehicleLicensePlate.trim();
+        const normalizedPlate = cleanPlate.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const v = this.vehicles.find(item => item.licensePlate && item.licensePlate.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedPlate);
+        if (v) {
+          foundVehicleId = v.id;
+          cleanPlate = v.licensePlate; // Chuẩn hóa lại biển số xe theo hệ thống
+        }
+      }
+
       const payload: any = {
         expenseCode: r.expenseCode,
         title: r.title,
         totalExpense: r.totalExpense ? Number(r.totalExpense) : 0,
-        vehicleLicensePlate: r.vehicleLicensePlate || '',
+        vehicleLicensePlate: cleanPlate,
+        vehicleId: foundVehicleId,
+        employeeId: currentEmployeeId, // Ghi nhận người tạo/thao tác là tài khoản đang đăng nhập
         notes: r.notes || ''
       };
 
-      if (r.expenseDate) payload.expenseDate = r.expenseDate;
+      if (r.expenseDate) {
+        // Chuyển chuỗi date ISO YYYY-MM-DD thành LocalDateTime YYYY-MM-DDT00:00:00 cho backend
+        payload.expenseDate = `${r.expenseDate}T00:00:00`;
+      }
 
       return this.expenseService.createExpense(payload).toPromise()
         .then(() => { successCount++; })
@@ -388,6 +425,14 @@ export class ExpenseListComponent implements OnInit {
       result = result.filter(e => e.vehicleId === Number(this.selectedVehicleFilter));
     }
 
+    if (this.startDateFilter) {
+      result = result.filter(e => e.expenseDate && e.expenseDate.substring(0, 10) >= this.startDateFilter!);
+    }
+
+    if (this.endDateFilter) {
+      result = result.filter(e => e.expenseDate && e.expenseDate.substring(0, 10) <= this.endDateFilter!);
+    }
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const q = this.searchQuery.toLowerCase().trim();
       result = result.filter(e => 
@@ -403,6 +448,12 @@ export class ExpenseListComponent implements OnInit {
     this.filteredExpenses = result;
     this.currentPage = 1;
     this.updatePaginatedExpenses();
+  }
+
+  clearDateFilter(): void {
+    this.startDateFilter = null;
+    this.endDateFilter = null;
+    this.applyFilter();
   }
 
   updatePaginatedExpenses(): void {

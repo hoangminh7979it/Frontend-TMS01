@@ -57,6 +57,12 @@ export class ReportExportService {
     });
   }
 
+  exportEmployeeSalaryById(salaryId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/salaries/${salaryId}/export-employee`, {
+      responseType: 'blob'
+    });
+  }
+
   exportRevenues(options: ReportFilterOptions = {}): Observable<Blob> {
     const params = this.buildParams(options);
     return this.http.get(`${this.baseUrl}/revenues/export`, {

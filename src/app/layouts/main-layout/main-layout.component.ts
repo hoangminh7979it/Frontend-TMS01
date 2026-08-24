@@ -8,6 +8,7 @@ import { VehicleService } from '@core/services/vehicle.service';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { ConfirmDialogService } from '@core/services/confirm-dialog.service';
 import { GlobalToastContainerComponent } from '@shared-ui';
+import { formatDateDDMMYYYY } from '@core/services/excel-import-export.service';
 
 interface MenuItem {
   title: string;
@@ -167,13 +168,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
           if (v.inspectionExpirationDate) {
             const expDate = new Date(v.inspectionExpirationDate);
             expDate.setHours(0, 0, 0, 0);
+            const expDateFormatted = formatDateDDMMYYYY(v.inspectionExpirationDate);
 
             if (expDate < today) {
               const id = `insp-exp-${v.id}`;
               notifs.push({
                 id,
                 title: `Xe ${v.licensePlate} QUÁ HẠN ĐĂNG KIỂM`,
-                message: `Hạn đăng kiểm (${v.inspectionExpirationDate}) đã hết hạn. Vui lòng đưa xe đi kiểm định ngay!`,
+                message: `Hạn đăng kiểm (${expDateFormatted}) đã hết hạn. Vui lòng đưa xe đi kiểm định ngay!`,
                 type: 'danger',
                 icon: 'fa-solid fa-triangle-exclamation',
                 link: '/vehicles',
@@ -186,7 +188,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
               notifs.push({
                 id,
                 title: `Xe ${v.licensePlate} SẮP HẾT HẠN ĐĂNG KIỂM`,
-                message: `Hạn đăng kiểm còn ${diffDays} ngày (${v.inspectionExpirationDate}). Hãy lên kế hoạch kiểm định.`,
+                message: `Hạn đăng kiểm còn ${diffDays} ngày (${expDateFormatted}). Hãy lên kế hoạch kiểm định.`,
                 type: 'warning',
                 icon: 'fa-solid fa-clipboard-check',
                 link: '/vehicles',
@@ -200,13 +202,14 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
           if (v.insuranceExpirationDate) {
             const insDate = new Date(v.insuranceExpirationDate);
             insDate.setHours(0, 0, 0, 0);
+            const insDateFormatted = formatDateDDMMYYYY(v.insuranceExpirationDate);
 
             if (insDate < today) {
               const id = `ins-exp-${v.id}`;
               notifs.push({
                 id,
                 title: `Xe ${v.licensePlate} HẾT HẠN BẢO HIỂM`,
-                message: `Bảo hiểm phương tiện (${v.insuranceExpirationDate}) đã quá hạn. Cần gia hạn bảo hiểm gấp!`,
+                message: `Bảo hiểm phương tiện (${insDateFormatted}) đã quá hạn. Cần gia hạn bảo hiểm gấp!`,
                 type: 'danger',
                 icon: 'fa-solid fa-shield-cat',
                 link: '/vehicles',
@@ -219,7 +222,7 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
               notifs.push({
                 id,
                 title: `Xe ${v.licensePlate} SẮP HẾT HẠN BẢO HIỂM`,
-                message: `Bảo hiểm phương tiện còn ${diffDays} ngày (${v.insuranceExpirationDate}).`,
+                message: `Bảo hiểm phương tiện còn ${diffDays} ngày (${insDateFormatted}).`,
                 type: 'warning',
                 icon: 'fa-solid fa-shield-halved',
                 link: '/vehicles',
@@ -238,22 +241,22 @@ export class MainLayoutComponent implements OnInit, OnDestroy {
 
             shipments.forEach(s => {
               if (s.deliveryDate && s.statusEnumCode !== 'DELIVERED' && s.statusEnumCode !== 'CANCELLED') {
-                const delivDate = new Date(s.deliveryDate);
-                delivDate.setHours(0, 0, 0, 0);
+                  const delivDate = new Date(s.deliveryDate);
+                  delivDate.setHours(0, 0, 0, 0);
 
-                if (delivDate < today) {
-                  const lateDays = Math.ceil((today.getTime() - delivDate.getTime()) / (1000 * 3600 * 24));
-                  const id = `shipment-late-${s.shipmentId}`;
-                  notifs.push({
-                    id,
-                    title: `Đơn ${s.shipmentCode} TRỄ NGÀY GIAO HÀNG`,
-                    message: `Đơn hàng hẹn giao ngày ${s.deliveryDate.substring(0, 10)} (Trễ ${lateDays} ngày) nhưng chưa hoàn thành!`,
-                    type: 'danger',
-                    icon: 'fa-solid fa-truck-clock',
-                    link: '/shipments',
-                    timeAgo: `Trễ ${lateDays} ngày`,
-                    isRead: readIds.includes(id)
-                  });
+                  if (delivDate < today) {
+                    const lateDays = Math.ceil((today.getTime() - delivDate.getTime()) / (1000 * 3600 * 24));
+                    const id = `shipment-late-${s.shipmentId}`;
+                    notifs.push({
+                      id,
+                      title: `Đơn ${s.shipmentCode} TRỄ NGÀY GIAO HÀNG`,
+                      message: `Đơn hàng hẹn giao ngày ${formatDateDDMMYYYY(s.deliveryDate)} (Trễ ${lateDays} ngày) nhưng chưa hoàn thành!`,
+                      type: 'danger',
+                      icon: 'fa-solid fa-truck-clock',
+                      link: '/shipments',
+                      timeAgo: `Trễ ${lateDays} ngày`,
+                      isRead: readIds.includes(id)
+                    });
                 }
               }
             });

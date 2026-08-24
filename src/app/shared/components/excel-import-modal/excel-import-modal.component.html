@@ -48,7 +48,7 @@
       <!-- Errors Box -->
       <div class="errors-box" *ngIf="errors.length > 0">
         <div class="errors-title">
-          <i class="fa-solid fa-triangle-exclamation"></i> Tìm thấy {{ errors.length }} cảnh báo/lỗi trong file:
+          <i class="fa-solid fa-triangle-exclamation"></i> Tìm thấy {{ errors.length }} lỗi trong file (Nút nhập đã bị khóa, vui lòng chỉnh sửa file và tải lên lại):
         </div>
         <ul>
           <li *ngFor="let err of errors.slice(0, 5)">{{ err }}</li>
@@ -100,7 +100,7 @@
       <button 
         type="button"
         class="btn btn-confirm-excel" 
-        [disabled]="!selectedFile || parsedData.length === 0 || loading"
+        [disabled]="!selectedFile || parsedData.length === 0 || errors.length > 0 || loading"
         (click)="confirmImport()"
       >
         <i class="fa-solid fa-spin fa-spinner" *ngIf="loading"></i>
