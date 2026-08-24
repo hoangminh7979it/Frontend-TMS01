@@ -122,7 +122,7 @@ export class VehicleListComponent implements OnInit {
         notes: r.notes || ''
       };
 
-      if (r.inspectionExpiryDate) payload.inspectionExpiryDate = r.inspectionExpiryDate;
+      if (r.inspectionExpiryDate) payload.inspectionExpiryDate = `${r.inspectionExpiryDate}T00:00:00`;
 
       return this.vehicleService.createVehicle(payload).toPromise()
         .then(() => { successCount++; })
@@ -361,8 +361,8 @@ export class VehicleListComponent implements OnInit {
       licensePlate: v.licensePlate,
       payloadCapacity: v.payloadCapacity,
       status: v.status || 'AVAILABLE',
-      inspectionExpirationDate: v.inspectionExpirationDate,
-      insuranceExpirationDate: v.insuranceExpirationDate,
+      inspectionExpirationDate: v.inspectionExpirationDate ? v.inspectionExpirationDate.substring(0, 10) : null,
+      insuranceExpirationDate: v.insuranceExpirationDate ? v.insuranceExpirationDate.substring(0, 10) : null,
       employeeId: v.employeeId,
       vehicleTypeId: v.vehicleTypeId
     });

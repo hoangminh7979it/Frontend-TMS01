@@ -85,26 +85,46 @@
         placeholder="Tìm theo Mã phiếu, Tiêu đề, Biển số xe, Ghi chú..."
       />
 
-      <!-- Select Dropdown Lọc Theo Nhân Sự -->
-      <div class="filter-select-box">
-        <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
-        <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
-          <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
-          <option *ngFor="let d of drivers" [value]="d.employeeId">
-            {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
-          </option>
-        </select>
-      </div>
+      <!-- Nhóm Các Bộ Lọc Cạnh Nhau -->
+      <div class="filter-controls-group">
+        <!-- Select Dropdown Lọc Theo Nhân Sự -->
+        <div class="filter-select-box">
+          <i class="fa-solid fa-user-gear select-icon color-cyan"></i>
+          <select [(ngModel)]="selectedDriverFilter" (change)="applyFilter()">
+            <option [ngValue]="null">-- Tất cả nhân sự / lái xe --</option>
+            <option *ngFor="let d of drivers" [value]="d.employeeId">
+              {{ d.firstname }} {{ d.lastname }} ({{ d.employeeCode || '-' }})
+            </option>
+          </select>
+        </div>
 
-      <!-- Select Dropdown Lọc Theo Phương Tiện -->
-      <div class="filter-select-box">
-        <i class="fa-solid fa-truck select-icon color-cyan"></i>
-        <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
-          <option [ngValue]="null">-- Tất cả phương tiện --</option>
-          <option *ngFor="let v of vehicles" [value]="v.id">
-            {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
-          </option>
-        </select>
+        <!-- Select Dropdown Lọc Theo Phương Tiện -->
+        <div class="filter-select-box">
+          <i class="fa-solid fa-truck select-icon color-cyan"></i>
+          <select [(ngModel)]="selectedVehicleFilter" (change)="applyFilter()">
+            <option [ngValue]="null">-- Tất cả phương tiện --</option>
+            <option *ngFor="let v of vehicles" [value]="v.id">
+              {{ v.licensePlate }}{{ v.name ? ' - ' + v.name : '' }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Lọc Theo Khoảng Ngày -->
+        <div class="filter-date-group">
+          <div class="date-field-item">
+            <i class="fa-regular fa-calendar-days date-icon"></i>
+            <span class="date-label">Từ:</span>
+            <input type="date" [(ngModel)]="startDateFilter" (change)="applyFilter()" />
+          </div>
+          <div class="date-field-item">
+            <i class="fa-regular fa-calendar-days date-icon"></i>
+            <span class="date-label">Đến:</span>
+            <input type="date" [(ngModel)]="endDateFilter" (change)="applyFilter()" />
+          </div>
+          <button *ngIf="startDateFilter || endDateFilter" class="btn-clear-date" (click)="clearDateFilter()" title="Xóa Lọc Ngày">
+            <i class="fa-solid fa-xmark"></i> Xóa ngày
+          </button>
+        </div>
       </div>
 
       <!-- Type Filter Tabs -->

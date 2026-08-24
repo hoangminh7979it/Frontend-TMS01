@@ -174,14 +174,14 @@
                   'date-badge-danger': isInspectionExpiringSoon(v.inspectionExpirationDate),
                   'date-badge-normal': !isInspectionExpiringSoon(v.inspectionExpirationDate)
                 }">
-                  <i class="fa-solid fa-calendar-day"></i> {{ v.inspectionExpirationDate }}
+                  <i class="fa-solid fa-calendar-day"></i> {{ v.inspectionExpirationDate | date:'dd/MM/yyyy' }}
                 </span>
                 <span class="text-muted" *ngIf="!v.inspectionExpirationDate">-</span>
               </td>
 
               <!-- Insurance Exp -->
               <td>
-                <span class="mono-text" *ngIf="v.insuranceExpirationDate">{{ v.insuranceExpirationDate }}</span>
+                <span class="mono-text" *ngIf="v.insuranceExpirationDate">{{ v.insuranceExpirationDate | date:'dd/MM/yyyy' }}</span>
                 <span class="text-muted" *ngIf="!v.insuranceExpirationDate">-</span>
               </td>
 

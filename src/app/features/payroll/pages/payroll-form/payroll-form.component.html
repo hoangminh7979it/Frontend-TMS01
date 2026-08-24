@@ -232,7 +232,10 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="onClose()">Hủy</button>
-        <button type="button" class="btn btn-excel-modal" *ngIf="isEditMode" (click)="onExport()" title="Xuất Phiếu Lương Excel">
+        <button type="button" class="btn btn-excel-modal" *ngIf="isEditMode" (click)="onExportEmployee()" title="Xuất Bảng Lương Cá Nhân Dành Cho Nhân Viên">
+          <i class="fa-solid fa-user-check"></i> Xuất Cho Nhân Viên
+        </button>
+        <button type="button" class="btn btn-excel-modal" *ngIf="isEditMode" (click)="onExport()" title="Xuất Phiếu Lương Chi Tiết Full Excel">
           <i class="fa-solid fa-file-excel"></i> Xuất Phiếu Lương Excel
         </button>
         <button type="submit" class="btn btn-primary" [disabled]="loading">

@@ -8,6 +8,85 @@ export interface TemplateColumnDef {
   field: string;
   required: boolean;
   sampleValue: string;
+  isDate?: boolean;
+}
+
+/** Chuyển Date object hoặc chuỗi ISO thành DD/MM/YYYY */
+export function formatDateDDMMYYYY(value: string | Date | null | undefined): string {
+  if (!value) return '';
+  const dateStr = typeof value === 'string' ? value : value.toISOString();
+  // Lấy phần YYYY-MM-DD từ ISO string
+  const iso = dateStr.substring(0, 10);
+  const parts = iso.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+/** Chuyển bất kỳ chuỗi định dạng ngày nào thành ISO YYYY-MM-DD (để gửi API) một cách thông minh và linh hoạt */
+export function parseDateToISO(value: string | null | undefined): string {
+  if (!value) return '';
+  const trimmed = value.trim();
+
+  // 1. Chuẩn hóa ISO dạng YYYY-MM-DD hoặc YYYY/MM/DD
+  const isoMatch = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (isoMatch) {
+    const yyyy = isoMatch[1];
+    const mm = isoMatch[2].padStart(2, '0');
+    const dd = isoMatch[3].padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  // 2. Định dạng có dạng: [Phần 1] / [Phần 2] / [Phần 3]
+  const dateParts = trimmed.split(/[\/\-\s\.]+/);
+  if (dateParts.length >= 3) {
+    const p1 = dateParts[0].padStart(2, '0');
+    const p2 = dateParts[1].padStart(2, '0');
+    const p3 = dateParts[2];
+
+    // Trường hợp: DD/MM/YYYY hoặc MM/DD/YYYY (với p3 là Năm 4 chữ số, ví dụ 2026)
+    if (p3.length === 4) {
+      const num1 = Number(p1);
+      const num2 = Number(p2);
+      const year = Number(p3);
+
+      // Nếu p1 > 12 -> chắc chắn p1 là Ngày (DD), p2 là Tháng (MM) -> DD/MM/YYYY
+      if (num1 > 12 && num1 <= 31 && num2 >= 1 && num2 <= 12) {
+        return `${year}-${String(num2).padStart(2, '0')}-${String(num1).padStart(2, '0')}`;
+      }
+
+      // Nếu p2 > 12 -> chắc chắn p2 là Ngày (DD), p1 là Tháng (MM) -> MM/DD/YYYY (kiểu US trong Excel)
+      if (num2 > 12 && num2 <= 31 && num1 >= 1 && num1 <= 12) {
+        return `${year}-${String(num1).padStart(2, '0')}-${String(num2).padStart(2, '0')}`;
+      }
+
+      // Nếu cả num1 và num2 đều <= 12 (ví dụ 09/07/2026 hay 07/09/2026)
+      // Mặc định ưu tiên theo chuẩn Việt Nam DD/MM/YYYY: p1 là Ngày, p2 là Tháng
+      if (num1 >= 1 && num1 <= 31 && num2 >= 1 && num2 <= 12) {
+        return `${year}-${String(num2).padStart(2, '0')}-${String(num1).padStart(2, '0')}`;
+      }
+    }
+
+    // Trường hợp năm 2 chữ số (ví dụ: 09/07/26)
+    if (p3.length === 2) {
+      const year = 2000 + Number(p3);
+      const num1 = Number(p1);
+      const num2 = Number(p2);
+      if (num1 >= 1 && num1 <= 31 && num2 >= 1 && num2 <= 12) {
+        return `${year}-${String(num2).padStart(2, '0')}-${String(num1).padStart(2, '0')}`;
+      }
+    }
+  }
+
+  // 3. Fallback: dùng Date.parse của JS nếu không khớp các quy tắc trên
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    const yyyy = parsed.getFullYear();
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return trimmed;
 }
 
 @Injectable({
@@ -22,12 +101,12 @@ export class ExcelImportExportService {
       columns: [
         { header: 'Mã Đơn Hàng (*)', field: 'shipmentCode', required: true, sampleValue: 'DH2026-001' },
         { header: 'Mã/Tên Khách Hàng', field: 'customerName', required: false, sampleValue: 'Công ty Samsung' },
-        { header: 'Loại Hàng Hóa (*)', field: 'cargoType', required: true, sampleValue: 'Linh kiện điện tử (10 Pallet)' },
-        { header: 'Nơi Nhận Hàng (*)', field: 'receiptPlace', required: true, sampleValue: 'Kho Yên Phong, Bắc Ninh' },
-        { header: 'Nơi Giao Hàng (*)', field: 'deliveryPlace', required: true, sampleValue: 'Cảng Hải Phòng, Hải Phòng' },
+        { header: 'Loại Hàng Hóa', field: 'cargoType', required: false, sampleValue: 'Linh kiện điện tử (10 Pallet)' },
+        { header: 'Nơi Nhận Hàng (*)', field: 'receiptPlace', required: true, sampleValue: 'Kho Yên Phong, Bắc Ninh + Kho Hải Dương' },
+        { header: 'Nơi Giao Hàng (*)', field: 'deliveryPlace', required: true, sampleValue: 'Cảng Hải Phòng + Kho ICD Phú Mỹ' },
         { header: 'Trọng Lượng (kg)', field: 'weight', required: false, sampleValue: '15000' },
-        { header: 'Ngày Nhận (YYYY-MM-DD)', field: 'dateOfReceipt', required: false, sampleValue: '2026-08-15' },
-        { header: 'Ngày Giao (YYYY-MM-DD)', field: 'deliveryDate', required: false, sampleValue: '2026-08-16' },
+        { header: 'Ngày Nhận (DD/MM/YYYY)', field: 'dateOfReceipt', required: false, sampleValue: '15/08/2026', isDate: true },
+        { header: 'Ngày Giao (DD/MM/YYYY)', field: 'deliveryDate', required: false, sampleValue: '16/08/2026', isDate: true },
         { header: 'Cước Phí VNĐ (*)', field: 'revenue', required: true, sampleValue: '25000000' },
         { header: 'Chi Phí Phát Sinh VNĐ', field: 'incurredCosts', required: false, sampleValue: '500000' },
         { header: 'Biển Số Xe', field: 'licensePlate', required: false, sampleValue: '51C-123.45' },
@@ -73,7 +152,7 @@ export class ExcelImportExportService {
         { header: 'Tên Xe / Mô Tả', field: 'name', required: false, sampleValue: 'Xe Đầu Kéo Hyundai HD1000' },
         { header: 'Mã Loại Xe (TRUCK/TRAILER...)', field: 'vehicleTypeCode', required: false, sampleValue: 'CONTAINER' },
         { header: 'Tải Trọng (Tấn)', field: 'payloadCapacity', required: false, sampleValue: '30' },
-        { header: 'Hạn Đăng Kiểm (YYYY-MM-DD)', field: 'inspectionExpiryDate', required: false, sampleValue: '2027-01-20' },
+        { header: 'Hạn Đăng Kiểm (DD/MM/YYYY)', field: 'inspectionExpiryDate', required: false, sampleValue: '20/01/2027', isDate: true },
         { header: 'Trạng Thái (AVAILABLE/IN_TRANSIT/MAINTENANCE)', field: 'status', required: false, sampleValue: 'AVAILABLE' },
         { header: 'Ghi Chú', field: 'notes', required: false, sampleValue: 'Bảo dưỡng định kỳ' }
       ]
@@ -99,7 +178,7 @@ export class ExcelImportExportService {
       columns: [
         { header: 'Mã Phiếu Chi (*)', field: 'expenseCode', required: true, sampleValue: 'PC-2026-001' },
         { header: 'Tiêu Đề / Nội Dung Chi (*)', field: 'title', required: true, sampleValue: 'Chi phí xăng dầu xe 51C-123.45' },
-        { header: 'Ngày Chi (YYYY-MM-DD)', field: 'expenseDate', required: false, sampleValue: '2026-08-10' },
+        { header: 'Ngày Chi (DD/MM/YYYY)', field: 'expenseDate', required: false, sampleValue: '10/08/2026', isDate: true },
         { header: 'Số Tiền VNĐ (*)', field: 'totalExpense', required: true, sampleValue: '4500000' },
         { header: 'Biển Số Xe', field: 'vehicleLicensePlate', required: false, sampleValue: '51C-123.45' },
         { header: 'Ghi Chú', field: 'notes', required: false, sampleValue: 'Có hóa đơn đỏ VAT' }
@@ -111,8 +190,8 @@ export class ExcelImportExportService {
       columns: [
         { header: 'Mã Bảng Lương (*)', field: 'salaryCode', required: true, sampleValue: 'LUONG-08-2026' },
         { header: 'Mã Nhân Viên (*)', field: 'employeeCode', required: true, sampleValue: 'NV-001' },
-        { header: 'Từ Ngày (YYYY-MM-DD)', field: 'startDate', required: false, sampleValue: '2026-08-01' },
-        { header: 'Đến Ngày (YYYY-MM-DD)', field: 'endDate', required: false, sampleValue: '2026-08-31' },
+        { header: 'Từ Ngày (DD/MM/YYYY)', field: 'startDate', required: false, sampleValue: '01/08/2026', isDate: true },
+        { header: 'Đến Ngày (DD/MM/YYYY)', field: 'endDate', required: false, sampleValue: '31/08/2026', isDate: true },
         { header: 'Số Ngày Công', field: 'workDaysCount', required: false, sampleValue: '26' },
         { header: 'Lương Cơ Bản/Ngày VNĐ', field: 'salaryBasicPerDay', required: false, sampleValue: '350000' },
         { header: 'Thưởng Chuyến VNĐ', field: 'totalSalaryPerShipment', required: false, sampleValue: '2000000' },
@@ -152,8 +231,9 @@ export class ExcelImportExportService {
     // 3. Tạo Sheet Hướng Dẫn
     const guideData = [
       { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Các cột có dấu (*) là thông tin BẮT BUỘC nhập.' },
-      { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Định dạng ngày tháng chuẩn: YYYY-MM-DD (Ví dụ: 2026-08-15).' },
+      { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Định dạng ngày tháng chuẩn: DD/MM/YYYY (Ví dụ: 15/08/2026).' },
       { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Số tiền và trọng lượng nhập số tự nhiên, không ghi chữ VNĐ hoặc dấu phẩy.' },
+      { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Nếu có NHIỀU NƠI NHẬN hoặc NHIỀU NƠI GIAO, dùng dấu + để phân cách. Ví dụ: Nam Hưng + Phú Mỹ' },
       { 'HƯỚNG DẪN NHẬP DỮ LIỆU FILE EXCEL TMS-01': 'Vui lòng không thay đổi tên tiêu đề cột để hệ thống đọc chính xác.' }
     ];
     const guideWs = XLSX.utils.json_to_sheet(guideData);
@@ -185,8 +265,8 @@ export class ExcelImportExportService {
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
 
-          // Parse sheet thành JSON dạng array of objects
-          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          // Parse sheet thành JSON với raw: false để lấy đúng định dạng chuỗi hiển thị trên Excel (formatted text)
+          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
 
           if (!rawRows || rawRows.length === 0) {
             errors.push('File Excel rỗng, không chứa dữ liệu nhập!');
@@ -201,13 +281,43 @@ export class ExcelImportExportService {
 
             config.columns.forEach(col => {
               // Tìm giá trị trong row khớp với header
-              const val = row[col.header] !== undefined ? String(row[col.header]).trim() : '';
+              let val = row[col.header] !== undefined ? String(row[col.header]).trim() : '';
+
+              // Xử lý cột ngày tháng (isDate)
+              if (col.isDate && row[col.header] !== undefined && row[col.header] !== null && row[col.header] !== '') {
+                const cellVal = row[col.header];
+
+                if (typeof cellVal === 'number') {
+                  // Trường hợp Excel lưu dưới dạng Serial Date Number (ví dụ: 46219)
+                  const jsDate = XLSX.SSF.parse_date_code(cellVal);
+                  if (jsDate) {
+                    const dd = String(jsDate.d).padStart(2, '0');
+                    const mm = String(jsDate.m).padStart(2, '0');
+                    const yyyy = jsDate.y;
+                    val = `${dd}/${mm}/${yyyy}`;
+                  }
+                } else if (cellVal instanceof Date) {
+                  // Trường hợp XLSX đọc cell ra đối tượng Date của JS
+                  const dd = String(cellVal.getDate()).padStart(2, '0');
+                  const mm = String(cellVal.getMonth() + 1).padStart(2, '0');
+                  const yyyy = cellVal.getFullYear();
+                  val = `${dd}/${mm}/${yyyy}`;
+                } else {
+                  // Chuỗi văn bản từ Excel (ví dụ: "09/07/2026", "2026-07-09", "9/7/2026")
+                  val = String(cellVal).trim();
+                }
+              }
 
               if (val) isRowEmpty = false;
 
               // Kiểm tra cột bắt buộc
               if (col.required && !val) {
                 errors.push(`Dòng ${rowNum}: Bắt buộc nhập cột "${col.header}"`);
+              }
+
+              // Convert ngày (bất kỳ định dạng DD/MM/YYYY hay YYYY-MM-DD...) -> YYYY-MM-DD chuẩn ISO gửi API
+              if (col.isDate && val) {
+                val = parseDateToISO(val);
               }
 
               item[col.field] = val;
