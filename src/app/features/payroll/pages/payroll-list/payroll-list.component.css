@@ -594,13 +594,26 @@
   outline: none;
 }
 
+.form-group select option {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  padding: 8px 12px;
+}
+
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   border-color: var(--border-active);
 }
 
 .input-error {
   border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.05) !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: var(--text-main) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.input-error option {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
 }
 
 .field-note {
