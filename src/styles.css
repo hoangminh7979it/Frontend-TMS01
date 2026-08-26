@@ -187,6 +187,25 @@ body {
   padding: 10px;
 }
 
+/* Global Form Controls & Dropdown Select Option Theme Alignment */
+select option {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  padding: 8px 12px;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: var(--text-main) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+.input-error option {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+
 /* Filter Date Group Controls */
 .filter-date-group {
   display: flex;
